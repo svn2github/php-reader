@@ -144,7 +144,7 @@ class Reader
    */
   public function setOffset($offset)
   {
-    fseek($this->_fd, $offset);
+    fseek($this->_fd, $offset < 0 ? $this->_size + $offset : $offset);
   }
   
   /**

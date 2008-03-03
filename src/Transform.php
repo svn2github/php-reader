@@ -40,6 +40,7 @@
  * @author    Sven Vollbehr <sven.vollbehr@behrss.eu>
  * @copyright 2006, 2007 The Bearpaw Project Work Group
  * @copyright 2007, 2008 BEHR Software Systems
+ * @license   http://www.opensource.org/licenses/bsd-license.php New BSD License
  * @version   $Rev$
  * @static
  */
@@ -79,7 +80,7 @@ final class Transform
    */
   public static function getInt64LE($raw)
   {
-    return ReaderUtils::getInt64($raw, self::LITTLE_ENDIAN_ORDER);
+    return self::getInt64($raw, self::LITTLE_ENDIAN_ORDER);
   }
 
   /**
@@ -92,7 +93,7 @@ final class Transform
    */
   public static function getInt64BE($raw)
   {
-    return ReaderUtils::getInt64($raw, self::BIG_ENDIAN_ORDER);
+    return self::getInt64($raw, self::BIG_ENDIAN_ORDER);
   }
 
   /**
@@ -125,7 +126,7 @@ final class Transform
    */
   public static function getUInt32LE($raw)
   {
-    return ReaderUtils::getUInt32($raw, self::LITTLE_ENDIAN_ORDER);
+    return self::getUInt32($raw, self::LITTLE_ENDIAN_ORDER);
   }
 
   /**
@@ -135,7 +136,7 @@ final class Transform
    */
   public static function getUInt32BE($raw)
   {
-    return ReaderUtils::getUInt32($raw, self::BIG_ENDIAN_ORDER);
+    return self::getUInt32($raw, self::BIG_ENDIAN_ORDER);
   }
 
   /**
@@ -168,7 +169,7 @@ final class Transform
    */
   public static function getUInt16LE($raw)
   {
-    return ReaderUtils::getUInt16($raw, self::LITTLE_ENDIAN_ORDER);
+    return self::getUInt16($raw, self::LITTLE_ENDIAN_ORDER);
   }
 
   /**
@@ -178,7 +179,7 @@ final class Transform
    */
   public static function getUInt16BE($raw)
   {
-    return ReaderUtils::getUInt16($raw, self::BIG_ENDIAN_ORDER);
+    return self::getUInt16($raw, self::BIG_ENDIAN_ORDER);
   }
 
   /**
@@ -215,7 +216,7 @@ final class Transform
     foreach (unpack(($order == 2 ? "n" :
                      ($order == 1 ? "v" : "S")) . "*", $raw) as $char)
       $string .= pack("S", $char);
-    return rtrim($string, "\0");
+    return $string;
   }
 
   /**
@@ -225,7 +226,7 @@ final class Transform
    */
   public static function getString16LE($raw)
   {
-    return ReaderUtils::getString16($raw, self::LITTLE_ENDIAN_ORDER);
+    return self::getString16($raw, self::LITTLE_ENDIAN_ORDER);
   }
 
   /**
@@ -235,7 +236,7 @@ final class Transform
    */
   public static function getString16BE($raw)
   {
-    return ReaderUtils::getString16($raw, self::BIG_ENDIAN_ORDER);
+    return self::getString16($raw, self::BIG_ENDIAN_ORDER);
   }
 
   /**

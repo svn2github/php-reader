@@ -39,8 +39,9 @@
  * @package   php-reader
  * @author    Sven Vollbehr <sven.vollbehr@behrss.eu>
  * @copyright 2008 BEHR Software Systems
+ * @license   http://www.opensource.org/licenses/bsd-license.php New BSD License
  * @version   $Rev$
  */
-class ReaderException extends Exception
+class Reader_Exception extends Exception
 {
 }

@@ -34,7 +34,7 @@
  */
 
 /**#@+ @ignore */
-require_once("ReaderException.php");
+require_once("Reader/Exception.php");
 require_once("Transform.php");
 /**#@-*/
 
@@ -47,6 +47,7 @@ require_once("Transform.php");
  * @author    Sven Vollbehr <sven.vollbehr@behrss.eu>
  * @copyright 2006, 2007 The Bearpaw Project Work Group
  * @copyright 2007, 2008 BEHR Software Systems
+ * @license   http://www.opensource.org/licenses/bsd-license.php New BSD License
  * @version   $Rev$
  */
 class Reader
@@ -65,12 +66,12 @@ class Reader
    * Opens the file given as a parameter.
    * 
    * @param string $filename The absolute or relative path to the file.
-   * @throws ReaderException if the file cannot be read.
+   * @throws Reader_Exception if the file cannot be read.
    */
   public function __construct($filename)
   {
     if (($this->_fd = fopen($filename, "rb")) === false)
-      throw new ReaderException("Unable to open file:" . $filename);
+      throw new Reader_Exception("Unable to open file:" . $filename);
     
     fseek($this->_fd, 0, SEEK_END);
     $this->_size = ftell($this->_fd);
@@ -100,13 +101,14 @@ class Reader
    * Jumps <var>size</var> amount of bytes in the file stream.
    * 
    * @return void
-   * @throws ReaderException if <var>size</var> attribute is not greater or
-   *         equal than zero.
+   * @throws Reader_Exception if <var>size</var> attribute is negative.
    */
   public function skip($size)
   {
     if ($size < 0)
-      throw new ReaderException("Invalid argument");
+      throw new Reader_Exception("Invalid argument");
+    if ($size == 0)
+      return;
     fseek($this->_fd, $size, SEEK_CUR);
   }
   
@@ -114,13 +116,14 @@ class Reader
    * Reads <var>length</var> amount of bytes from the file stream.
    * 
    * @return string Returns read bytes as a string
-   * @throws ReaderException if <var>length</var> attribute is not greater than
-   *         zero.
+   * @throws Reader_Exception if <var>length</var> attribute is negative.
    */
   public function read($length)
   {
-    if ($length <= 0)
-      throw new ReaderException("Invalid argument");
+    if ($length < 0)
+      throw new Reader_Exception("Invalid argument");
+    if ($length == 0)
+      return "";
     return fread($this->_fd, $length);
   }
   
@@ -165,7 +168,7 @@ class Reader
    * @param string $method The method to be called.
    * @param string $params The parameters should the function accept them.
    * @return mixed
-   * @throws ReaderException if no such transformer is implemented
+   * @throws Reader_Exception if no such transformer is implemented
    */
   public function __call($method, $params) {
     $chunks = array();
@@ -177,6 +180,6 @@ class Reader
          $this->read(preg_match("/String|(?:H|L)Hex/", $chunks[1]) ?
                      (isset($params[0]) ? $params[0] : 1) :
                      ($chunks[1] == "GUID" ? 16 : $chunks[2] / 8)));
-    } else throw new ReaderException("Unknown method: " . $method);
+    } else throw new Reader_Exception("Unknown method: " . $method);
   }
 }

@@ -78,8 +78,7 @@ class ASF
   }
   
   /**
-   * Checks whether the reader was successfully initiated and whether there are
-   * objects left in the stream.
+   * Checks whether there are objects left in the stream.
    * 
    * @return  Boolean value corresponding whether there is more to read.
    */
@@ -92,9 +91,9 @@ class ASF
    * Returns the next ASF object or false if end of stream has been reached.
    * 
    * @todo   Only the ASF_Header_Object top level object is regognized. 
-   * @return ASFObject Returns the appropriate object. Returned objects are of
-   *         the type ASFObject or of any of the other object types that inherit
-   *         from that base class.
+   * @return ASF_Object Returns the appropriate object. Returned objects are of
+   *         the type ASF_Object or of any of the other object types that
+   *         inherit from that base class.
    */
   public function nextObject()
   {
@@ -111,7 +110,6 @@ class ASF
       default:
         $object = new ASF_Object($this->_reader, $guid, $size);
       }
-
       $this->_reader->setOffset($offset - 24 + $size);
     }
     return $object;

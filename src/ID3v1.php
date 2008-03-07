@@ -178,4 +178,15 @@ class ID3v1
     else
       return self::$genres[128]; // unknown
   }
+  
+  /**
+   * Magic function so that $obj->value will work.
+   *
+   * @param string $name
+   * @return mixed
+   */
+  public function __get($name) {
+    if (method_exists($this, "get" . ucfirst(strtolower($name))))
+      return call_user_func(array($this, "get" . ucfirst(strtolower($name))));
+  }
 }

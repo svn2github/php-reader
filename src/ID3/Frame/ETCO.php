@@ -1,0 +1,152 @@
+<?php
+/**
+ * PHP Reader Library
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ *  - Redistributions of source code must retain the above copyright notice,
+ *    this list of conditions and the following disclaimer.
+ *  - Redistributions in binary form must reproduce the above copyright notice,
+ *    this list of conditions and the following disclaimer in the documentation
+ *    and/or other materials provided with the distribution.
+ *  - Neither the name of the BEHR Software Systems nor the names of its
+ *    contributors may be used to endorse or promote products derived from this
+ *    software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ *
+ * @package    php-reader
+ * @subpackage ID3
+ * @copyright  Copyright (c) 2008 BEHR Software Systems
+ * @license    http://www.opensource.org/licenses/bsd-license.php New BSD License
+ * @version    $Id$
+ */
+
+/**#@+ @ignore */
+require_once("ID3/Frame.php");
+require_once("ID3/Timing.php");
+/**#@-*/
+
+/**
+ * The <i>Event timing codes</i> allows synchronisation with key events in the
+ * audio.
+ *
+ * The events are an array of timestamp and type pairs. The time stamp is set to
+ * zero if directly at the beginning of the sound or after the previous event.
+ * All events are sorted in chronological order.
+ *
+ * The events $E0-EF are for user events. You might want to synchronise your
+ * music to something, like setting off an explosion on-stage, activating a
+ * screensaver etc.
+ *
+ * There may only be one ETCO frame in each tag.
+ *
+ * @package    php-reader
+ * @subpackage ID3
+ * @author     Sven Vollbehr <sven.vollbehr@behrss.eu>
+ * @copyright  Copyright (c) 2008 BEHR Software Systems
+ * @license    http://www.opensource.org/licenses/bsd-license.php New BSD License
+ * @version    $Rev$
+ */
+final class ID3_Frame_ETCO extends ID3_Frame
+  implements ID3_Timing
+{
+  /**
+   * The list of event types.
+   *
+   * @var Array
+   */
+  public static $types = array
+    (0x00 => "Padding",
+     0x01 => "End of initial silence",
+     0x02 => "Intro start",
+     0x03 => "Main part start",
+     0x04 => "Outro start",
+     0x05 => "Outro end",
+     0x06 => "Verse start",
+     0x07 => "Refrain start",
+     0x08 => "Interlude start",
+     0x09 => "Theme start",
+     0x0a => "Variation start",
+     0x0b => "Key change",
+     0x0c => "Time change",
+     0x0d => "Momentary unwanted noise",
+     0x0e => "Sustained noise",
+     0x0f => "Sustained noise end",
+     0x10 => "Intro end",
+     0x11 => "Main part end",
+     0x12 => "Verse end",
+     0x13 => "Refrain end",
+     0x14 => "Theme end",
+     0x15 => "Profanity",
+     0x16 => "Profanity end",
+     0xe0 => "User event",
+     0xe1 => "User event",
+     0xe2 => "User event",
+     0xe3 => "User event",
+     0xe4 => "User event",
+     0xe5 => "User event",
+     0xe6 => "User event",
+     0xe7 => "User event",
+     0xea => "User event",
+     0xeb => "User event",
+     0xec => "User event",
+     0xed => "User event",
+     0xee => "User event",
+     0xef => "User event",
+     0xfd => "Audio end (start of silence)",
+     0xfe => "Audio file ends",
+     0xff => "One more byte of events follows");
+  
+  /** @var integer */
+  private $_format;
+  
+  /** @var Array */
+  private $_events = array();
+  
+  /**
+   * Constructs the class with given parameters and parses object related data.
+   *
+   * @param Reader $reader The reader object.
+   */
+  public function __construct($reader)
+  {
+    parent::__construct($reader);
+
+    $this->_format = substr($this->_data, 0, 1);
+    
+    for ($i = 1; $i < $this->getSize(); $i += 5) {
+      $this->_events[Transform::getInt32BE(substr($this->_data, $i + 1, 4))] =
+        $data = substr($this->_data, $i, 1);
+      if ($data == 0xff)
+        break;
+    }
+    sort($this->_events);
+  }
+  
+  /**
+   * Returns the timing format.
+   * 
+   * @return integer
+   */
+  public function getFormat() { return $this->_format; }
+
+  /**
+   * Returns the events as an associated array having the timestamps as keys and
+   * the event types as values.
+   * 
+   * @return string
+   */
+  public function getEvents() { return $this->_events; }
+}

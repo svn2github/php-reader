@@ -1,9 +1,6 @@
 <?php
 /**
- * $Id$
- *
- *
- * Copyright (C) 2008 BEHR Software Systems. All Rights Reserved.
+ * PHP Reader Library
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -29,7 +26,11 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *
- * @package   php-reader
+ * @package    php-reader
+ * @subpackage ID3
+ * @copyright  Copyright (c) 2008 BEHR Software Systems
+ * @license    http://www.opensource.org/licenses/bsd-license.php New BSD License
+ * @version    $Id$
  */
 
 /**#@+ @ignore */
@@ -40,36 +41,41 @@ require_once("Reader.php");
  * This class represents a file containing ID3v1 headers as described in
  * {@link http://www.id3.org/id3v2-00 The ID3-Tag Specification Appendix}.
  * 
- * @package   php-reader
- * @author    Sven Vollbehr <sven.vollbehr@behrss.eu>
- * @copyright 2008 BEHR Software Systems
- * @license   http://www.opensource.org/licenses/bsd-license.php New BSD License
- * @version   $Rev$
+ * @package    php-reader
+ * @subpackage ID3
+ * @author     Sven Vollbehr <sven.vollbehr@behrss.eu>
+ * @copyright  Copyright (c) 2008 BEHR Software Systems
+ * @license    http://www.opensource.org/licenses/bsd-license.php New BSD License
+ * @version    $Rev$
  */
-class ID3v1
+final class ID3v1
 {
-  /** @var string The title */
+  /** @var string */
   private $_title;
   
-  /** @var string The artist */
+  /** @var string */
   private $_artist;
   
-  /** @var string The album */
+  /** @var string */
   private $_album;
   
-  /** @var string The year */
+  /** @var string */
   private $_year;
   
-  /** @var string The comment */
+  /** @var string */
   private $_comment;
   
-  /** @var integer The track number */
+  /** @var integer */
   private $_track;
   
-  /** @var integer The genre index */
+  /** @var integer */
   private $_genre = 128;
 
-  /** @var Array The genre list */
+  /**
+   * The genre list.
+   *
+   * @var Array
+   */
   public static $genres = array
     ("Blues", "Classic Rock", "Country", "Dance", "Disco", "Funk", "Grunge",
      "Hip-Hop", "Jazz", "Metal", "New Age", "Oldies", "Other", "Pop", "R&B",
@@ -94,11 +100,13 @@ class ID3v1
      "Freestyle", "Duet", "Punk Rock", "Drum Solo", "A capella", "Euro-House",
      "Dance Hall", "Unknown");
   
-  /** @var Reader The Reader object */
+  /** @var Reader */
   private $_reader;
   
   /**
-   * The default constructor. Initiates the reader for the given file.
+   * Constructs the ID3v1 class with given file.
+   *
+   * @param string $filename The path to the file.
    */
   public function __construct($filename)
   {
@@ -127,50 +135,50 @@ class ID3v1
   /**
    * Returns the title field.
    *
-   * @return string Returns the title field.
+   * @return string
    */
   public function getTitle() { return $this->_title; }
   
   /**
    * Returns the artist field.
    *
-   * @return string Returns the artist field.
+   * @return string
    */
   public function getArtist() { return $this->_artist; }
   
   /**
    * Returns the album field.
    *
-   * @return string Returns the album field.
+   * @return string
    */
   public function getAlbum() { return $this->_album; }
   
   /**
    * Returns the year field.
    *
-   * @return string Returns the year field.
+   * @return string
    */
   public function getYear() { return $this->_year; }
   
   /**
    * Returns the comment field.
    *
-   * @return string Returns the comment field.
+   * @return string
    */
   public function getComment() { return $this->_comment; }
   
   /**
    * Returns the track field.
    *
-   * @note ID3v1.1 feature only
-   * @return integer Returns the track field.
+   * @since ID3v1.1
+   * @return integer
    */
   public function getTrack() { return $this->_track; }
   
   /**
    * Returns the genre.
    *
-   * @return string Returns the genre.
+   * @return string
    */
   public function getGenre() {
     if (isset(self::$genres[$this->_genre]))
@@ -182,7 +190,7 @@ class ID3v1
   /**
    * Magic function so that $obj->value will work.
    *
-   * @param string $name
+   * @param string $name The field name.
    * @return mixed
    */
   public function __get($name) {

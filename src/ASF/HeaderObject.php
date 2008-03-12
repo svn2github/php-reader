@@ -1,10 +1,6 @@
 <?php
 /**
- * $Id$
- *
- *
- * Copyright (C) 2006, 2007 The Bearpaw Project Work Group. All Rights Reserved.
- * Copyright (C) 2007, 2008 BEHR Software Systems. All Rights Reserved.
+ * PHP Reader Library
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -30,7 +26,12 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *
- * @package   php-reader
+ * @package    php-reader
+ * @subpackage ASF
+ * @copyright  Copyright (c) 2006, 2007 The Bearpaw Project Work Group
+ * @copyright  Copyright (c) 2007, 2008 BEHR Software Systems
+ * @license    http://www.opensource.org/licenses/bsd-license.php New BSD License
+ * @version    $Id$
  */
 
 /**#@+ @ignore */
@@ -38,38 +39,43 @@ require_once("Object.php");
 /**#@-*/
 
 /**
- * The ASF_Header_Object object implementation. This object contains objects
- * that give information about the file. See corresponding object classes for
- * more.
+ * The <i>ASF_Header_Object</i> object implementation. This object contains
+ * objects that give information about the file. See corresponding object
+ * classes for more.
  * 
- * @package   php-reader
- * @author    Sven Vollbehr <sven.vollbehr@behrss.eu>
- * @copyright 2006, 2007 The Bearpaw Project Work Group
- * @copyright 2007, 2008 BEHR Software Systems
- * @license   http://www.opensource.org/licenses/bsd-license.php New BSD License
- * @version   $Rev$
+ * @package    php-reader
+ * @subpackage ASF
+ * @author     Sven Vollbehr <sven.vollbehr@behrss.eu>
+ * @copyright  Copyright (c) 2006, 2007 The Bearpaw Project Work Group
+ * @copyright  Copyright (c) 2007, 2008 BEHR Software Systems
+ * @license    http://www.opensource.org/licenses/bsd-license.php New BSD License
+ * @version    $Rev$
  */
 final class ASF_HeaderObject extends ASF_Object
 {
-  /**
-   * @var integer The number of the objects the header contains.
-   */
+  /** @var     integer */
   private $_objectCount;
 
   /**
-   * @var integer Internal variable to have the start of the stream stored in.
+   * @internal Internal variable to have the start of the stream stored in.
+   * @var      integer
    */
   private $_readerSOffset;
 
   /**
-   * @var integer Internal variable to have the current position of the
-   *      stream pointer stored in.
+   * @internal Internal variable to have the current position of the stream
+   *           pointer stored in.
+   * @var      integer
    */
   private $_readerCOffset;
 
   /**
-   * Default constructor. Initiates the class with given parameters and reads
-   * object information from the file.
+   * Constructs the class with given parameters and reads object related data
+   * from the ASF file.
+   *
+   * @param Reader  $reader The reader object.
+   * @param string  $id     The object GUID identifier.
+   * @param integer $size   The object size.
    */
   public function __construct($reader, $id, $size)
   {
@@ -84,15 +90,16 @@ final class ASF_HeaderObject extends ASF_Object
   /**
    * Returns the number of standard ASF header objects this object contains.
    * 
-   * @return integer The number of objects the header contains.
+   * @return integer
    */
   public function getObjectCount() { return $this->_objectCount; }
 
   /**
    * Checks whether there is more to be read within the bounds of the parent
-   * object size.
+   * object size. Returns <var>true</var> if there are child objects unread,
+   * <var>false</var> otherwise.
    *
-   * @return boolean Boolean value corresponding whether there is more to read.
+   * @return boolean
    */
   public function hasChildObjects()
   {
@@ -100,13 +107,12 @@ final class ASF_HeaderObject extends ASF_Object
   }
 
   /**
-   * Returns the next standard ASF object or <var>false</var> if end of stream
-   * has been reached.
+   * Returns the next ASF object or <var>false</var> if end of stream has been
+   * reached. Returned objects are of the type <var>ASFObject</var> or of any of
+   * the other object types that inherit from that base class.
    *
    * @todo   Only limited subset of possible child objects are regognized.
-   * @return ASF_Object Returns the appropriate object. Returned objects are of
-   *         the type ASFObject or of any of the other object types that inherit
-   *         from that base class.
+   * @return ASF_Object|false
    */
   public function nextChildObject()
   {

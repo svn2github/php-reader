@@ -1,11 +1,7 @@
 <?php
 /**
- * $Id$
- *
- *
- * Copyright (C) 2006, 2007 The Bearpaw Project Work Group. All Rights Reserved.
- * Copyright (C) 2007, 2008 BEHR Software Systems. All Rights Reserved.
- *
+ * PHP Reader Library
+ * 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
@@ -31,6 +27,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  *
  * @package   php-reader
+ * @copyright Copyright (c) 2006, 2007 The Bearpaw Project Work Group
+ * @copyright Copyright (c) 2007, 2008 BEHR Software Systems
+ * @license   http://www.opensource.org/licenses/bsd-license.php New BSD License
+ * @version   $Id$
  */
 
 /**#@+ @ignore */
@@ -45,27 +45,23 @@ require_once("Transform.php");
  * 
  * @package   php-reader
  * @author    Sven Vollbehr <sven.vollbehr@behrss.eu>
- * @copyright 2006, 2007 The Bearpaw Project Work Group
- * @copyright 2007, 2008 BEHR Software Systems
+ * @copyright Copyright (c) 2006, 2007 The Bearpaw Project Work Group
+ * @copyright Copyright (c) 2007, 2008 BEHR Software Systems
  * @license   http://www.opensource.org/licenses/bsd-license.php New BSD License
  * @version   $Rev$
  */
 class Reader
 {
-  /**
-   * @var resource The underlying file descriptor.
-   */
+  /** @var resource */
   private $_fd;
   
-  /**
-   * @var integer  The file size.
-   */
+  /** @var integer */
   private $_size;
   
   /**
-   * Opens the file given as a parameter.
+   * Constructs the Reader class with given file.
    * 
-   * @param string $filename The absolute or relative path to the file.
+   * @param string $filename The path to the file.
    * @throws Reader_Exception if the file cannot be read.
    */
   public function __construct($filename)
@@ -87,10 +83,11 @@ class Reader
   }
   
   /**
-   * Checks whether there is more to be read in the file.
+   * Checks whether there is more to be read in the file. Returns
+   * <var>true</var> if the end of the file has not yet been reached;
+   * <var>false</var> otherwise.
    * 
-   * @return boolean Returns <var>true</var> if the end of the file has not yet
-   *         been reached; <var>false</var> otherwise.
+   * @return boolean 
    */
   public function available()
   {
@@ -100,6 +97,7 @@ class Reader
   /**
    * Jumps <var>size</var> amount of bytes in the file stream.
    * 
+   * @param integer $size The amount of bytes.
    * @return void
    * @throws Reader_Exception if <var>size</var> attribute is negative.
    */
@@ -115,7 +113,8 @@ class Reader
   /**
    * Reads <var>length</var> amount of bytes from the file stream.
    * 
-   * @return string Returns read bytes as a string
+   * @param integer $length The amount of bytes.
+   * @return string
    * @throws Reader_Exception if <var>length</var> attribute is negative.
    */
   public function read($length)
@@ -130,7 +129,7 @@ class Reader
   /**
    * Returns the current point of operation.
    * 
-   * @return integer Returns the current cursor position.
+   * @return integer
    */
   public function getOffset()
   {
@@ -138,8 +137,11 @@ class Reader
   }
 
   /**
-   * Sets the point of operation, ie the cursor offset value.
+   * Sets the point of operation, ie the cursor offset value. The offset can
+   * also be set to a negative value when it is interpreted as an offset from
+   * the end of the file instead of the beginning.
    * 
+   * @param integer $offset The new point of operation.
    * @return void
    */
   public function setOffset($offset)
@@ -150,7 +152,7 @@ class Reader
   /**
    * Returns the file size in bytes.
    * 
-   * @return integer Returns the file size in bytes.
+   * @return integer
    */
   public function getSize()
   {
@@ -158,8 +160,8 @@ class Reader
   }
 
   /**
-   * Magic function to delegate the call to helper methods of Transform class
-   * to transform read data in another format.
+   * Magic function to delegate the call to helper methods of
+   * <var>Transform</var> class to transform read data in another format.
    *
    * The read data length is determined from the helper method name. For methods
    * where arbitrary data lengths are accepted a parameter can be used to

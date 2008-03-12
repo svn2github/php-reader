@@ -1,10 +1,6 @@
 <?php
 /**
- * $Id$
- *
- *
- * Copyright (C) 2006, 2007 The Bearpaw Project Work Group. All Rights Reserved.
- * Copyright (C) 2007, 2008 BEHR Software Systems. All Rights Reserved.
+ * PHP Reader Library
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -30,7 +26,12 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *
- * @package   php-reader
+ * @package    php-reader
+ * @subpackage ASF
+ * @copyright  Copyright (c) 2006, 2007 The Bearpaw Project Work Group
+ * @copyright  Copyright (c) 2007, 2008 BEHR Software Systems
+ * @license    http://www.opensource.org/licenses/bsd-license.php New BSD License
+ * @version    $Id$
  */
 
 /**#@+ @ignore */
@@ -38,76 +39,59 @@ require_once("Object.php");
 /**#@-*/
 
 /**
- * The ASF_File_Properties_Object object implementation. This object contains
- * various information about the ASF file.
+ * The <i>ASF_File_Properties_Object</i> object implementation. This object
+ * contains various information about the ASF file.
  *
- * @package   php-reader
- * @author    Sven Vollbehr <sven.vollbehr@behrss.eu>
- * @copyright 2006, 2007 The Bearpaw Project Work Group
- * @copyright 2007, 2008 BEHR Software Systems
- * @license   http://www.opensource.org/licenses/bsd-license.php New BSD License
- * @version   $Rev$
+ * @package    php-reader
+ * @subpackage ASF
+ * @author     Sven Vollbehr <sven.vollbehr@behrss.eu>
+ * @copyright  Copyright (c) 2006, 2007 The Bearpaw Project Work Group
+ * @copyright  Copyright (c) 2007, 2008 BEHR Software Systems
+ * @license    http://www.opensource.org/licenses/bsd-license.php New BSD License
+ * @version    $Rev$
  */
 final class ASF_FilePropertiesObject extends ASF_Object
 {
-  /**
-   * @var string The file id field.
-   */
+  /** @var string */
   private $_fileId;
 
-  /**
-   * @var string The file size field.
-   */
+  /** @var string */
   private $_fileSize;
 
-  /**
-   * @var string The creation date field.
-   */
+  /** @var string */
   private $_creationDate;
 
-  /**
-   * @var string The data packets count field.
-   */
+  /** @var string */
   private $_dataPacketsCount;
 
-  /**
-   * @var string The play duration field.
-   */
+  /** @var string */
   private $_playDuration;
 
-  /**
-   * @var string The send duration field.
-   */
+  /** @var string */
   private $_sendDuration;
 
-  /**
-   * @var string The preroll field.
-   */
+  /** @var string */
   private $_preroll;
 
-  /**
-   * @var string The flags field.
-   */
+  /** @var string */
   private $_flags;
 
-  /**
-   * @var string The minimum data packet size field.
-   */
+  /** @var string */
   private $_minimumDataPacketSize;
 
-  /**
-   * @var string The maximum data packet size field.
-   */
+  /** @var string */
   private $_maximumDataPacketSize;
 
-  /**
-   * @var string The maximum bitrate field.
-   */
+  /** @var string */
   private $_maximumBitrate;
   
   /**
-   * Initiates the object class with given parameters and reads and processes
-   * the object information from the ASF file. 
+   * Constructs the class with given parameters and reads object related data
+   * from the ASF file.
+   *
+   * @param Reader  $reader The reader object.
+   * @param string  $id     The object GUID identifier.
+   * @param integer $size   The object size.
    */
   public function __construct($reader, $id, $size)
   {
@@ -146,63 +130,63 @@ final class ASF_FilePropertiesObject extends ASF_Object
   /**
    * Returns the file id field.
    *
-   * @return integer Returns the file id field.
+   * @return integer
    */
   public function getFileId() { return $this->_fileId; }
 
   /**
    * Returns the file size field.
    *
-   * @return integer Returns the file size field.
+   * @return integer
    */
   public function getFileSize() { return $this->_fileSize; }
 
   /**
    * Returns the creation date field.
    *
-   * @return integer Returns the creation date field.
+   * @return integer
    */
   public function getCreationDate() { return $this->_creationDate; }
 
   /**
    * Returns the data packets field.
    *
-   * @return integer Returns the data packets field.
+   * @return integer
    */
   public function getDataPacketsCount() { return $this->_dataPacketsCount; }
 
   /**
    * Returns the play duration field.
    *
-   * @return integer Returns the play duration field.
+   * @return integer
    */
   public function getPlayDuration() { return $this->_playDuration; }
 
   /**
    * Returns the send duration field.
    *
-   * @return integer Returns the send duration field.
+   * @return integer
    */
   public function getSendDuration() { return $this->_sendDuration; }
 
   /**
    * Returns the preroll field.
    *
-   * @return integer Returns the preroll field.
+   * @return integer
    */
   public function getPreroll() { return $this->_preroll; }
 
   /**
    * Returns the flags field.
    *
-   * @return integer Returns the flags field.
+   * @return integer
    */
   public function getFlags() { return $this->_flags; }
   
   /**
    * Returns the minimum data packet size field.
    * 
-   * @return integer Returns the minimum data packet size field.
+   * @return integer
    */
   public function getMinimumDataPacketSize()
   {
@@ -212,7 +196,7 @@ final class ASF_FilePropertiesObject extends ASF_Object
   /**
    * Returns the maximum data packet size field.
    * 
-   * @return integer Returns the maximum data packet size field.
+   * @return integer
    */
   public function getMaximumDataPacketSize()
   {
@@ -222,10 +206,7 @@ final class ASF_FilePropertiesObject extends ASF_Object
   /**
    * Returns the maximum bitrate field.
    * 
-   * @return integer Returns the maximum bitrate field.
+   * @return integer
    */
-  public function getMaximumBitrate()
-  {
-    return $this->_maximumBitrate;
-  }
+  public function getMaximumBitrate() { return $this->_maximumBitrate; }
 }

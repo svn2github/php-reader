@@ -1,10 +1,6 @@
 <?php
 /**
- * $Id$
- *
- *
- * Copyright (C) 2006, 2007 The Bearpaw Project Work Group. All Rights Reserved.
- * Copyright (C) 2007, 2008 BEHR Software Systems. All Rights Reserved.
+ * PHP Reader Library
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -30,38 +26,50 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *
- * @package   php-reader
+ * @package    php-reader
+ * @subpackage ASF
+ * @copyright  Copyright (c) 2006, 2007 The Bearpaw Project Work Group
+ * @copyright  Copyright (c) 2007, 2008 BEHR Software Systems
+ * @license    http://www.opensource.org/licenses/bsd-license.php New BSD License
+ * @version    $Id$
  */
 
 /**
  * The base class for all ASF objects.
  *
- * @package   php-reader
- * @author    Sven Vollbehr <sven.vollbehr@behrss.eu>
- * @copyright 2006, 2007 The Bearpaw Project Work Group
- * @copyright 2007, 2008 BEHR Software Systems
- * @license   http://www.opensource.org/licenses/bsd-license.php New BSD License
- * @version   $Rev$
+ * @package    php-reader
+ * @subpackage ASF
+ * @author     Sven Vollbehr <sven.vollbehr@behrss.eu>
+ * @copyright  Copyright (c) 2006, 2007 The Bearpaw Project Work Group
+ * @copyright  Copyright (c) 2007, 2008 BEHR Software Systems
+ * @license    http://www.opensource.org/licenses/bsd-license.php New BSD License
+ * @version    $Rev$
  */
 class ASF_Object
 {
   /**
-   * @var Reader  The reader associated with this object.
+   * The reader object.
+   *
+   * @var Reader
    */
   protected $_reader;
   
-  /**
-   * @var string  Object's ID
-   */
+  /** @var string */
   private $_id;
   
   /**
-   * @var integer Object size in bytes.
+   * The object size in bytes.
+   *
+   * @var integer
    */
   protected $_size;
   
   /**
-   * Constructs the object with the given parameters.
+   * Constructs the class with given parameters.
+   *
+   * @param Reader  $reader The reader object.
+   * @param string  $id     The object GUID identifier.
+   * @param integer $size   The object size.
    */
   public function __construct($reader, $id, $size)
   {
@@ -73,7 +81,7 @@ class ASF_Object
   /**
    * Returns the GUID of the ASF object.
    * 
-   * @return string Returns the GUID of the ASF object.
+   * @return string
    */
-  public function getID() { return $this->_id; }
+  public function getIdentifier() { return $this->_id; }
 }

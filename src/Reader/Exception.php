@@ -1,9 +1,6 @@
 <?php
 /**
- * $Id$
- *
- *
- * Copyright (C) 2008 BEHR Software Systems. All Rights Reserved.
+ * PHP Reader Library
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -30,15 +27,18 @@
  * POSSIBILITY OF SUCH DAMAGE.
  *
  * @package   php-reader
+ * @copyright Copyright (c) 2008 BEHR Software Systems
+ * @license   http://www.opensource.org/licenses/bsd-license.php New BSD License
+ * @version   $Id$
  */
 
 /**
- * The ReaderException is thrown whenever an error occurs within the Reader
+ * The Reader_Exception is thrown whenever an error occurs within the Reader
  * class during a file operation.
  * 
  * @package   php-reader
  * @author    Sven Vollbehr <sven.vollbehr@behrss.eu>
- * @copyright 2008 BEHR Software Systems
+ * @copyright Copyright (c) 2008 BEHR Software Systems
  * @license   http://www.opensource.org/licenses/bsd-license.php New BSD License
  * @version   $Rev$
  */

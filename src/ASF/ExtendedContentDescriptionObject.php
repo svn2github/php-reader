@@ -1,10 +1,6 @@
 <?php
 /**
- * $Id$
- *
- *
- * Copyright (C) 2006, 2007 The Bearpaw Project Work Group. All Rights Reserved.
- * Copyright (C) 2007, 2008 BEHR Software Systems. All Rights Reserved.
+ * PHP Reader Library
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -30,7 +26,12 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *
- * @package   php-reader
+ * @package    php-reader
+ * @subpackage ASF
+ * @copyright  Copyright (c) 2006, 2007 The Bearpaw Project Work Group
+ * @copyright  Copyright (c) 2007, 2008 BEHR Software Systems
+ * @license    http://www.opensource.org/licenses/bsd-license.php New BSD License
+ * @version    $Id$
  */
 
 /**#@+ @ignore */
@@ -38,27 +39,30 @@ require_once("Object.php");
 /**#@-*/
 
 /**
- * The ASF_Extended_Content_Description_Object object implementation. This
- * object contains unlimited number of attribute fields giving more information
- * about the file.
+ * The <i>ASF_Extended_Content_Description_Object</i> object implementation.
+ * This object contains unlimited number of attribute fields giving more
+ * information about the file.
  * 
- * @package   php-reader
- * @author    Sven Vollbehr <sven.vollbehr@behrss.eu>
- * @copyright 2006, 2007 The Bearpaw Project Work Group
- * @copyright 2007, 2008 BEHR Software Systems
- * @license   http://www.opensource.org/licenses/bsd-license.php New BSD License
- * @version   $Rev$
+ * @package    php-reader
+ * @subpackage ASF
+ * @author     Sven Vollbehr <sven.vollbehr@behrss.eu>
+ * @copyright  Copyright (c) 2006, 2007 The Bearpaw Project Work Group
+ * @copyright  Copyright (c) 2007, 2008 BEHR Software Systems
+ * @license    http://www.opensource.org/licenses/bsd-license.php New BSD License
+ * @version    $Rev$
  */
 final class ASF_ExtendedContentDescriptionObject extends ASF_Object
 {
-  /**
-   * @var Array An associate array of descriptors and their values.
-   */
+  /** @var Array */
   private $_contentDescriptors = array();
 
   /**
-   * Initiates the object class with given parameters and reads and processes
-   * the object information from the ASF file.
+   * Constructs the class with given parameters and reads object related data
+   * from the ASF file.
+   *
+   * @param Reader  $reader The reader object.
+   * @param string  $id     The object GUID identifier.
+   * @param integer $size   The object size.
    */
   public function __construct($reader, $id, $size)
   {
@@ -96,7 +100,7 @@ final class ASF_ExtendedContentDescriptionObject extends ASF_Object
    * is no such descriptor defined.
    *
    * @param  string $name The name of the descriptor (ie the name of the field).
-   * @return string Returns the value of a descriptor.
+   * @return string|false
    */
   public function getDescriptor($name)
   {

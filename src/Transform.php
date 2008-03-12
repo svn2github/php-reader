@@ -1,11 +1,7 @@
 <?php
 /**
- * $Id$
- *
- *
- * Copyright (C) 2006, 2007 The Bearpaw Project Work Group. All Rights Reserved.
- * Copyright (C) 2007, 2008 BEHR Software Systems. All Rights Reserved.
- *
+ * PHP Reader Library
+ * 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
@@ -31,6 +27,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  *
  * @package   php-reader
+ * @copyright Copyright (c) 2006, 2007 The Bearpaw Project Work Group
+ * @copyright Copyright (c) 2007, 2008 BEHR Software Systems
+ * @license   http://www.opensource.org/licenses/bsd-license.php New BSD License
+ * @version   $Id$
  */
 
 /**
@@ -38,8 +38,8 @@
  * 
  * @package   php-reader
  * @author    Sven Vollbehr <sven.vollbehr@behrss.eu>
- * @copyright 2006, 2007 The Bearpaw Project Work Group
- * @copyright 2007, 2008 BEHR Software Systems
+ * @copyright Copyright (c) 2006, 2007 The Bearpaw Project Work Group
+ * @copyright Copyright (c) 2007, 2008 BEHR Software Systems
  * @license   http://www.opensource.org/licenses/bsd-license.php New BSD License
  * @version   $Rev$
  * @static
@@ -61,7 +61,9 @@ final class Transform
    * aritmetic operations it is implicitly converted into floating point which
    * is of 64-bits long.
    *
-   * @return integer Returns the resulting 64-bit integer.
+   * @param  string  $raw   The raw data string.
+   * @param  integer $order The byte order of the raw string.
+   * @return integer
    */
   public static function getInt64($raw, $order = self::MACHINE_ENDIAN_ORDER)
   {
@@ -76,7 +78,8 @@ final class Transform
    * aritmetic operations it is implicitly converted into floating point which
    * is of 64-bits long.
    *
-   * @return integer Returns the resulting 64-bit integer.
+   * @param string $raw The raw data string.
+   * @return integer
    */
   public static function getInt64LE($raw)
   {
@@ -89,7 +92,8 @@ final class Transform
    * aritmetic operations it is implicitly converted into floating point which
    * is of 64-bits long.
    *
-   * @return integer Returns the resulting 64-bit integer.
+   * @param string $raw The raw data string.
+   * @return integer
    */
   public static function getInt64BE($raw)
   {
@@ -99,7 +103,8 @@ final class Transform
   /**
    * Returns machine-endian ordered binary data as signed 32-bit integer.
    *
-   * @return integer Returns the resulting signed 32-bit integer.
+   * @param string $raw The raw data string.
+   * @return integer
    */
   public static function getInt32($raw)
   {
@@ -110,7 +115,9 @@ final class Transform
   /**
    * Returns machine-endian ordered binary data as unsigned 32-bit integer.
    *
-   * @return integer Returns the resulting unsigned 32-bit integer.
+   * @param string  $raw   The raw data string.
+   * @param integer $order The byte order of the raw string.
+   * @return integer
    */
   public static function getUInt32($raw, $order = self::MACHINE_ENDIAN_ORDER)
   {
@@ -122,7 +129,8 @@ final class Transform
   /**
    * Returns little-endian ordered binary data as unsigned 32-bit integer.
    *
-   * @return integer Returns the resulting unsigned 32-bit integer.
+   * @param string $raw The raw data string.
+   * @return integer
    */
   public static function getUInt32LE($raw)
   {
@@ -132,7 +140,8 @@ final class Transform
   /**
    * Returns big-endian ordered binary data as unsigned 32-bit integer.
    *
-   * @return integer Returns the resulting unsigned 32-bit integer.
+   * @param string $raw The raw data string.
+   * @return integer
    */
   public static function getUInt32BE($raw)
   {
@@ -142,7 +151,8 @@ final class Transform
   /**
    * Returns machine endian ordered binary data as signed 16-bit integer.
    *
-   * @return integer Returns the resulting signed 16-bit integer.
+   * @param string $raw The raw data string.
+   * @return integer
    */
   public static function getInt16($raw)
   {
@@ -153,7 +163,9 @@ final class Transform
   /**
    * Returns machine endian ordered binary data as unsigned 16-bit integer.
    * 
-   * @return integer Returns the resulting unsigned 16-bit integer.
+   * @param string  $raw   The raw data string.
+   * @param integer $order The byte order of the raw string.
+   * @return integer
    */
   public static function getUInt16($raw, $order)
   {
@@ -165,7 +177,8 @@ final class Transform
   /**
    * Returns little-endian ordered binary data as unsigned 16-bit integer.
    * 
-   * @return integer Returns the resulting unsigned 16-bit integer.
+   * @param string $raw The raw data string.
+   * @return integer
    */
   public static function getUInt16LE($raw)
   {
@@ -175,7 +188,8 @@ final class Transform
   /**
    * Returns big-endian ordered binary data as unsigned 16-bit integer.
    * 
-   * @return integer Returns the resulting unsigned 16-bit integer.
+   * @param string $raw The raw data string.
+   * @return integer
    */
   public static function getUInt16BE($raw)
   {
@@ -185,7 +199,8 @@ final class Transform
   /**
    * Returns binary data as 8-bit integer.
    * 
-   * @return integer Returns the resulting 8-bit integer.
+   * @param string $raw The raw data string.
+   * @return integer
    */
   public static function getInt8($raw)
   {
@@ -195,7 +210,8 @@ final class Transform
   /**
    * Returns binary data as string. Removes terminating zero.
    *
-   * @return string Returns the resulting string.
+   * @param string $raw The raw data string.
+   * @return string
    */
   public static function getString8($raw)
   {
@@ -206,9 +222,11 @@ final class Transform
   }
 
   /**
-   * Returns machine-endian ordered binary data as string.
+   * Returns machine-endian ordered binary data as multibyte string.
    *
-   * @return string Returns the resulting string.
+   * @param string  $raw   The raw data string.
+   * @param integer $order The byte order of the raw string.
+   * @return string
    */
   public static function getString16($raw, $order = self::MACHINE_ENDIAN_ORDER)
   {
@@ -220,9 +238,10 @@ final class Transform
   }
 
   /**
-   * Returns little-endian ordered binary data as string.
+   * Returns little-endian ordered binary data as multibyte string.
    *
-   * @return string Returns the resulting string.
+   * @param string $raw The raw data string.
+   * @return string
    */
   public static function getString16LE($raw)
   {
@@ -230,9 +249,10 @@ final class Transform
   }
 
   /**
-   * Returns big-endian ordered binary data as string.
+   * Returns big-endian ordered binary data as multibyte string.
    *
-   * @return string Returns the resulting string.
+   * @param string $raw The raw data string.
+   * @return string
    */
   public static function getString16BE($raw)
   {
@@ -242,7 +262,8 @@ final class Transform
   /**
    * Returns binary data as hexadecimal string having high nibble first.
    * 
-   * @return string Returns the resulting string.
+   * @param string $raw The raw data string.
+   * @return string
    */
   public static function getHHex($raw)
   {
@@ -253,7 +274,8 @@ final class Transform
   /**
    * Returns binary data as hexadecimal string having low nibble first.
    * 
-   * @return string Returns the resulting string.
+   * @param string $raw The raw data string.
+   * @return string
    */
   public static function getLHex($raw)
   {
@@ -265,7 +287,8 @@ final class Transform
    * Returns the little-endian ordered raw data as big-endian ordered
    * hexadecimal GUID string.
    * 
-   * @return string Returns the raw data in appropriate GUID format.
+   * @param string $raw The raw data string.
+   * @return string
    */
   public static function getGUID($raw)
   {

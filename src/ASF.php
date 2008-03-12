@@ -1,11 +1,7 @@
 <?php
 /**
- * $Id$
- *
- *
- * Copyright (C) 2006, 2007 The Bearpaw Project Work Group. All Rights Reserved.
- * Copyright (C) 2007, 2008 BEHR Software Systems. All Rights Reserved.
- *
+ * PHP Reader Library
+ * 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
@@ -30,7 +26,12 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *
- * @package   php-reader
+ * @package    php-reader
+ * @subpackage ASF
+ * @copyright  Copyright (c) 2006, 2007 The Bearpaw Project Work Group
+ * @copyright  Copyright (c) 2007, 2008 BEHR Software Systems
+ * @license    http://www.opensource.org/licenses/bsd-license.php New BSD License
+ * @version    $Id$
  */
 
 /**#@+ @ignore */
@@ -57,20 +58,23 @@ require_once("ASF/FilePropertiesObject.php");
  * or other specific data. Each supported object has been implemented as their
  * own classes to ease the correct use of the information.
  * 
- * @package   php-reader
- * @author    Sven Vollbehr <sven.vollbehr@behrss.eu>
- * @copyright 2006, 2007 The Bearpaw Project Work Group
- * @copyright 2007, 2008 BEHR Software Systems
- * @license   http://www.opensource.org/licenses/bsd-license.php New BSD License
- * @version   $Rev$
+ * @package    php-reader
+ * @subpackage ASF
+ * @author     Sven Vollbehr <sven.vollbehr@behrss.eu>
+ * @copyright  Copyright (c) 2006, 2007 The Bearpaw Project Work Group
+ * @copyright  Copyright (c) 2007, 2008 BEHR Software Systems
+ * @license    http://www.opensource.org/licenses/bsd-license.php New BSD License
+ * @version    $Rev$
  */
 class ASF
 {
-  /** @var Reader The Reader object */
+  /** @var Reader */
   private $_reader;
   
   /**
-   * The default constructor. Initiates the reader for the given file.
+   * Constructs the ASF class with given file.
+   *
+   * @param string $filename The path to the file.
    */
   public function __construct($filename)
   {
@@ -78,9 +82,11 @@ class ASF
   }
   
   /**
-   * Checks whether there are objects left in the stream.
+   * Checks whether there are objects left in the stream. Returns
+   * <var>true</var> if there are objects left in the stream, <var>false</var>
+   * otherwise.
    * 
-   * @return  Boolean value corresponding whether there is more to read.
+   * @return boolean
    */
   public function hasObjects()
   {
@@ -88,12 +94,12 @@ class ASF
   }
   
   /**
-   * Returns the next ASF object or false if end of stream has been reached.
+   * Returns the next ASF object or <var>false</var> if end of stream has been
+   * reached. Returned objects are of the type ASF_Object or of any of its child
+   * types.
    * 
    * @todo   Only the ASF_Header_Object top level object is regognized. 
-   * @return ASF_Object Returns the appropriate object. Returned objects are of
-   *         the type ASF_Object or of any of the other object types that
-   *         inherit from that base class.
+   * @return ASF_Object
    */
   public function nextObject()
   {

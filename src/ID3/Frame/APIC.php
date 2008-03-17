@@ -67,27 +67,14 @@ final class ID3_Frame_APIC extends ID3_Frame
    * @var Array
    */
   public static $types = array
-    (0x00 => "Other",
-     0x01 => "32x32 pixels file icon (PNG only)",
-     0x02 => "Other file icon",
-     0x03 => "Cover (front)",
-     0x04 => "Cover (back)",
-     0x05 => "Leaflet page",
-     0x06 => "Media (e.g. label side of CD)",
-     0x07 => "Lead artist/lead performer/soloist",
-     0x08 => "Artist/performer",
-     0x09 => "Conductor",
-     0x0A => "Band/Orchestra",
-     0x0B => "Composer",
-     0x0C => "Lyricist/text writer",
-     0x0D => "Recording Location",
-     0x0E => "During recording",
-     0x0F => "During performance",
-     0x10 => "Movie/video screen capture",
-     0x11 => "A bright coloured fish",
-     0x12 => "Illustration",
-     0x13 => "Band/artist logotype",
-     0x14 => "Publisher/Studio logotype");
+    ("Other", "32x32 pixels file icon (PNG only)", "Other file icon",
+     "Cover (front)", "Cover (back)", "Leaflet page",
+     "Media (e.g. label side of CD)", "Lead artist/lead performer/soloist",
+     "Artist/performer", "Conductor", "Band/Orchestra", "Composer",
+     "Lyricist/text writer", "Recording Location", "During recording",
+     "During performance", "Movie/video screen capture",
+     "A bright coloured fish", "Illustration", "Band/artist logotype",
+     "Publisher/Studio logotype");
   
   /** @var integer */
   private $_encoding;
@@ -113,22 +100,27 @@ final class ID3_Frame_APIC extends ID3_Frame
     $this->_encoding = substr($this->_data, 0, 1);
     $this->_mimeType = substr
       ($this->_data, 1, ($pos = strpos($this->_data, "\0", 1)) - 1);
-    $this->_pictureType = substr($this->_data, $pos++, 1);
+    $this->_pictureType = ord($this->_data{$pos++});
+    $this->_data = substr($this->_data, $pos);
+    
     switch ($this->_encoding) {
     case self::UTF16:
-      list ($this->_description, $this->_data) =
-        preg_split("/\\x00\\x00/", substr($this->_data, $pos), 2);
-      $this->_description = Transform::getString16LE($this->_description);
-      break;
+      $bom = substr($this->_data, 0, 2);
+      $this->_data = substr($this->_data, 2);
+      if ($bom == 0xfffe) {
+        list ($this->_description, $this->_data) =
+          preg_split("/\\x00\\x00/", $this->_data, 2);
+        $this->_description = Transform::getString16LE($this->_description);
+        break;
+      }
     case self::UTF16BE:
       list ($this->_description, $this->_data) =
-        preg_split("/\\x00\\x00/", substr($this->_data, $pos), 2);
+        preg_split("/\\x00\\x00/", $this->_data, 2);
       $this->_description = Transform::getString16BE($this->_description);
       break;
     default:
       list ($this->_description, $this->_data) =
-        preg_split("/\\x00/", substr($this->_data, $pos), 2);
-      $this->_description = Transform::getString8($this->_description);
+        preg_split("/\\x00/", $this->_data, 2);
     }
   }
   

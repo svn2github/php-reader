@@ -78,25 +78,30 @@ final class ID3_Frame_COMM extends ID3_Frame
   {
     parent::__construct($reader);
 
-    $this->_encoding = substr($this->_data, 0, 1);
+    $this->_encoding = ord($this->_data{0});
     $this->_language = substr($this->_data, 1, 3);
+    $this->_data = substr($this->_data, 4);
     
     switch ($this->_encoding) {
     case self::UTF16:
-      list ($this->_description, $this->_text) =
-        preg_split("/\\x00\\x00/", substr($this->_data, 4), 2);
-      $this->_description = Transform::getString16LE($this->_description);
-      $this->_text = Transform::getString16LE($this->_text);
-      break;
+      $bom = substr($this->_data, 0, 2);
+      $this->_data = substr($this->_data, 2);
+      if ($bom == 0xfffe) {
+        list ($this->_description, $this->_text) =
+          preg_split("/\\x00\\x00/", $this->_data, 2);
+        $this->_description = Transform::getString16LE($this->_description);
+        $this->_text = Transform::getString16LE($this->_text);
+        break;
+      }
     case self::UTF16BE:
       list ($this->_description, $this->_text) =
-        preg_split("/\\x00\\x00/", substr($this->_data, 4), 2);
+        preg_split("/\\x00\\x00/", $this->_data, 2);
       $this->_description = Transform::getString16BE($this->_description);
       $this->_text = Transform::getString16BE($this->_text);
       break;
     default:
       list ($this->_description, $this->_text) =
-        preg_split("/\\x00/", substr($this->_data, 4), 2);
+        preg_split("/\\x00/", $this->_data, 2);
       $this->_description = Transform::getString8($this->_description);
       $this->_text = Transform::getString8($this->_text);
     }

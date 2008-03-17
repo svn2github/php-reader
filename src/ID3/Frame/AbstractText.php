@@ -66,19 +66,23 @@ abstract class ID3_Frame_AbstractText extends ID3_Frame
   {
     parent::__construct($reader);
 
-    $this->_encoding = substr($this->_data, 0, 1);
+    $this->_encoding = ord($this->_data{0});
+    $this->_data = substr($this->_data, 1);
     switch ($this->_encoding) {
     case self::UTF16:
-      $this->_data = Transform::getString16LE(substr($this->_data, 1));
-      $this->_text = preg_split("/\\x00\\x00/", $this->_data);
-      break;
+      $bom = substr($this->_data, 0, 2);
+      $this->_data = substr($this->_data, 2);
+      if ($bom == 0xfffe) {
+        $this->_text =
+          preg_split("/\\x00\\x00/", Transform::getString16LE($this->_data));
+        break;
+      }
     case self::UTF16BE:
-      $this->_data = Transform::getString16BE(substr($this->_data, 1));
-      $this->_text = preg_split("/\\x00\\x00/", $this->_data);
+      $this->_text =
+        preg_split("/\\x00\\x00/", Transform::getString16BE($this->_data));
       break;
     default:
-      $this->_data = Transform::getString8(substr($this->_data, 1));
-      $this->_text = preg_split("/\\x00/", $this->_data);
+      $this->_text = preg_split("/\\x00/", Transform::getString8($this->_data));
     }
   }
   

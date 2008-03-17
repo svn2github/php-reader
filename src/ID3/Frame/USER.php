@@ -74,18 +74,23 @@ final class ID3_Frame_USER extends ID3_Frame
   {
     parent::__construct($reader);
 
-    $this->_encoding = substr($this->_data, 0, 1);
+    $this->_encoding = ord($this->_data{0});
     $this->_language = substr($this->_data, 1, 3);
-    
+    $this->_data = substr($this->_data, 4);
+
     switch ($this->_encoding) {
     case self::UTF16:
-      $this->_text = Transform::getString16LE(substr($this->_data, 4));
-      break;
+      $bom = substr($this->_data, 0, 2);
+      $this->_data = substr($this->_data, 2);
+      if ($bom == 0xfffe) {
+        $this->_text = Transform::getString16LE($this->_data);
+        break;
+      }
     case self::UTF16BE:
-      $this->_text = Transform::getString16BE(substr($this->_data, 4));
+      $this->_text = Transform::getString16BE($this->_data);
       break;
     default:
-      $this->_text = Transform::getString8(substr($this->_data, 4));
+      $this->_text = Transform::getString8($this->_data);
     }
   }
 

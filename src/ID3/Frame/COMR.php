@@ -63,15 +63,10 @@ final class ID3_Frame_COMR extends ID3_Frame
    * @var Array
    */
   public static $types = array
-    (0x00 => "Other",
-     0x01 => "Standard CD album with other songs",
-     0x02 => "Compressed audio on CD",
-     0x03 => "File over the Internet",
-     0x04 => "Stream over the Internet",
-     0x05 => "As note sheets",
-     0x06 => "As note sheets in a book with other sheets",
-     0x07 => "Music on other media",
-     0x08 => "Non-musical merchandise");
+    ("Other", "Standard CD album with other songs", "Compressed audio on CD",
+     "File over the Internet", "Stream over the Internet", "As note sheets",
+     "As note sheets in a book with other sheets", "Music on other media",
+     "Non-musical merchandise");
 
   /** @var integer */
   private $_encoding;
@@ -109,7 +104,7 @@ final class ID3_Frame_COMR extends ID3_Frame
   {
     parent::__construct($reader);
 
-    $this->_encoding = substr($this->_data, 0, 1);
+    $this->_encoding = ord($this->_data{0});
     list($pricing, $this->_data) =
       preg_split("/\\x00/", substr($this->_data, 1), 2);
     $this->_currency = substr($pricing, 0, 3);
@@ -117,24 +112,29 @@ final class ID3_Frame_COMR extends ID3_Frame
     $this->_date = substr($this->_data, 0, 8);
     list($this->_contact, $this->_data) =
       preg_split("/\\x00/", substr($this->_data, 8), 2);
-    $this->_delivery = substr($this->_data, 0, 1);
+    $this->_delivery = ord($this->_data{0});
+    $this->_data = substr($this->_data, 1);
     
     switch ($this->_encoding) {
     case self::UTF16:
-      list ($this->_seller, $this->_description, $this->_data) =
-        preg_split("/\\x00\\x00/", substr($this->_data, 1), 3);
-      $this->_seller = Transform::getString16LE($this->_seller);
-      $this->_description = Transform::getString16LE($this->_description);
-      break;
+      $bom = substr($this->_data, 0, 2);
+      $this->_data = substr($this->_data, 2);
+      if ($bom == 0xfffe) {
+        list ($this->_seller, $this->_description, $this->_data) =
+          preg_split("/\\x00\\x00/", $this->_data, 3);
+        $this->_seller = Transform::getString16LE($this->_seller);
+        $this->_description = Transform::getString16LE($this->_description);
+        break;
+      }
     case self::UTF16BE:
       list ($this->_seller, $this->_description, $this->_data) =
-        preg_split("/\\x00\\x00/", substr($this->_data, 1), 3);
+        preg_split("/\\x00\\x00/", $this->_data, 3);
       $this->_seller = Transform::getString16BE($this->_seller);
       $this->_description = Transform::getString16BE($this->_description);
       break;
     default:
       list ($this->_seller, $this->_description, $this->_data) =
-        preg_split("/\\x00/", substr($this->_data, 1), 3);
+        preg_split("/\\x00/", $this->_data, 3);
       $this->_seller = Transform::getString8($this->_seller);
       $this->_description = Transform::getString8($this->_description);
     }

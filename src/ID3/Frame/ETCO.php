@@ -68,46 +68,19 @@ final class ID3_Frame_ETCO extends ID3_Frame
    * @var Array
    */
   public static $types = array
-    (0x00 => "Padding",
-     0x01 => "End of initial silence",
-     0x02 => "Intro start",
-     0x03 => "Main part start",
-     0x04 => "Outro start",
-     0x05 => "Outro end",
-     0x06 => "Verse start",
-     0x07 => "Refrain start",
-     0x08 => "Interlude start",
-     0x09 => "Theme start",
-     0x0a => "Variation start",
-     0x0b => "Key change",
-     0x0c => "Time change",
-     0x0d => "Momentary unwanted noise",
-     0x0e => "Sustained noise",
-     0x0f => "Sustained noise end",
-     0x10 => "Intro end",
-     0x11 => "Main part end",
-     0x12 => "Verse end",
-     0x13 => "Refrain end",
-     0x14 => "Theme end",
-     0x15 => "Profanity",
-     0x16 => "Profanity end",
-     0xe0 => "User event",
-     0xe1 => "User event",
-     0xe2 => "User event",
-     0xe3 => "User event",
-     0xe4 => "User event",
-     0xe5 => "User event",
-     0xe6 => "User event",
-     0xe7 => "User event",
-     0xea => "User event",
-     0xeb => "User event",
-     0xec => "User event",
-     0xed => "User event",
-     0xee => "User event",
-     0xef => "User event",
-     0xfd => "Audio end (start of silence)",
-     0xfe => "Audio file ends",
-     0xff => "One more byte of events follows");
+    ("Padding", "End of initial silence", "Intro start", "Main part start",
+     "Outro start", "Outro end", "Verse start","Refrain start",
+     "Interlude start", "Theme start", "Variation start", "Key change",
+     "Time change", "Momentary unwanted noise", "Sustained noise",
+     "Sustained noise end", "Intro end", "Main part end", "Verse end",
+     "Refrain end", "Theme end", "Profanity", "Profanity end",
+    
+     0xe0 => "User event", "User event", "User event", "User event",
+     "User event", "User event", "User event", "User event", "User event",
+     "User event", "User event", "User event", "User event", "User event",
+    
+     0xfd => "Audio end (start of silence)", "Audio file ends",
+     "One more byte of events follows");
   
   /** @var integer */
   private $_format;
@@ -124,11 +97,11 @@ final class ID3_Frame_ETCO extends ID3_Frame
   {
     parent::__construct($reader);
 
-    $this->_format = substr($this->_data, 0, 1);
+    $this->_format = ord($this->_data{0});
     
     for ($i = 1; $i < $this->getSize(); $i += 5) {
       $this->_events[Transform::getInt32BE(substr($this->_data, $i + 1, 4))] =
-        $data = substr($this->_data, $i, 1);
+        $data = $this->_data{$i};
       if ($data == 0xff)
         break;
     }

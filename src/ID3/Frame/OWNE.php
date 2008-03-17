@@ -79,21 +79,26 @@ final class ID3_Frame_OWNE extends ID3_Frame
   {
     parent::__construct($reader);
 
-    $this->_encoding = substr($this->_data, 0, 1);
-    list($tmp1, $tmp2) = preg_split("/\\x00/", substr($this->_data, 1), 2);
-    $this->_currency = substr($tmp1, 0, 3);
-    $this->_price = substr($tmp1, 3);
-    $this->_date = substr($tmp2, 0, 8);
+    $this->_encoding = ord($this->_data{0});
+    list($tmp, $this->_data) = preg_split("/\\x00/", substr($this->_data, 1), 2);
+    $this->_currency = substr($tmp, 0, 3);
+    $this->_price = substr($tmp, 3);
+    $this->_date = substr($this->_data, 0, 8);
+    $this->_data = substr($this->_data, 8);
     
     switch ($this->_encoding) {
     case self::UTF16:
-      $this->_seller = Transform::getString16LE(substr($tmp2, 8));
-      break;
+      $bom = substr($this->_data, 0, 2);
+      $this->_data = substr($this->_data, 2);
+      if ($bom == 0xfffe) {
+        $this->_seller = Transform::getString16LE($this->_data);
+        break;
+      }
     case self::UTF16BE:
-      $this->_seller = Transform::getString16BE(substr($tmp2, 8));
+      $this->_seller = Transform::getString16BE($this->_data);
       break;
     default:
-      $this->_seller = Transform::getString8(substr($tmp2, 8));
+      $this->_seller = Transform::getString8($this->_data);
     }
   }
 

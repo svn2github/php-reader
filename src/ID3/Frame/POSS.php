@@ -69,7 +69,7 @@ final class ID3_Frame_POSS extends ID3_Frame
   {
     parent::__construct($reader);
 
-    $this->_format = substr($this->_data, 0, 1);
+    $this->_format = ord($this->_data{0});
     $this->_position = Transform::getInt32BE(substr($this->_data, 1, 4));
   }
 

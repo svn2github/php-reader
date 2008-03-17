@@ -70,23 +70,29 @@ final class ID3_Frame_WXXX extends ID3_Frame_AbstractLink
   {
     parent::__construct($reader);
 
-    $this->_encoding = substr($this->_data, 0, 1);
+    $this->_encoding = ord($this->_data{0});
+    $this->_data = substr($this->_data, 1);
+    
     switch ($this->_encoding) {
     case self::UTF16:
-      $chunks = preg_split("/\\x00\\x00/", substr($this->_data, 1));
-      $this->_description = Transform::getString16LE($chunks[0]);
-      $this->_link = $chunks[1];
-      break;
+      $bom = substr($this->_data, 0, 2);
+      $this->_data = substr($this->_data, 2);
+      if ($bom == 0xfffe) {
+        list($this->_description, $this->_link) = 
+          preg_split("/\\x00\\x00/", $this->_data, 2);
+        $this->_description = Transform::getString16LE($this->_description);
+        break;
+      }
     case self::UTF16BE:
-      $chunks = preg_split("/\\x00\\x00/", substr($this->_data, 1));
-      $this->_description = Transform::getString16BE($chunks[0]);
-      $this->_link = $chunks[1];
+        list($this->_description, $this->_link) = 
+          preg_split("/\\x00\\x00/", $this->_data, 2);
+        $this->_description = Transform::getString16BE($this->_description);
       break;
     case self::UTF8:
     case self::ISO88591:
     default:
       list($this->_description, $this->_link) =
-        preg_split("/\\x00/", substr($this->_data, 1));
+        preg_split("/\\x00/", $this->_data);
       break;
     }
   }

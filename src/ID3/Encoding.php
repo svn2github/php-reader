@@ -47,16 +47,16 @@
 interface ID3_Encoding
 {
   /** The ISO-8859-1 encoding. */
-  const ISO88591 = 0x00;
+  const ISO88591 = 0;
   
   /** The UTF-16 Unicode encoding with BOM. */
-  const UTF16 = 0x01;
+  const UTF16    = 1;
   
   /** The UTF-16BE Unicode encoding without BOM. */
-  const UTF16BE = 0x02;
+  const UTF16BE  = 2;
   
   /** The UTF-8 Unicode encoding. */
-  const UTF8 = 0x03;
+  const UTF8     = 3;
   
   /**
    * Returns the text encoding.

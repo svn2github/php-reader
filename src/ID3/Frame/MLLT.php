@@ -35,9 +35,6 @@
 
 /**#@+ @ignore */
 require_once("ID3/Frame.php");
-require_once("ID3/Encoding.php");
-require_once("ID3/Language.php");
-require_once("ID3/Timing.php");
 /**#@-*/
 
 /**

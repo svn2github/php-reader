@@ -50,10 +50,10 @@
 interface ID3_Timing
 {
   /** The timestamp is an absolute time, using MPEG frames as unit. */
-  const MPEG_FRAMES = 0x01;
+  const MPEG_FRAMES   = 1;
   
   /** The timestamp is an absolute time, using milliseconds as unit. */
-  const MILLISECONDS = 0x02;
+  const MILLISECONDS  = 2;
   
   /**
    * Returns the timing format.

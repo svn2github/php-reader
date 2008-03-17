@@ -65,15 +65,8 @@ final class ID3_Frame_USER extends ID3_Frame
    * @var Array
    */
   public static $types = array
-    (0x00 => "Other",
-     0x01 => "Lyrics",
-     0x02 => "Text transcription",
-     0x03 => "Movement/Part name",
-     0x04 => "Eevents",
-     0x05 => "Chord",
-     0x06 => "Trivia",
-     0x07 => "URLs to webpages",
-     0x08 => "URLs to images");
+    ("Other", "Lyrics", "Text transcription", "Movement/Part name", "Eevents",
+     "Chord", "Trivia", "URLs to webpages", "URLs to images");
   
   /** @var integer */
   private $_encoding;
@@ -102,25 +95,30 @@ final class ID3_Frame_USER extends ID3_Frame
   {
     parent::__construct($reader);
 
-    $this->_encoding = substr($this->_data, 0, 1);
+    $this->_encoding = ord($this->_data{0});
     $this->_language = substr($this->_data, 1, 3);
-    $this->_format = substr($this->_data, 3, 1);
-    $this->_type = substr($this->_data, 4, 1);
+    $this->_format = ord($this->_data{3});
+    $this->_type = ord($this->_data{4});
+    $this->_data = substr($this->_data, 5);
     
     switch ($this->_encoding) {
     case self::UTF16:
-      list($this->_description, $this->_data) =
-        preg_split("/\\x00\\x00/", substr($this->_data, 5), 2);
-      $this->_description = Transform::getString16LE($this->_description);
-      break;
+      $bom = substr($this->_data, 0, 2);
+      $this->_data = substr($this->_data, 2);
+      if ($bom == 0xfffe) {
+        list($this->_description, $this->_data) =
+          preg_split("/\\x00\\x00/", $this->_data, 2);
+        $this->_description = Transform::getString16LE($this->_description);
+        break;
+      }
     case self::UTF16BE:
       list($this->_description, $this->_data) =
-        preg_split("/\\x00\\x00/", substr($this->_data, 5), 2);
+        preg_split("/\\x00\\x00/", $this->_data, 2);
       $this->_description = Transform::getString16BE($this->_description);
       break;
     default:
       list($this->_description, $this->_data) =
-        preg_split("/\\x00/", substr($this->_data, 5), 2);
+        preg_split("/\\x00/", $this->_data, 2);
       $this->_description = Transform::getString8($this->_description);
     }
     

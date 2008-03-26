@@ -2,6 +2,8 @@
 /**
  * PHP Reader Library
  *
+ * Copyright (c) 2008 The PHP Reader Project Workgroup. All rights reserved.
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
@@ -10,7 +12,7 @@
  *  - Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- *  - Neither the name of the BEHR Software Systems nor the names of its
+ *  - Neither the name of the project workgroup nor the names of its
  *    contributors may be used to endorse or promote products derived from this
  *    software without specific prior written permission.
  *
@@ -28,8 +30,8 @@
  *
  * @package    php-reader
  * @subpackage ID3
- * @copyright  Copyright (c) 2008 BEHR Software Systems
- * @license    http://www.opensource.org/licenses/bsd-license.php New BSD License
+ * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
+ * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Id$
  */
 
@@ -48,9 +50,9 @@ require_once("ID3/Language.php");
  *
  * @package    php-reader
  * @subpackage ID3
- * @author     Sven Vollbehr <sven.vollbehr@behrss.eu>
- * @copyright  Copyright (c) 2008 BEHR Software Systems
- * @license    http://www.opensource.org/licenses/bsd-license.php New BSD License
+ * @author     Sven Vollbehr <svollbehr@gmail.com>
+ * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
+ * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Rev$
  */
 final class ID3_Frame_USER extends ID3_Frame
@@ -80,17 +82,13 @@ final class ID3_Frame_USER extends ID3_Frame
 
     switch ($this->_encoding) {
     case self::UTF16:
-      $bom = substr($this->_data, 0, 2);
-      $this->_data = substr($this->_data, 2);
-      if ($bom == 0xfffe) {
-        $this->_text = Transform::getString16LE($this->_data);
-        break;
-      }
+      $this->_text = Transform::fromString16($this->_data);
+      break;
     case self::UTF16BE:
-      $this->_text = Transform::getString16BE($this->_data);
+      $this->_text = Transform::fromString16BE($this->_data);
       break;
     default:
-      $this->_text = Transform::getString8($this->_data);
+      $this->_text = Transform::fromString8($this->_data);
     }
   }
 

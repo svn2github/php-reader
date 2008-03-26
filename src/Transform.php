@@ -1,6 +1,9 @@
 <?php
 /**
  * PHP Reader Library
+ *
+ * Copyright (c) 2006-2008 The PHP Reader Project Workgroup. All rights
+ * reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -10,7 +13,7 @@
  *  - Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- *  - Neither the name of the BEHR Software Systems nor the names of its
+ *  - Neither the name of the project workgroup nor the names of its
  *    contributors may be used to endorse or promote products derived from this
  *    software without specific prior written permission.
  *
@@ -27,9 +30,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  *
  * @package   php-reader
- * @copyright Copyright (c) 2006, 2007 The Bearpaw Project Work Group
- * @copyright Copyright (c) 2007, 2008 BEHR Software Systems
- * @license   http://www.opensource.org/licenses/bsd-license.php New BSD License
+ * @copyright Copyright (c) 2006-2008 The PHP Reader Project Workgroup
+ * @license   http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version   $Id$
  */
 
@@ -37,10 +39,9 @@
  * An utility class to perform simple byte transformations on data.
  * 
  * @package   php-reader
- * @author    Sven Vollbehr <sven.vollbehr@behrss.eu>
- * @copyright Copyright (c) 2006, 2007 The Bearpaw Project Work Group
- * @copyright Copyright (c) 2007, 2008 BEHR Software Systems
- * @license   http://www.opensource.org/licenses/bsd-license.php New BSD License
+ * @author    Sven Vollbehr <svollbehr@gmail.com>
+ * @copyright Copyright (c) 2006-2008 The PHP Reader Project Workgroup
+ * @license   http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version   $Rev$
  * @static
  */
@@ -56,243 +57,409 @@ final class Transform
   private function __construct() {}
   
   /**
-   * Returns machine-endian ordered binary data as 64-bit float. PHP does not
-   * support 64-bit integers as the long integer is of 32-bits but using
-   * aritmetic operations it is implicitly converted into floating point which
-   * is of 64-bits long.
+   * Returns 64-bit float as little-endian ordered binary data string.
    *
-   * @param  string  $raw   The raw data string.
-   * @param  integer $order The byte order of the raw string.
-   * @return integer
+   * @param  integer $value The input value.
+   * @return string
    */
-  public static function getInt64($raw, $order = self::MACHINE_ENDIAN_ORDER)
+  public static function toInt64LE($value)
   {
-    list(, $lo, $hi) = unpack(($order == 2 ? "L" :
-                               ($order == 1 ? "V" : "N")) . "*", $raw);
-    return $hi * 0xffffffff + $lo;
+    return pack("V*", $value & 0xffffffff, $value / (0xffffffff+1));
   }
-
+  
   /**
    * Returns little-endian ordered binary data as 64-bit float. PHP does not
    * support 64-bit integers as the long integer is of 32-bits but using
    * aritmetic operations it is implicitly converted into floating point which
    * is of 64-bits long.
    *
-   * @param string $raw The raw data string.
+   * @param string $value The binary data string.
    * @return integer
    */
-  public static function getInt64LE($raw)
+  public static function fromInt64LE($value)
   {
-    return self::getInt64($raw, self::LITTLE_ENDIAN_ORDER);
+    list(, $lolo, $lohi, $hilo, $hihi) = unpack("v*", $value);
+    return ($hihi * (0xffff+1) + $hilo) * (0xffffffff+1) +
+      ($lohi * (0xffff+1) + $lolo);
   }
-
+  
+  /**
+   * Returns 64-bit float as big-endian ordered binary data string.
+   *
+   * @param integer $value The input value.
+   * @return string
+   */
+  public static function toInt64BE($value)
+  {
+    return pack("N*", $value / (0xffffffff+1), $value & 0xffffffff);
+  }
+  
   /**
    * Returns big-endian ordered binary data as 64-bit float. PHP does not
    * support 64-bit integers as the long integer is of 32-bits but using
    * aritmetic operations it is implicitly converted into floating point which
    * is of 64-bits long.
    *
-   * @param string $raw The raw data string.
+   * @param string $value The binary data string.
    * @return integer
    */
-  public static function getInt64BE($raw)
+  public static function fromInt64BE($value)
   {
-    return self::getInt64($raw, self::BIG_ENDIAN_ORDER);
+    list(, $hihi, $hilo, $lohi, $lolo) = unpack("n*", $value);
+    return ($hihi * (0xffff+1) + $hilo) * (0xffffffff+1) +
+      ($lohi * (0xffff+1) + $lolo);
   }
-
+  
+  /**
+   * Returns signed 32-bit integer as machine-endian ordered binary data.
+   *
+   * @param integer $value The input value.
+   * @return string
+   */
+  public static function toInt32($value)
+  {
+    return pack("l*", $value);
+  }
+  
   /**
    * Returns machine-endian ordered binary data as signed 32-bit integer.
-   *
-   * @param string $raw The raw data string.
+   * 
+   * @param string $value The binary data string.
    * @return integer
    */
-  public static function getInt32($raw)
+  public static function fromInt32($value)
   {
-    list(, $int) = unpack("l*", $raw);
+    list(, $int) = unpack("l*", $value);
     return $int;
   }
-
+  
   /**
-   * Returns machine-endian ordered binary data as unsigned 32-bit integer.
+   * Returns unsigned 32-bit integer as little-endian ordered binary data.
    *
-   * @param string  $raw   The raw data string.
-   * @param integer $order The byte order of the raw string.
-   * @return integer
+   * @param integer $value The input value.
+   * @return string
    */
-  public static function getUInt32($raw, $order = self::MACHINE_ENDIAN_ORDER)
+  public static function toUInt32LE($value)
   {
-    list(, $int) = unpack(($order == 2 ? "N" :
-                           ($order == 1 ? "V" : "L")) . "*", $raw);
-    return $int;
+    return pack("V*", $value);
   }
-
+  
   /**
    * Returns little-endian ordered binary data as unsigned 32-bit integer.
    *
-   * @param string $raw The raw data string.
+   * @param string $value The binary data string.
    * @return integer
    */
-  public static function getUInt32LE($raw)
+  public static function fromUInt32LE($value)
   {
-    return self::getUInt32($raw, self::LITTLE_ENDIAN_ORDER);
+    list(, $lo, $hi) = unpack("v*", $value);
+    return $hi * (0xffff+1) + $lo; // eq $hi << 16 | $lo
   }
-
+  
+  /**
+   * Returns unsigned 32-bit integer as big-endian ordered binary data.
+   *
+   * @param integer $value The input value.
+   * @return string
+   */
+  public static function toUInt32BE($value)
+  {
+    return pack("N*", $value);
+  }
+  
   /**
    * Returns big-endian ordered binary data as unsigned 32-bit integer.
    *
-   * @param string $raw The raw data string.
+   * @param string $value The binary data string.
    * @return integer
    */
-  public static function getUInt32BE($raw)
+  public static function fromUInt32BE($value)
   {
-    return self::getUInt32($raw, self::BIG_ENDIAN_ORDER);
+    list(, $hi, $lo) = unpack("n*", $value);
+    return $hi * (0xffff+1) + $lo; // eq $hi << 16 | $lo
   }
-
+  
+  /**
+   * Returns signed 16-bit integer as machine endian ordered binary data.
+   *
+   * @param integer $value The input value.
+   * @return string
+   */
+  public static function toInt16($value)
+  {
+    return pack("s*", $value);
+  }
+  
   /**
    * Returns machine endian ordered binary data as signed 16-bit integer.
    *
-   * @param string $raw The raw data string.
+   * @param string $value The binary data string.
    * @return integer
    */
-  public static function getInt16($raw)
+  public static function fromInt16($value)
   {
-    list(, $int) = unpack("s*", $raw);
+    list(, $int) = unpack("s*", $value);
     return $int;
   }
-
+  
   /**
    * Returns machine endian ordered binary data as unsigned 16-bit integer.
    * 
-   * @param string  $raw   The raw data string.
-   * @param integer $order The byte order of the raw string.
+   * @param string  $value The binary data string.
+   * @param integer $order The byte order of the binary data string.
    * @return integer
    */
-  public static function getUInt16($raw, $order)
+  private static function fromUInt16($value, $order = self::MACHINE_ENDIAN_ORDER)
   {
     list(, $int) = unpack(($order == 2 ? "n" :
-                           ($order == 1 ? "v" : "S")) . "*", $raw);
+                           ($order == 1 ? "v" : "S")) . "*", $value);
     return $int;
   }
-
+  
+  /**
+   * Returns unsigned 16-bit integer as little-endian ordered binary data.
+   *
+   * @param integer $value The input value.
+   * @return string
+   */
+  public static function toUInt16LE($value)
+  {
+    return pack("v*", $value);
+  }
+  
   /**
    * Returns little-endian ordered binary data as unsigned 16-bit integer.
    * 
-   * @param string $raw The raw data string.
+   * @param string $value The binary data string.
    * @return integer
    */
-  public static function getUInt16LE($raw)
+  public static function fromUInt16LE($value)
   {
-    return self::getUInt16($raw, self::LITTLE_ENDIAN_ORDER);
+    return self::fromUInt16($value, self::LITTLE_ENDIAN_ORDER);
   }
-
+  
+  /**
+   * Returns unsigned 16-bit integer as big-endian ordered binary data.
+   *
+   * @param integer $value The input value.
+   * @return string
+   */
+  public static function toUInt16BE($value)
+  {
+    return pack("n*", $value);
+  }
+  
   /**
    * Returns big-endian ordered binary data as unsigned 16-bit integer.
    * 
-   * @param string $raw The raw data string.
+   * @param string $value The binary data string.
    * @return integer
    */
-  public static function getUInt16BE($raw)
+  public static function fromUInt16BE($value)
   {
-    return self::getUInt16($raw, self::BIG_ENDIAN_ORDER);
+    return self::fromUInt16($value, self::BIG_ENDIAN_ORDER);
   }
-
+  
   /**
    * Returns binary data as 8-bit integer.
    * 
-   * @param string $raw The raw data string.
+   * @param integer $value The input value.
    * @return integer
    */
-  public static function getInt8($raw)
+  public static function toInt8($value)
   {
-    return $raw;
+    return chr($value);
+  }
+  
+  /**
+   * Returns binary data as 8-bit integer.
+   * 
+   * @param string $value The binary data string.
+   * @return integer
+   */
+  public static function fromInt8($value)
+  {
+    return ord($value);
+  }
+
+  /**
+   * Returns string as binary data padded to given length with zeros.
+   * 
+   * @param string $value The input value.
+   * @return string
+   */
+  public static function toString8($value, $length, $padding = "\0")
+  {
+    return str_pad($value, $length, $padding);
   }
 
   /**
    * Returns binary data as string. Removes terminating zero.
    *
-   * @param string $raw The raw data string.
+   * @param string $value The binary data string.
    * @return string
    */
-  public static function getString8($raw)
+  public static function fromString8($value)
   {
-    $string = "";
-    foreach (unpack("C*", $raw) as $char)
-      $string .= pack("c", $char);
-    return rtrim($string, "\0");
+    return rtrim($value, "\0");
   }
-
+  
   /**
-   * Returns machine-endian ordered binary data as multibyte string.
+   * Returns machine-ordered multibyte string as machine-endian ordered binary
+   * data 
    *
-   * @param string  $raw   The raw data string.
-   * @param integer $order The byte order of the raw string.
+   * @param string $value The input value.
+   * @param integer $order The byte order of the binary data string.
    * @return string
    */
-  public static function getString16($raw, $order = self::MACHINE_ENDIAN_ORDER)
+  public static function toString16($value, $order = self::MACHINE_ENDIAN_ORDER)
   {
     $string = "";
-    foreach (unpack(($order == 2 ? "n" :
-                     ($order == 1 ? "v" : "S")) . "*", $raw) as $char)
-      $string .= pack("S", $char);
+    foreach (unpack("S*", $value) as $char)
+      $string .=
+        pack(($order == 2 ? "n" : ($order == 1 ? "v" : "S")), $char);
     return $string;
   }
 
   /**
-   * Returns little-endian ordered binary data as multibyte string.
+   * Returns UTF-16 formatted binary data as machine-ordered multibyte string.
+   * The byte order is determined from the byte order mark included in the
+   * binary data string.
    *
-   * @param string $raw The raw data string.
+   * @param string  $value The binary data string.
    * @return string
    */
-  public static function getString16LE($raw)
+  public static function fromString16($value)
   {
-    return self::getString16($raw, self::LITTLE_ENDIAN_ORDER);
+      if ($value{0} == 0xfe && $value{1} = 0xff)
+        return self::fromString16LE(substr($value, 2));
+      else
+        return self::fromString16BE(substr($value, 2));
   }
-
+  
   /**
-   * Returns big-endian ordered binary data as multibyte string.
+   * Returns machine-ordered multibyte string as little-endian ordered binary
+   * data.
    *
-   * @param string $raw The raw data string.
+   * @param string $value The input value.
    * @return string
    */
-  public static function getString16BE($raw)
+  public static function toString16LE($value)
   {
-    return self::getString16($raw, self::BIG_ENDIAN_ORDER);
+    return self::toString16($value, self::LITTLE_ENDIAN_ORDER);
   }
-
+  
+  /**
+   * Returns little-endian ordered binary data as machine ordered multibyte
+   * string.
+   *
+   * @param string $value The binary data string.
+   * @return string
+   */
+  public static function fromString16LE($value)
+  {
+    $string = "";
+    foreach (unpack("v*", $value) as $char)
+      $string .= pack("S", $char);
+    return $string;
+  }
+  
+  /**
+   * Returns machine ordered multibyte string as big-endian ordered binary data.
+   *
+   * @param string $value The input value.
+   * @return string
+   */
+  public static function toString16BE($value)
+  {
+    return self::toString16($value, self::BIG_ENDIAN_ORDER);
+  }
+  
+  /**
+   * Returns big-endian ordered binary data as machine ordered multibyte string.
+   *
+   * @param string $value The binary data string.
+   * @return string
+   */
+  public static function fromString16BE($value)
+  {
+    $string = "";
+    foreach (unpack("n*", $value) as $char)
+      $string .= pack("S", $char);
+    return $string;
+  }
+  
+  /**
+   * Returns hexadecimal string having high nibble first as binary data.
+   * 
+   * @param string $value The input value.
+   * @return string
+   */
+  public static function toHHex($value)
+  {
+    return pack("H*", $value);
+  }
+  
   /**
    * Returns binary data as hexadecimal string having high nibble first.
    * 
-   * @param string $raw The raw data string.
+   * @param string $value The binary data string.
    * @return string
    */
-  public static function getHHex($raw)
+  public static function fromHHex($value)
   {
-    list($hex) = unpack("H*0", $raw);
+    list($hex) = unpack("H*0", $value);
     return $hex; 
   }
-
+  
+  /**
+   * Returns hexadecimal string having low nibble first as binary data.
+   * 
+   * @param string $value The input value.
+   * @return string
+   */
+  public static function toLHex($value)
+  {
+    return pack("h*", $value);
+  }
+  
   /**
    * Returns binary data as hexadecimal string having low nibble first.
    * 
-   * @param string $raw The raw data string.
+   * @param string $value The binary data string.
    * @return string
    */
-  public static function getLHex($raw)
+  public static function fromLHex($value)
   {
-    list($hex) = unpack("h*0", $raw);
+    list($hex) = unpack("h*0", $value);
     return $hex; 
   }
-
+  
   /**
-   * Returns the little-endian ordered raw data as big-endian ordered
-   * hexadecimal GUID string.
+   * Returns big-endian ordered hexadecimal GUID string as little-endian ordered
+   * binary data string.
    * 
-   * @param string $raw The raw data string.
+   * @param string $value The input value.
    * @return string
    */
-  public static function getGUID($raw)
+  public static function toGUID($value)
   {
-    $C = @unpack("V1V/v2v/N2N", $raw);
+    $string = ""; $C = preg_split("/-/", $value);
+    return pack
+      ("V1v2N2", hexdec($C[0]), hexdec($C[1]), hexdec($C[2]),
+       hexdec($C[3] . substr($C[4], 0, 4)), hexdec(substr($C[4], 4)));
+  }
+  
+  /**
+   * Returns the little-endian ordered binary data as big-endian ordered
+   * hexadecimal GUID string.
+   * 
+   * @param string $value The binary data string.
+   * @return string
+   */
+  public static function fromGUID($value)
+  {
+    $C = @unpack("V1V/v2v/N2N", $value);
     list($hex) = @unpack("H*0", pack
       ("NnnNN", $C["V"], $C["v1"], $C["v2"], $C["N1"], $C["N2"]));
     

@@ -2,6 +2,8 @@
 /**
  * PHP Reader Library
  *
+ * Copyright (c) 2008 The PHP Reader Project Workgroup. All rights reserved.
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
@@ -10,7 +12,7 @@
  *  - Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- *  - Neither the name of the BEHR Software Systems nor the names of its
+ *  - Neither the name of the project workgroup nor the names of its
  *    contributors may be used to endorse or promote products derived from this
  *    software without specific prior written permission.
  *
@@ -28,8 +30,8 @@
  *
  * @package    php-reader
  * @subpackage ID3
- * @copyright  Copyright (c) 2008 BEHR Software Systems
- * @license    http://www.opensource.org/licenses/bsd-license.php New BSD License
+ * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
+ * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Id$
  */
 
@@ -58,9 +60,9 @@ require_once("ID3/Frame.php");
  * 
  * @package    php-reader
  * @subpackage ID3
- * @author     Sven Vollbehr <sven.vollbehr@behrss.eu>
- * @copyright  Copyright (c) 2008 BEHR Software Systems
- * @license    http://www.opensource.org/licenses/bsd-license.php New BSD License
+ * @author     Sven Vollbehr <svollbehr@gmail.com>
+ * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
+ * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Rev$
  */
 final class ID3_Frame_GRID extends ID3_Frame

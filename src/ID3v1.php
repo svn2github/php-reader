@@ -2,6 +2,8 @@
 /**
  * PHP Reader Library
  *
+ * Copyright (c) 2008 The PHP Reader Project Workgroup. All rights reserved.
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
@@ -10,7 +12,7 @@
  *  - Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- *  - Neither the name of the BEHR Software Systems nor the names of its
+ *  - Neither the name of the project workgroup nor the names of its
  *    contributors may be used to endorse or promote products derived from this
  *    software without specific prior written permission.
  *
@@ -28,13 +30,14 @@
  *
  * @package    php-reader
  * @subpackage ID3
- * @copyright  Copyright (c) 2008 BEHR Software Systems
- * @license    http://www.opensource.org/licenses/bsd-license.php New BSD License
+ * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
+ * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Id$
  */
 
 /**#@+ @ignore */
 require_once("Reader.php");
+require_once("ID3/Exception.php");
 /**#@-*/
 
 /**
@@ -43,9 +46,9 @@ require_once("Reader.php");
  * 
  * @package    php-reader
  * @subpackage ID3
- * @author     Sven Vollbehr <sven.vollbehr@behrss.eu>
- * @copyright  Copyright (c) 2008 BEHR Software Systems
- * @license    http://www.opensource.org/licenses/bsd-license.php New BSD License
+ * @author     Sven Vollbehr <svollbehr@gmail.com>
+ * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
+ * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Rev$
  */
 final class ID3v1
@@ -69,7 +72,7 @@ final class ID3v1
   private $_track;
   
   /** @var integer */
-  private $_genre = 128;
+  private $_genre = 255;
 
   /**
    * The genre list.
@@ -86,7 +89,7 @@ final class ID3v1
      "AlternRock", "Bass", "Soul", "Punk", "Space", "Meditative",
      "Instrumental Pop", "Instrumental Rock", "Ethnic", "Gothic", "Darkwave",
      "Techno-Industrial", "Electronic", "Pop-Folk", "Eurodance", "Dream",
-     "Southern Rock", "Comedy", "Cult", "Gangsta", "Top ", "Christian Rap",
+     "Southern Rock", "Comedy", "Cult", "Gangsta", "Top 40", "Christian Rap",
      "Pop/Funk", "Jungle", "Native American", "Cabaret", "New Wave",
      "Psychadelic", "Rave", "Showtunes", "Trailer", "Lo-Fi", "Tribal",
      "Acid Punk", "Acid Jazz", "Polka", "Retro", "Musical", "Rock & Roll",
@@ -98,38 +101,51 @@ final class ID3v1
      "Booty Bass", "Primus", "Porn Groove", "Satire", "Slow Jam", "Club",
      "Tango", "Samba", "Folklore", "Ballad", "Power Ballad", "Rhythmic Soul",
      "Freestyle", "Duet", "Punk Rock", "Drum Solo", "A capella", "Euro-House",
-     "Dance Hall", "Unknown");
+     "Dance Hall", 255 => "Unknown");
   
   /** @var Reader */
   private $_reader;
   
+  /** @var string */
+  private $_filename;
+  
   /**
-   * Constructs the ID3v1 class with given file.
+   * Constructs the ID3v1 class with given file. The file is not mandatory
+   * argument and may be omitted. A new tag can be written to a file also by
+   * giving the filename to the {@link #write} method of this class.
    *
    * @param string $filename The path to the file.
    */
-  public function __construct($filename)
+  public function __construct($filename = false)
   {
-    $this->_reader = new Reader($filename);
-    $this->_reader->setOffset(-128);
-    if ($this->_reader->getString8(3) != "TAG")
-      throw new ID3_Exception("File does not contain ID3v1 tag: " . $filename);
+    if (($this->_filename = $filename) === false ||
+        file_exists($filename) === false)
+      return;
     
-    $this->_title = rtrim($this->_reader->getString8(30), " \0");
-    $this->_artist = rtrim($this->_reader->getString8(30), " \0");
-    $this->_album = rtrim($this->_reader->getString8(30), " \0");
-    $this->_year = $this->_reader->getString8(4);
-    $this->_comment = rtrim($this->_reader->getString8(28), " \0");
+    $this->_reader = new Reader($filename);
+    if ($this->_reader->size < 128)
+      return;
+    $this->_reader->offset = -128;
+    if ($this->_reader->read(3) != "TAG") {
+      $this->_reader = false; // reset reader, see write
+      return;
+    }
+    
+    $this->_title = rtrim($this->_reader->readString8(30), " \0");
+    $this->_artist = rtrim($this->_reader->readString8(30), " \0");
+    $this->_album = rtrim($this->_reader->readString8(30), " \0");
+    $this->_year = $this->_reader->readString8(4);
+    $this->_comment = rtrim($this->_reader->readString8(28), " \0");
 
     /* ID3v1.1 support for tracks */
-    $v11_null = $this->_reader->getInt8();
-    $v11_track = $this->_reader->getInt8();
+    $v11_null = $this->_reader->read(1);
+    $v11_track = $this->_reader->read(1);
     if (ord($v11_null) == 0 && ord($v11_track) != 0)
       $this->_track = ord($v11_track);
     else
       $this->_comment = rtrim($this->_comment . $v11_null . $v11_track, " \0");
     
-    $this->_genre = ord($this->_reader->getInt8());
+    $this->_genre = $this->_reader->readInt8();
   }
   
   /**
@@ -140,11 +156,27 @@ final class ID3v1
   public function getTitle() { return $this->_title; }
   
   /**
+   * Sets a new value for the title field. The field cannot exceed 30
+   * characters in length.
+   *
+   * @param string $title The title.
+   */
+  public function setTitle($title) { $this->_title = $title; }
+  
+  /**
    * Returns the artist field.
    *
    * @return string
    */
   public function getArtist() { return $this->_artist; }
+  
+  /**
+   * Sets a new value for the artist field. The field cannot exceed 30
+   * characters in length.
+   *
+   * @param string $artist The artist.
+   */
+  public function setArtist($artist) { $this->_artist = $artist; }
   
   /**
    * Returns the album field.
@@ -154,6 +186,14 @@ final class ID3v1
   public function getAlbum() { return $this->_album; }
   
   /**
+   * Sets a new value for the album field. The field cannot exceed 30
+   * characters in length.
+   *
+   * @param string $album The album.
+   */
+  public function setAlbum($album) { $this->_album = $album; }
+  
+  /**
    * Returns the year field.
    *
    * @return string
@@ -161,11 +201,27 @@ final class ID3v1
   public function getYear() { return $this->_year; }
   
   /**
+   * Sets a new value for the year field. The field cannot exceed 4
+   * characters in length.
+   *
+   * @param string $year The year.
+   */
+  public function setYear($year) { $this->_year = $year; }
+  
+  /**
    * Returns the comment field.
    *
    * @return string
    */
   public function getComment() { return $this->_comment; }
+  
+  /**
+   * Sets a new value for the comment field. The field cannot exceed 30
+   * characters in length.
+   *
+   * @param string $comment The comment.
+   */
+  public function setComment($comment) { $this->_comment = $comment; }
   
   /**
    * Returns the track field.
@@ -176,15 +232,66 @@ final class ID3v1
   public function getTrack() { return $this->_track; }
   
   /**
+   * Sets a new value for the track field. By setting this field you enforce the
+   * 1.1 version to be used.
+   *
+   * @since ID3v1.1
+   * @param integer $track The track number.
+   */
+  public function setTrack($track) { $this->_track = $track; }
+  
+  /**
    * Returns the genre.
    *
    * @return string
    */
-  public function getGenre() {
+  public function getGenre()
+  {
     if (isset(self::$genres[$this->_genre]))
       return self::$genres[$this->_genre];
     else
-      return self::$genres[128]; // unknown
+      return self::$genres[255]; // unknown
+  }
+  
+  /**
+   * Sets a new value for the genre field. The value may either be a numerical
+   * code representing one of the genres, or its string variant.
+   *
+   * The genre is set to unknown (code 255) in case the string is not found from
+   * the static {@link $genres} array of this class.
+   *
+   * @param integer $genre The genre.
+   */
+  public function setGenre($genre)
+  {
+    if ((is_numeric($genre) && $genre >= 0 && $genre <= 255) ||
+        ($genre = array_search($genre, self::$genres)) !== false)
+      $this->_genre = $genre;
+    else
+      $this->_genre = 255; // unknown
+  }
+  
+  /**
+   * Writes the possibly altered ID3v1 tag back to the file where it was read.
+   * If the class was constructed without a file name, one can be provided here
+   * as an argument. Regardless, the write operation will override previous
+   * tag information, if found.
+   *
+   * @param string $filename The optional path to the file.
+   */
+  public function write($filename = false)
+  {
+    if ($filename === false && ($filename = $this->_filename) === false)
+      throw new ID3_Exception("No file given to write the tag to");
+    
+    if (($fd = fopen
+         ($filename, file_exists($filename) ? "r+b" : "wb")) === false)
+      throw new ID3_Exception("Unable to open file for writing: " . $filename);
+    
+    fseek($fd, $this->_reader !== false ? -128 : 0, SEEK_END);
+    fwrite($fd, $this, 128);
+    
+    $this->_filename = $filename;
   }
   
   /**
@@ -193,8 +300,44 @@ final class ID3v1
    * @param string $name The field name.
    * @return mixed
    */
-  public function __get($name) {
+  public function __get($name)
+  {
     if (method_exists($this, "get" . ucfirst(strtolower($name))))
       return call_user_func(array($this, "get" . ucfirst(strtolower($name))));
+    else throw new ID3_Exception("Unknown field: " . $name);
+  }
+  
+  /**
+   * Magic function so that assignments with $obj->value will work.
+   *
+   * @param string $name  The field name.
+   * @param string $value The field value.
+   * @return mixed
+   */
+  public function __set($name, $value)
+  {
+    if (method_exists($this, "set" . ucfirst(strtolower($name))))
+      call_user_func
+        (array($this, "set" . ucfirst(strtolower($name))), $value);
+    else throw new ID3_Exception("Unknown field: " . $name);
+  }
+  
+  /**
+   * Returns the tag raw data.
+   *
+   * @return string
+   */
+  private function __toString()
+  {
+    return "TAG" .
+      Transform::toString8(substr($this->_title,  0, 30), 30) .
+      Transform::toString8(substr($this->_artist, 0, 30), 30) .
+      Transform::toString8(substr($this->_album,  0, 30), 30) .
+      Transform::toString8(substr($this->_year,   0,  4),  4) .
+      ($this->_track ?
+       Transform::toString8(substr($this->_comment, 0, 28), 28) .
+       "\0" . Transform::toInt8($this->_track) :
+       Transform::toString8(substr($this->_comment, 0, 30), 30)) .
+      Transform::toInt8($this->_genre);
   }
 }

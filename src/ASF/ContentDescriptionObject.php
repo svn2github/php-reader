@@ -2,6 +2,9 @@
 /**
  * PHP Reader Library
  *
+ * Copyright (c) 2006-2008 The PHP Reader Project Workgroup. All rights
+ * reserved.
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
@@ -10,7 +13,7 @@
  *  - Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- *  - Neither the name of the BEHR Software Systems nor the names of its
+ *  - Neither the name of the project workgroup nor the names of its
  *    contributors may be used to endorse or promote products derived from this
  *    software without specific prior written permission.
  *
@@ -28,9 +31,8 @@
  *
  * @package    php-reader
  * @subpackage ASF
- * @copyright  Copyright (c) 2006, 2007 The Bearpaw Project Work Group
- * @copyright  Copyright (c) 2007, 2008 BEHR Software Systems
- * @license    http://www.opensource.org/licenses/bsd-license.php New BSD License
+ * @copyright  Copyright (c) 2006-2008 The PHP Reader Project Workgroup
+ * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Id$
  */
 
@@ -45,10 +47,9 @@ require_once("Object.php");
  *
  * @package    php-reader
  * @subpackage ASF
- * @author     Sven Vollbehr <sven.vollbehr@behrss.eu>
- * @copyright  Copyright (c) 2006, 2007 The Bearpaw Project Work Group
- * @copyright  Copyright (c) 2007, 2008 BEHR Software Systems
- * @license    http://www.opensource.org/licenses/bsd-license.php New BSD License
+ * @author     Sven Vollbehr <svollbehr@gmail.com>
+ * @copyright  Copyright (c) 2006-2008 The PHP Reader Project Workgroup
+ * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Rev$
  */
 final class ASF_ContentDescriptionObject extends ASF_Object
@@ -80,17 +81,17 @@ final class ASF_ContentDescriptionObject extends ASF_Object
   {
     parent::__construct($reader, $id, $size);
 
-    $titleLen = $this->_reader->getUInt16LE();
-    $authorLen = $this->_reader->getUInt16LE();
-    $copyrightLen = $this->_reader->getUInt16LE();
-    $descriptionLen = $this->_reader->getUInt16LE();
-    $ratingLen = $this->_reader->getUInt16LE();
+    $titleLen = $this->_reader->readUInt16LE();
+    $authorLen = $this->_reader->readUInt16LE();
+    $copyrightLen = $this->_reader->readUInt16LE();
+    $descriptionLen = $this->_reader->readUInt16LE();
+    $ratingLen = $this->_reader->readUInt16LE();
 
-    $this->_title = $this->_reader->getString16LE($titleLen);
-    $this->_author = $this->_reader->getString16LE($authorLen);
-    $this->_copyright = $this->_reader->getString16LE($copyrightLen);
-    $this->_description = $this->_reader->getString16LE($descriptionLen);
-    $this->_rating = $this->_reader->getString16LE($ratingLen);
+    $this->_title = $this->_reader->readString16LE($titleLen);
+    $this->_author = $this->_reader->readString16LE($authorLen);
+    $this->_copyright = $this->_reader->readString16LE($copyrightLen);
+    $this->_description = $this->_reader->readString16LE($descriptionLen);
+    $this->_rating = $this->_reader->readString16LE($ratingLen);
   }
 
   /**

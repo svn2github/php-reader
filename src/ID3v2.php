@@ -1,6 +1,8 @@
 <?php
 /**
  * PHP Reader Library
+ *
+ * Copyright (c) 2008 The PHP Reader Project Workgroup. All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -10,7 +12,7 @@
  *  - Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- *  - Neither the name of the BEHR Software Systems nor the names of its
+ *  - Neither the name of the project workgroup nor the names of its
  *    contributors may be used to endorse or promote products derived from this
  *    software without specific prior written permission.
  *
@@ -28,8 +30,8 @@
  *
  * @package    php-reader
  * @subpackage ID3
- * @copyright  Copyright (c) 2008 BEHR Software Systems
- * @license    http://www.opensource.org/licenses/bsd-license.php New BSD License
+ * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
+ * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Id$
  */
 
@@ -54,11 +56,9 @@ require_once("ID3/Frame.php");
  * ID3v2 is designed to be as flexible and expandable as possible to meet new
  * meta information needs that might arise. To achieve that ID3v2 is constructed
  * as a container for several information blocks, called frames, whose format
- * need not be known to the software that encounters them. At the start of every
- * frame is an unique and predefined identifier, a size descriptor that allows
- * software to skip unknown frames and a flags field. The flags describes
- * encoding details and if the frame should remain in the tag, should it be
- * unknown to the software, if the file is altered.
+ * need not be known to the software that encounters them. Each frame has an
+ * unique and predefined identifier which allows software to skip unknown
+ * frames.
  *
  * Overall tag structure:
  *
@@ -82,9 +82,9 @@ require_once("ID3/Frame.php");
  * 
  * @package    php-reader
  * @subpackage ID3
- * @author     Sven Vollbehr <sven.vollbehr@behrss.eu>
- * @copyright  Copyright (c) 2008 BEHR Software Systems
- * @license    http://www.opensource.org/licenses/bsd-license.php New BSD License
+ * @author     Sven Vollbehr <svollbehr@gmail.com>
+ * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
+ * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Rev$
  */
 final class ID3v2
@@ -99,19 +99,36 @@ final class ID3v2
   private $_extendedHeader;
   
   /** @var ID3_Header */
-  private $_footer;
+  private $_footer = null;
   
+  /** @var Array */
+  private $_frames = array();
+  
+  /** @var string */
+  private $_filename;
+
   /**
-   * Constructs the ID3v2 class with given file.
+   * Constructs the ID3v2 class with given file and options.
    *
    * @todo  Only limited subset of flags are processed.
+   * @todo  ID3_Footer
    * @param string $filename The path to the file.
+   * @param Array  $options  The options array.
    */
-  public function __construct($filename)
+  public function __construct($filename = false, $options = array())
   {
+    if (is_array($filename)) {
+      $options = $filename;
+      $filename = false;
+    }
+    
+    if (($this->_filename = $filename) === false ||
+        file_exists($filename) === false)
+      return;
+    
     $this->_reader = new Reader($filename);
     
-    if ($this->_reader->getString8(3) != "ID3")
+    if ($this->_reader->readString8(3) != "ID3")
       throw new ID3_Exception("File does not contain ID3v2 tag: " . $filename);
     
     $this->_header = new ID3_Header($this->_reader);
@@ -121,10 +138,16 @@ final class ID3v2
     if ($this->_header->hasFlag(ID3_Header::EXTENDEDHEADER))
       $this->_extendedHeader = new ID3_ExtendedHeader($this->_reader);
     if ($this->_header->hasFlag(ID3_Header::FOOTER)) {
-      $offset = $this->_reader->getOffset();
-      $this->_reader->setOffset($this->_header->getSize() + 10);
+      $offset = $this->_reader->offset;
+      $this->_reader->offset = $this->_header->getSize() + 10;
       $this->_footer = new ID3_Header($this->_reader);
-      $this->_reader->setOffset($offset);
+      $this->_reader->offset = $offset;
+    }
+    
+    while ($frame = $this->nextFrame()) {
+      if (!isset($this->_frames[$frame->identifier]))
+        $this->_frames[$frame->identifier] = array();
+      $this->_frames[$frame->identifier][] = $frame;
     }
   }
 
@@ -158,16 +181,16 @@ final class ID3v2
       return $this->_extendedHeader;
     return false;
   }
-  
+
   /**
    * Checks whether there are frames left in the tag. Returns <var>true</var> if
    * there are frames left in the tag, <var>false</var> otherwise.
    * 
    * @return boolean
    */
-  public function hasFrames()
+  protected function hasFrames()
   {
-    $offset = $this->_reader->getOffset();
+    $offset = $this->_reader->offset;
     
     // Return false if we reached the end of the tag
     if ($offset >= $this->_header->getSize() - 10 -
@@ -175,8 +198,8 @@ final class ID3v2
       return false;
     
     // Return false if we reached the last frame, true otherwise
-    $res = $this->_reader->getUInt32() != 0;
-    $this->_reader->setOffset($offset);
+    $res = $this->_reader->readUInt32BE() != 0;
+    $this->_reader->offset = $offset;
     return $res;
   }
   
@@ -187,14 +210,13 @@ final class ID3v2
    * 
    * @return ID3_Frame|false
    */
-  public function nextFrame()
+  protected function nextFrame()
   {
     $frame = false;
     if ($this->hasFrames()) {
-      $offset = $this->_reader->getOffset();
-      $identifier = $this->_reader->getString8(4);
-      $this->_reader->setOffset($offset);
-      
+      $offset = $this->_reader->offset;
+      $identifier = $this->_reader->readString8(4);
+      $this->_reader->offset = $offset;
       if (file_exists($filename = "ID3/Frame/" . $identifier . ".php"))
         require_once($filename);
       if (class_exists($classname = "ID3_Frame_" . $identifier))
@@ -203,6 +225,55 @@ final class ID3v2
         $frame = new ID3_Frame($this->_reader);
     }
     return $frame;
+  }
+  
+  /**
+   * Checks whether there is a frame given as an argument defined in the tag.
+   * Returns <var>true</var> if one ore more frames are present,
+   * <var>false</var> otherwise.
+   * 
+   * @return boolean
+   */
+  public function hasFrame($identifier)
+  {
+    return isset($this->_frames[$identifier]);
+  }
+  
+  /**
+   * Returns all the frames the tag contains as an associate array. The frame
+   * identifiers work as keys having an array of frames as associated value.
+   * 
+   * @return Array
+   */
+  public function getFrames()
+  {
+    return $this->_frames;
+  }
+  
+  /**
+   * Returns an array of frames matching the given identifier or an empty array
+   * if no frames matched the identifier.
+   *
+   * The identifier may contain wildcard characters "*" and "?". The asterisk
+   * matches against zero or more characters, and the question mark matches any
+   * single character.
+   *
+   * Please note that one may also use the shorthand $obj->identifier to access
+   * the first frame with the identifier given. Wildcards cannot be used with
+   * the shorthand.
+   * 
+   * @return Array
+   */
+  public function getFramesByIdentifier($identifier)
+  {
+    $matches = array();
+    $searchPattern = "/^" .
+      str_replace(array("*", "?"), array(".*", "."), $identifier) . "$/i";
+    foreach ($this->_frames as $identifier => $frames)
+      if (preg_match($searchPattern, $identifier))
+        foreach ($frames as $frame)
+          $matches[] = $frame;
+    return $matches;
   }
   
   /**
@@ -226,5 +297,20 @@ final class ID3v2
     if ($this->hasFooter())
       return $this->_footer;
     return false;
+  }
+  
+  /**
+   * Magic function so that $obj->value will work. The method will attempt to
+   * return the first frame that matches the identifier.
+   *
+   * @param string $name The frame or field name.
+   * @return mixed
+   */
+  public function __get($name) {
+    if (isset($this->_frames[$name]))
+      return $this->_frames[$name][0];
+    if (method_exists($this, "get" . ucfirst($name)))
+      return call_user_func(array($this, "get" . ucfirst($name)));
+    else throw new ID3_Exception("Unknown frame/field: " . $name);
   }
 }

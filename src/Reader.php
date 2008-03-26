@@ -1,6 +1,9 @@
 <?php
 /**
  * PHP Reader Library
+ *
+ * Copyright (c) 2006-2008 The PHP Reader Project Workgroup. All rights
+ * reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -10,7 +13,7 @@
  *  - Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- *  - Neither the name of the BEHR Software Systems nor the names of its
+ *  - Neither the name of the project workgroup nor the names of its
  *    contributors may be used to endorse or promote products derived from this
  *    software without specific prior written permission.
  *
@@ -27,9 +30,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  *
  * @package   php-reader
- * @copyright Copyright (c) 2006, 2007 The Bearpaw Project Work Group
- * @copyright Copyright (c) 2007, 2008 BEHR Software Systems
- * @license   http://www.opensource.org/licenses/bsd-license.php New BSD License
+ * @copyright Copyright (c) 2006-2008 The PHP Reader Project Workgroup
+ * @license   http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version   $Id$
  */
 
@@ -44,10 +46,9 @@ require_once("Transform.php");
  * data from it.
  * 
  * @package   php-reader
- * @author    Sven Vollbehr <sven.vollbehr@behrss.eu>
- * @copyright Copyright (c) 2006, 2007 The Bearpaw Project Work Group
- * @copyright Copyright (c) 2007, 2008 BEHR Software Systems
- * @license   http://www.opensource.org/licenses/bsd-license.php New BSD License
+ * @author    Sven Vollbehr <svollbehr@gmail.com>
+ * @copyright Copyright (c) 2006-2008 The PHP Reader Project Workgroup
+ * @license   http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version   $Rev$
  */
 class Reader
@@ -62,11 +63,12 @@ class Reader
    * Constructs the Reader class with given file.
    * 
    * @param string $filename The path to the file.
+   * @param string $mode     The type of access.
    * @throws Reader_Exception if the file cannot be read.
    */
-  public function __construct($filename)
+  public function __construct($filename, $mode = "rb")
   {
-    if (($this->_fd = fopen($filename, "rb")) === false)
+    if (($this->_fd = fopen($filename, $mode)) === false)
       throw new Reader_Exception("Unable to open file:" . $filename);
     
     fseek($this->_fd, 0, SEEK_END);
@@ -158,7 +160,33 @@ class Reader
   {
     return $this->_size;
   }
-
+  
+  /**
+   * Magic function so that $obj->value will work.
+   *
+   * @param string $name The field name.
+   * @return mixed
+   */
+  public function __get($name) {
+    if (method_exists($this, "get" . ucfirst(strtolower($name))))
+      return call_user_func(array($this, "get" . ucfirst(strtolower($name))));
+    else throw new Reader_Exception("Unknown field: " . $name);
+  }
+  
+  /**
+   * Magic function so that assignments with $obj->value will work.
+   *
+   * @param string $name  The field name.
+   * @param string $value The field value.
+   * @return mixed
+   */
+  public function __set($name, $value) {
+    if (method_exists($this, "set" . ucfirst(strtolower($name))))
+      call_user_func
+        (array($this, "set" . ucfirst(strtolower($name))), $value);
+    else throw new Reader_Exception("Unknown field: " . $name);
+  }
+  
   /**
    * Magic function to delegate the call to helper methods of
    * <var>Transform</var> class to transform read data in another format.
@@ -175,10 +203,10 @@ class Reader
   public function __call($method, $params) {
     $chunks = array();
     if (preg_match
-          ("/get([a-z]{3,6})?(\d{1,2})?(?:LE|BE)?/i", $method, $chunks) &&
-        method_exists("Transform", $method)) {
+          ("/read([a-z]{3,6})?(\d{1,2})?(?:LE|BE)?/i", $method, $chunks) &&
+        method_exists("Transform", preg_replace("/^read/", "from", $method))) {
       return call_user_func
-        (array("Transform", $method),
+        (array("Transform", preg_replace("/^read/", "from", $method)),
          $this->read(preg_match("/String|(?:H|L)Hex/", $chunks[1]) ?
                      (isset($params[0]) ? $params[0] : 1) :
                      ($chunks[1] == "GUID" ? 16 : $chunks[2] / 8)));

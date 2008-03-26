@@ -2,6 +2,8 @@
 /**
  * PHP Reader Library
  *
+ * Copyright (c) 2008 The PHP Reader Project Workgroup. All rights reserved.
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
@@ -10,7 +12,7 @@
  *  - Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- *  - Neither the name of the BEHR Software Systems nor the names of its
+ *  - Neither the name of the project workgroup nor the names of its
  *    contributors may be used to endorse or promote products derived from this
  *    software without specific prior written permission.
  *
@@ -28,8 +30,8 @@
  *
  * @package    php-reader
  * @subpackage ID3
- * @copyright  Copyright (c) 2008 BEHR Software Systems
- * @license    http://www.opensource.org/licenses/bsd-license.php New BSD License
+ * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
+ * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Id$
  */
 
@@ -38,9 +40,9 @@
  *
  * @package    php-reader
  * @subpackage ID3
- * @author     Sven Vollbehr <sven.vollbehr@behrss.eu>
- * @copyright  Copyright (c) 2008 BEHR Software Systems
- * @license    http://www.opensource.org/licenses/bsd-license.php New BSD License
+ * @author     Sven Vollbehr <svollbehr@gmail.com>
+ * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
+ * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Rev$
  */
 abstract class ID3_Object
@@ -53,14 +55,49 @@ abstract class ID3_Object
   protected $_reader;
   
   /**
+   * The options array.
+   *
+   * @var Array
+   */
+  protected $_options = array();
+  
+  /**
    * Constructs the class with given parameters and reads object related data
    * from the ID3v2 tag.
    *
    * @param Reader $reader The reader object.
    */
-  public function __construct($reader)
+  public function __construct($reader = null)
   {
     $this->_reader = $reader;
+  }
+  
+  /**
+   * Magic function so that $obj->value will work.
+   *
+   * @param string $name The field name.
+   * @return mixed
+   */
+  public function __get($name)
+  {
+    if (method_exists($this, "get" . ucfirst($name)))
+      return call_user_func(array($this, "get" . ucfirst($name)));
+    else throw new Reader_Exception("Unknown field: " . $name);
+  }
+  
+  /**
+   * Magic function so that assignments with $obj->value will work.
+   *
+   * @param string $name  The field name.
+   * @param string $value The field value.
+   * @return mixed
+   */
+  public function __set($name, $value)
+  {
+    if (method_exists($this, "set" . ucfirst($name)))
+      call_user_func
+        (array($this, "set" . ucfirst($name)), $value);
+    else throw new Reader_Exception("Unknown field: " . $name);
   }
   
   /**
@@ -71,7 +108,8 @@ abstract class ID3_Object
    * @param integer $val The integer to encode.
    * @return integer
    */
-  protected function encodeSynchsafe32($val) {
+  protected function encodeSynchsafe32($val)
+  {
     for ($i = 0, $mask = 0xffffff00; $i < 4; $i++, $mask <<= 8)
       $val = ($val << 1 & $mask) | ($val << 1 & ~$mask) >> 1;
     return $val & 0x7fffffff;
@@ -83,7 +121,8 @@ abstract class ID3_Object
    * @param integer $val The integer to decode
    * @return integer
    */
-  protected function decodeSynchsafe32($val) {
+  protected function decodeSynchsafe32($val)
+  {
     for ($i = 0, $mask = 0xff000000; $i < 3; $i++, $mask >>= 8)
       $val = ($val & $mask) >> 1 | ($val & ~$mask);
     return $val;

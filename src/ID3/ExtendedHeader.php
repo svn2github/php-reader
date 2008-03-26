@@ -2,6 +2,8 @@
 /**
  * PHP Reader Library
  *
+ * Copyright (c) 2008 The PHP Reader Project Workgroup. All rights reserved.
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
@@ -10,7 +12,7 @@
  *  - Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- *  - Neither the name of the BEHR Software Systems nor the names of its
+ *  - Neither the name of the project workgroup nor the names of its
  *    contributors may be used to endorse or promote products derived from this
  *    software without specific prior written permission.
  *
@@ -28,8 +30,8 @@
  *
  * @package    php-reader
  * @subpackage ID3
- * @copyright  Copyright (c) 2008 BEHR Software Systems
- * @license    http://www.opensource.org/licenses/bsd-license.php New BSD License
+ * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
+ * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Id$
  */
 
@@ -44,9 +46,9 @@ require_once("Object.php");
  *
  * @package    php-reader
  * @subpackage ID3
- * @author     Sven Vollbehr <sven.vollbehr@behrss.eu>
- * @copyright  Copyright (c) 2008 BEHR Software Systems
- * @license    http://www.opensource.org/licenses/bsd-license.php New BSD License
+ * @author     Sven Vollbehr <svollbehr@gmail.com>
+ * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
+ * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Rev$
  */
 final class ID3_ExtendedHeader extends ID3_Object
@@ -94,10 +96,10 @@ final class ID3_ExtendedHeader extends ID3_Object
   {
     parent::__construct($reader);
 
-    $offset = $this->_reader->getOffset();
-    $this->_size = $this->decodeSynchsafe32($this->_reader->getUInt32BE());
+    $offset = $this->_reader->offset;
+    $this->_size = $this->decodeSynchsafe32($this->_reader->readUInt32BE());
     $this->_reader->skip(1);
-    $this->_flags = $this->_reader->getInt8();
+    $this->_flags = $this->_reader->readInt8();
     
     if ($this->hasFlag(self::UPDATE))
       $this->_reader->skip(1);
@@ -109,10 +111,10 @@ final class ID3_ExtendedHeader extends ID3_Object
     }
     if ($this->hasFlag(self::RESTRICTED)) {
       $this->_reader->skip(1);
-      $this->_restrictions = $this->_reader->getInt8(1);
+      $this->_restrictions = $this->_reader->readInt8(1);
     }
     
-    $this->_reader->skip($this->_size - $this->_reader->getOffset() - $offset);
+    $this->_reader->skip($this->_size - $this->_reader->offset - $offset);
   }
   
   /**

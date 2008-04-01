@@ -37,7 +37,7 @@
 
 /**#@+ @ignore */
 require_once("PHPUnit/Framework.php");
-require_once("../src/ID3v1.php");
+require_once("ID3v1.php");
 /**#@-*/
 
 /**

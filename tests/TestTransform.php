@@ -37,7 +37,7 @@
 
 /**#@+ @ignore */
 require_once("PHPUnit/Framework.php");
-require_once("../src/Transform.php");
+require_once("Transform.php");
 /**#@-*/
 
 /**
@@ -118,8 +118,8 @@ final class TestTransform extends PHPUnit_Framework_TestCase
   function testString16()
   {
     $this->assertEquals("00e4", Transform::fromHHex
-      (Transform::fromString16(Transform::toString16("\xff\xfe\xe4\x00"))));
-    $this->assertEquals("e400", Transform::fromHHex
+      (Transform::fromString16(Transform::toString16("\xff\xfe\x00\xe4"))));
+    $this->assertEquals("00e4", Transform::fromHHex
       (Transform::fromString16(Transform::toString16("\xfe\xff\x00\xe4"))));
   }
 

@@ -36,7 +36,7 @@
  */
 
 /**#@+ @ignore */
-require_once("Object.php");
+require_once("ID3/Object.php");
 /**#@-*/
 
 /**
@@ -72,13 +72,13 @@ final class ID3_Header extends ID3_Object
   const FOOTER = 32;
 
   /** @var integer */
-  private $_version;
+  private $_version = 4;
   
   /** @var integer */
-  private $_revision;
+  private $_revision = 0;
   
   /** @var integer */
-  private $_flags;
+  private $_flags = 0;
   
   /** @var integer */
   private $_size;
@@ -89,10 +89,13 @@ final class ID3_Header extends ID3_Object
    *
    * @param Reader $reader The reader object.
    */
-  public function __construct($reader)
+  public function __construct($reader = null)
   {
     parent::__construct($reader);
-
+    
+    if ($reader === null)
+      return;
+    
     $this->_version = $this->_reader->readInt8();
     $this->_revision = $this->_reader->readInt8();
     $this->_flags = $this->_reader->readInt8();
@@ -123,9 +126,44 @@ final class ID3_Header extends ID3_Object
   public function hasFlag($flag) { return ($this->_flags & $flag) == $flag; }
   
   /**
+   * Returns the flags byte.
+   * 
+   * @return integer
+   */
+  public function getFlags($flags) { return $this->_flags; }
+  
+  /**
+   * Sets the flags byte.
+   * 
+   * @param string $flags The flags byte.
+   */
+  public function setFlags($flags) { $this->_flags = $flags; }
+  
+  /**
    * Returns the tag size, excluding the header and the footer.
    * 
    * @return integer
    */
   public function getSize() { return $this->_size; }
+  
+  /**
+   * Sets the tag size, excluding the header and the footer. Called
+   * automatically upon tag generation to adjust the tag size.
+   * 
+   * @param integer $size The size of the tag, in bytes.
+   */
+  public function setSize($size) { $this->_size = $size; }
+  
+  /**
+   * Returns the header/footer raw data without the identifier.
+   *
+   * @return string
+   */
+  protected function __toString()
+  {
+    return Transform::toInt8($this->_version) .
+      Transform::toInt8($this->_revision) .
+      Transform::toInt8($this->_flags) .
+      Transform::toUInt32BE($this->encodeSynchsafe32($this->_size));
+  }
 }

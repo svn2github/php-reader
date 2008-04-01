@@ -63,4 +63,11 @@ interface ID3_Timing
    * @return integer
    */
   public function getFormat();
+  
+  /**
+   * Sets the timing format.
+   * 
+   * @param integer $format The timing format.
+   */
+  public function setFormat($format);
 }

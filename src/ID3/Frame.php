@@ -36,7 +36,7 @@
  */
 
 /**#@+ @ignore */
-require_once("Object.php");
+require_once("ID3/Object.php");
 /**#@-*/
 
 /**
@@ -117,17 +117,17 @@ class ID3_Frame extends ID3_Object
   private $_identifier;
 
   /** @var integer */
-  private $_size;
+  private $_size = 0;
 
   /** @var integer */
-  private $_flags;
+  private $_flags = 0;
   
   /**
-   * Raw content read from the frame.
+   * Raw content of the frame.
    * 
    * @var string
    */
-  protected $_data;
+  protected $_data = "";
   
   /**
    * Constructs the class with given parameters and reads object related data
@@ -136,14 +136,18 @@ class ID3_Frame extends ID3_Object
    * @todo  Only limited subset of flags are processed.
    * @param Reader $reader The reader object.
    */
-  public function __construct($reader)
+  public function __construct($reader = null)
   {
     parent::__construct($reader);
-
-    $this->_identifier = $this->_reader->readString8(4);
-    $this->_size = $this->decodeSynchsafe32($this->_reader->readUInt32BE());
-    $this->_flags = $this->_reader->readUInt16BE();
-    $this->_data = $this->_reader->read($this->_size);
+    
+    if ($reader === null) {
+      $this->_identifier = substr(get_class($this), -4);
+    } else {
+      $this->_identifier = $this->_reader->readString8(4);
+      $this->_size = $this->decodeSynchsafe32($this->_reader->readUInt32BE());
+      $this->_flags = $this->_reader->readUInt16BE();
+      $this->_data = $this->_reader->read($this->_size);
+    }
   }
   
   /**
@@ -185,18 +189,35 @@ class ID3_Frame extends ID3_Object
    * 
    * @return integer
    */
-  public function getFlags($flags)
-  {
-    return $this->_flags;
-  }
+  public function getFlags($flags) { return $this->_flags; }
   
   /**
    * Sets the frame flags byte.
    * 
    * @param string $flags The flags byte.
    */
-  public function setFlags($flags)
+  public function setFlags($flags) { $this->_flags = $flags; }
+  
+  /**
+   * Sets the frame raw data.
+   *
+   * @return string
+   */
+  protected function setData($data)
   {
-    $this->_flags = $flags;
+    $this->_data = $data;
+    $this->_size = strlen($data);
+  }
+  
+  /**
+   * Returns the frame raw data.
+   *
+   * @return string
+   */
+  public function __toString()
+  {
+    return Transform::toString8(substr($this->_identifier, 0, 4), 4) .
+      Transform::toUInt32BE($this->encodeSynchsafe32($this->_size)) .
+      Transform::toUInt16BE($this->_flags) . $this->_data;
   }
 }

@@ -36,7 +36,7 @@
  */
 
 /**#@+ @ignore */
-require_once("Object.php");
+require_once("ID3/Object.php");
 /**#@-*/
 
 /**
@@ -96,7 +96,7 @@ final class ID3_ExtendedHeader extends ID3_Object
   {
     parent::__construct($reader);
 
-    $offset = $this->_reader->offset;
+    $offset = $this->_reader->getOffset();
     $this->_size = $this->decodeSynchsafe32($this->_reader->readUInt32BE());
     $this->_reader->skip(1);
     $this->_flags = $this->_reader->readInt8();
@@ -105,7 +105,7 @@ final class ID3_ExtendedHeader extends ID3_Object
       $this->_reader->skip(1);
     if ($this->hasFlag(self::CRC32)) {
       $this->_reader->skip(1);
-      $this->_crc = Transform::getInt32BE
+      $this->_crc = Transform::fromInt32BE
         (($this->_reader->read(1) << 4) &
          $this->decodeSynchsafe32($this->_reader->read(4)));
     }
@@ -114,7 +114,7 @@ final class ID3_ExtendedHeader extends ID3_Object
       $this->_restrictions = $this->_reader->readInt8(1);
     }
     
-    $this->_reader->skip($this->_size - $this->_reader->offset - $offset);
+    $this->_reader->skip($this->_size - $this->_reader->getOffset() - $offset);
   }
   
   /**
@@ -134,11 +134,43 @@ final class ID3_ExtendedHeader extends ID3_Object
   public function hasFlag($flag) { return ($this->_flags & $flag) == $flag; }
   
   /**
+   * Returns the flags byte.
+   * 
+   * @return integer
+   */
+  public function getFlags($flags) { return $this->_flags; }
+  
+  /**
+   * Sets the flags byte.
+   * 
+   * @param integer $flags The flags byte.
+   */
+  public function setFlags($flags) { $this->_flags = $flags; }
+  
+  /**
    * Returns the CRC-32 data.
    * 
    * @return integer
    */
-  public function getCRC() { return $this->_crc; }
+  public function getCrc()
+  {
+    if ($this->hasFlag(self::CRC32))
+      return $this->_crc;
+    return false;
+  }
+  
+  /**
+   * Sets whether the CRC-32 should be generated upon tag write.
+   *
+   * @param boolean $useCrc Whether CRC-32 should be generated
+   */
+  public function setCrc($useCrc)
+  {
+    if ($useCrc)
+      $this->setFlags($this->getFlags() | self::CDC32);
+    else
+      $this->setFlags($this->getFlags() & ~self::CDC32);
+  }
   
   /**
    * Returns the restrictions. For some applications it might be desired to
@@ -189,4 +221,30 @@ final class ID3_ExtendedHeader extends ID3_Object
    * @return integer
    */
   public function getRestrictions() { return $this->_restrictions; }
+  
+  /**
+   * Sets the restrictions byte. See {@link #getRestrictions} for more.
+   *
+   * @param integer $restrictions The restrictions byte.
+   */
+  public function setRestrictions($restrictions)
+  {
+    $this->_restrictions = $restrictions;
+  }
+  
+  /**
+   * Returns the header raw data.
+   *
+   * @todo CRC must use safesynch
+   * @return string
+   */
+  public function toString()
+  {
+    return Transform::toUInt32BE($this->encodeSynchsafe32($this->_size)) .
+      Transform::toInt8(1) . Transform::toInt8($this->_flags) .
+      ($this->hasFlag(self::UPDATE) ? "\0" : "") .
+      ($this->hasFlag(self::CRC32) ? Transform::toInt8(5) . $this->_crc : "") .
+      ($this->hasFlag(self::RESTRICTED) ? 
+         Transform::toInt8(1) . Transform::toInt8($this->_restrictions) : "");
+  }
 }

@@ -54,7 +54,7 @@ abstract class ID3_Frame_AbstractText extends ID3_Frame
   implements ID3_Encoding
 {
   /** @var integer */
-  private $_encoding;
+  private $_encoding = ID3_Encoding::UTF8;
   
   /** @var string */
   private $_text;
@@ -64,10 +64,13 @@ abstract class ID3_Frame_AbstractText extends ID3_Frame
    *
    * @param Reader $reader The reader object.
    */
-  public function __construct($reader)
+  public function __construct($reader = null)
   {
     parent::__construct($reader);
-
+    
+    if ($reader === null)
+      return;
+    
     $this->_encoding = ord($this->_data{0});
     $this->_data = substr($this->_data, 1);
     switch ($this->_encoding) {
@@ -91,11 +94,61 @@ abstract class ID3_Frame_AbstractText extends ID3_Frame
    * @return integer
    */
   public function getEncoding() { return $this->_encoding; }
-
+  
+  /**
+   * Sets the text encoding.
+   * 
+   * @param integer $encoding The text encoding.
+   */
+  public function setEncoding($encoding) { $this->_encoding = $encoding; };
+  
+  /**
+   * Returns the first text chunk the frame contains.
+   * 
+   * @return string
+   */
+  public function getText() { return $this->_text[0]; }
+  
   /**
    * Returns an array of texts the frame contains.
    * 
    * @return Array
    */
-  public function getText() { return $this->_text; }
+  public function getTexts() { return $this->_text; }
+  
+  /**
+   * Sets the text using given encoding.
+   * 
+   * @param mixed $text The test string or an array of strings.
+   */
+  public function setText($text, $encoding = ID3_Encoding::UTF8)
+  {
+    $this->_encoding = $encoding;
+    $this->_text = is_array($text) ? $text : array($text);
+  }
+  
+  /**
+   * Returns the frame raw data.
+   *
+   * @return string
+   */
+  public function __toString()
+  {
+    $data = Transform::toInt8($this->_encoding);
+    switch ($this->_encoding) {
+    case self::UTF16:
+      $data .= Transform::toString16(implode("\0\0", $this->_text));
+      break;
+    case self::UTF16BE:
+      $data .= Transform::toString16BE(implode("\0\0", $this->_text));
+      break;
+    case self::UTF16LE:
+      $data .= Transform::toString16LE(implode("\0\0", $this->_text));
+      break;
+    default:
+      $data .= implode("\0", $this->_text);
+    }
+    $this->setData($data);
+    return parent::__toString();
+  }
 }

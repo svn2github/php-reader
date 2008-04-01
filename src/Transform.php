@@ -332,9 +332,9 @@ final class Transform
   public static function fromString16($value)
   {
       if ($value{0} == 0xfe && $value{1} = 0xff)
-        return self::fromString16LE(substr($value, 2));
-      else
         return self::fromString16BE(substr($value, 2));
+      else
+        return self::fromString16LE(substr($value, 2));
   }
   
   /**

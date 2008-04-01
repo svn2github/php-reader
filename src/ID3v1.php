@@ -123,9 +123,9 @@ final class ID3v1
       return;
     
     $this->_reader = new Reader($filename);
-    if ($this->_reader->size < 128)
+    if ($this->_reader->getSize() < 128)
       return;
-    $this->_reader->offset = -128;
+    $this->_reader->setOffset(-128);
     if ($this->_reader->read(3) != "TAG") {
       $this->_reader = false; // reset reader, see write
       return;

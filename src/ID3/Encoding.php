@@ -69,4 +69,11 @@ interface ID3_Encoding
    * @return integer
    */
   public function getEncoding();
+  
+  /**
+   * Sets the text encoding.
+   * 
+   * @param integer $encoding The text encoding.
+   */
+  public function setEncoding($encoding);
 }

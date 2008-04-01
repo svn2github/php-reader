@@ -59,10 +59,12 @@ abstract class ID3_Frame_AbstractLink extends ID3_Frame
    *
    * @param Reader $reader The reader object.
    */
-  public function __construct($reader)
+  public function __construct($reader = null)
   {
     parent::__construct($reader);
-    $this->_link = preg_split("/\\x00/", $this->_data, 1);
+    
+    if ($reader !== null)
+      $this->_link = preg_split("/\\x00/", $this->_data, 1);
   }
 
   /**
@@ -71,4 +73,22 @@ abstract class ID3_Frame_AbstractLink extends ID3_Frame
    * @return string
    */
   public function getLink() { return $this->_link; }
+  
+  /**
+   * Sets the link.
+   * 
+   * @param string $link The link.
+   */
+  public function setLink($link) { $this->_link = $link; }
+  
+  /**
+   * Returns the frame raw data.
+   *
+   * @return string
+   */
+  public function __toString()
+  {
+    $this->setData($link);
+    return parent::__toString();
+  }
 }

@@ -39,14 +39,15 @@
 require_once("PHPUnit/Framework.php");
 require_once("PHPUnit/TextUI/TestRunner.php");
 
+ini_set("include_path", ini_get("include_path") . PATH_SEPARATOR . "../src/");
+
 $suite = new PHPUnit_Framework_TestSuite("PHP Reader");
 
 $dir = opendir(dirname(__FILE__));
 while (($file = readdir($dir)) !== false) {
   if ($file == basename(__FILE__))
     continue;
-  if (file_exists(dirname(__FILE__) . "/" . $file) &&
-      preg_match("/^Test.+\.php$/", $file)) {
+  if (preg_match("/^Test.+\.php$/", $file)) {
     require_once($file);
     $suite->addTestSuite(substr($file, 0, -4));
   }

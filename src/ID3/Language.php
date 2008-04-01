@@ -59,4 +59,11 @@ interface ID3_Language
    * @return string
    */
   public function getLanguage();
+  
+  /**
+   * Sets the text language code.
+   * 
+   * @param string $language The text language code.
+   */
+  public function setLanguage($language);
 }

@@ -71,7 +71,7 @@ abstract class ID3_Frame_AbstractText extends ID3_Frame
     if ($reader === null)
       return;
     
-    $this->_encoding = ord($this->_data{0});
+    $this->_encoding = Transform::fromInt8($this->_data[0]);
     $this->_data = substr($this->_data, 1);
     switch ($this->_encoding) {
     case self::UTF16:
@@ -98,9 +98,10 @@ abstract class ID3_Frame_AbstractText extends ID3_Frame
   /**
    * Sets the text encoding.
    * 
+   * @see ID3_Encoding
    * @param integer $encoding The text encoding.
    */
-  public function setEncoding($encoding) { $this->_encoding = $encoding; };
+  public function setEncoding($encoding) { $this->_encoding = $encoding; }
   
   /**
    * Returns the first text chunk the frame contains.
@@ -120,11 +121,13 @@ abstract class ID3_Frame_AbstractText extends ID3_Frame
    * Sets the text using given encoding.
    * 
    * @param mixed $text The test string or an array of strings.
+   * @param integer $encoding The text encoding.
    */
-  public function setText($text, $encoding = ID3_Encoding::UTF8)
+  public function setText($text, $encoding = false)
   {
-    $this->_encoding = $encoding;
     $this->_text = is_array($text) ? $text : array($text);
+    if ($encoding !== false)
+      $this->_encoding = $encoding;
   }
   
   /**

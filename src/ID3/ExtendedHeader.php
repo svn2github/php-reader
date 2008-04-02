@@ -78,13 +78,13 @@ final class ID3_ExtendedHeader extends ID3_Object
   private $_size;
 
   /** @var integer */
-  private $_flags;
+  private $_flags = 0;
   
   /** @var integer */
   private $_crc;
   
   /** @var integer */
-  private $_restrictions;
+  private $_restrictions = 0;
   
   /**
    * Constructs the class with given parameters and reads object related data
@@ -92,9 +92,12 @@ final class ID3_ExtendedHeader extends ID3_Object
    *
    * @param Reader $reader The reader object.
    */
-  public function __construct($reader)
+  public function __construct($reader = null)
   {
     parent::__construct($reader);
+    
+    if ($reader === null)
+      return;
 
     $offset = $this->_reader->getOffset();
     $this->_size = $this->decodeSynchsafe32($this->_reader->readUInt32BE());
@@ -105,9 +108,9 @@ final class ID3_ExtendedHeader extends ID3_Object
       $this->_reader->skip(1);
     if ($this->hasFlag(self::CRC32)) {
       $this->_reader->skip(1);
-      $this->_crc = Transform::fromInt32BE
-        (($this->_reader->read(1) << 4) &
-         $this->decodeSynchsafe32($this->_reader->read(4)));
+      $this->_crc =
+        Transform::fromInt8($this->_reader->read(1)) * (0xfffffff + 1) +
+        decodeSynchsafe32(Transform::fromUInt32BE($this->_reader->read(4)));
     }
     if ($this->hasFlag(self::RESTRICTED)) {
       $this->_reader->skip(1);
@@ -162,14 +165,28 @@ final class ID3_ExtendedHeader extends ID3_Object
   /**
    * Sets whether the CRC-32 should be generated upon tag write.
    *
-   * @param boolean $useCrc Whether CRC-32 should be generated
+   * @param boolean $useCrc Whether CRC-32 should be generated.
    */
-  public function setCrc($useCrc)
+  public function useCrc($useCrc)
   {
     if ($useCrc)
-      $this->setFlags($this->getFlags() | self::CDC32);
+      $this->setFlags($this->getFlags() | self::CRC32);
     else
-      $this->setFlags($this->getFlags() & ~self::CDC32);
+      $this->setFlags($this->getFlags() & ~self::CRC32);
+  }
+  
+  /**
+   * Sets the CRC-32. The CRC-32 value is calculated of all the frames in the
+   * tag and includes padding.
+   *
+   * @param integer $crc The 32-bit CRC value.
+   */
+  public function setCrc($crc)
+  {
+    if (is_bool($crc))
+      $this->useCrc($crc);
+    else
+      $this->_crc = $crc;
   }
   
   /**
@@ -235,7 +252,6 @@ final class ID3_ExtendedHeader extends ID3_Object
   /**
    * Returns the header raw data.
    *
-   * @todo CRC must use safesynch
    * @return string
    */
   public function toString()
@@ -243,7 +259,9 @@ final class ID3_ExtendedHeader extends ID3_Object
     return Transform::toUInt32BE($this->encodeSynchsafe32($this->_size)) .
       Transform::toInt8(1) . Transform::toInt8($this->_flags) .
       ($this->hasFlag(self::UPDATE) ? "\0" : "") .
-      ($this->hasFlag(self::CRC32) ? Transform::toInt8(5) . $this->_crc : "") .
+      ($this->hasFlag(self::CRC32) ? Transform::toInt8(5) .
+       Transform::toInt8($this->_crc & 0xf0000000 >> 28 & 0xf /* eq >>> 28 */) .
+       Transform::toUInt32BE(encodeSynchsafe32($this->_crc)) : "") .
       ($this->hasFlag(self::RESTRICTED) ? 
          Transform::toInt8(1) . Transform::toInt8($this->_restrictions) : "");
   }

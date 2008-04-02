@@ -36,7 +36,7 @@
  */
 
 /**#@+ @ignore */
-require_once("AbstractLink.php");
+require_once("ID3/Frame/AbstractLink.php");
 /**#@-*/
 
 /**

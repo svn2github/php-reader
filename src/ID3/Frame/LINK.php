@@ -91,17 +91,23 @@ final class ID3_Frame_LINK extends ID3_Frame
   /** @var string */
   private $_url;
   
+  /** @var string */
+  private $_qualifier;
+  
   /**
    * Constructs the class with given parameters and parses object related data.
    *
    * @param Reader $reader The reader object.
    */
-  public function __construct($reader)
+  public function __construct($reader = null)
   {
     parent::__construct($reader);
+    
+    if ($reader === null)
+      return;
 
     $this->_target = substr($this->_data, 0, 4);
-    list($this->_url, $this->_data) =
+    list($this->_url, $this->_qualifier) =
       preg_split("/\\x00/", substr($this->_data, 4), 2);
   }
   
@@ -111,18 +117,55 @@ final class ID3_Frame_LINK extends ID3_Frame
    * @return string
    */
   public function getTarget() { return $this->_target; }
-
+  
+  /**
+   * Sets the target tag identifier.
+   * 
+   * @param string $target The target tag identifier.
+   */
+  public function setTarget($target) { $this->_target = $target; }
+  
   /**
    * Returns the target tag URL.
    * 
    * @return string
    */
-  public function getURL() { return $this->_url; }
+  public function getUrl() { return $this->_url; }
   
   /**
-   * Returns the additional ID data.
+   * Sets the target tag URL.
+   * 
+   * @param string $url The target URL.
+   */
+  public function setUrl($url) { $this->_url = $url; }
+  
+  /**
+   * Returns the additional data to identify further the tag.
    * 
    * @return string
    */
-  public function getData() { return $this->_data; }
+  public function getQualifier() { return $this->_qualifier; }
+  
+  /**
+   * Sets the additional data to be used in tag identification.
+   * 
+   * @param string $identifier The qualifier.
+   */
+  public function setQualifier($qualifier)
+  {
+    $this->_qualifier = $qualifier;
+  }
+  
+  /**
+   * Returns the frame raw data.
+   *
+   * @return string
+   */
+  public function __toString()
+  {
+    $this->setData
+      (Transform::toString8(substr($this->_target, 0, 4), 4) .
+       $this->_url . "\0" . $this->_qualifier);
+    return parent::__toString();
+  }
 }

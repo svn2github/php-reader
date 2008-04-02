@@ -63,17 +63,41 @@ final class ID3_Frame_SEEK extends ID3_Frame
    *
    * @param Reader $reader The reader object.
    */
-  public function __construct($reader)
+  public function __construct($reader = null)
   {
     parent::__construct($reader);
+    
+    if ($reader === null)
+      return;
 
     $this->_minOffset = Transform::fromInt32BE($this->_data);
   }
-
+  
   /**
    * Returns the minimum offset to next tag in bytes.
    * 
    * @return integer
    */
   public function getMinimumOffset() { return $this->_minOffset; }
+  
+  /**
+   * Sets the minimum offset to next tag in bytes.
+   * 
+   * @param integer $minOffset The minimum offset.
+   */
+  public function setMinimumOffset($minOffset)
+  {
+    $this->_minOffset = $minOffset;
+  }
+  
+  /**
+   * Returns the frame raw data.
+   *
+   * @return string
+   */
+  public function __toString()
+  {
+    $this->setData(Transform::toInt32BE($this->_minOffset));
+    return parent::__toString();
+  }
 }

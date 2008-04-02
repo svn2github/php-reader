@@ -68,25 +68,53 @@ final class ID3_Frame_SIGN extends ID3_Frame
    *
    * @param Reader $reader The reader object.
    */
-  public function __construct($reader)
+  public function __construct($reader = null)
   {
     parent::__construct($reader);
+    
+    if ($reader === null)
+      return;
 
     $this->_group = substr($this->_data, 0, 1);
     $this->_signature = substr($this->_data, 1);
   }
-
+  
   /**
-   * Returns the group symbol.
+   * Returns the group symbol byte.
    * 
    * @return integer
    */
   public function getGroup() { return $this->_group; }
-
+  
+  /**
+   * Sets the group symbol byte.
+   * 
+   * @param integer $group The group symbol byte.
+   */
+  public function setGroup($group) { $this->_group = $group; }
+  
   /**
    * Returns the signature binary data.
    * 
    * @return string
    */
   public function getSignature() { return $this->_signature; }
+  
+  /**
+   * Sets the signature binary data.
+   * 
+   * @param string $signature The signature binary data string.
+   */
+  public function setSignature($signature) { $this->_signature = $signature; }
+  
+  /**
+   * Returns the frame raw data.
+   *
+   * @return string
+   */
+  public function __toString()
+  {
+    $this->setData(Transform::toInt8($this->_group) . $this->_signature);
+    return parent::__toString();
+  }
 }

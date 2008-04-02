@@ -54,31 +54,56 @@ require_once("ID3/Frame.php");
 final class ID3_Frame_PCNT extends ID3_Frame
 {
   /** @var integer */
-  private $_counter;
+  private $_counter = 0;
   
   /**
    * Constructs the class with given parameters and parses object related data.
    *
    * @param Reader $reader The reader object.
    */
-  public function __construct($reader)
+  public function __construct($reader = null)
   {
     parent::__construct($reader);
+    
+    if ($reader === null)
+      return;
 
-    switch (strlen($this->_data)) {
-    case 8:
+    if (strlen($this->_data) > 4)
       $this->_counter = Transform::fromInt64BE($this->_data);
-      break;
-    case 4:
-      $this->_counter = Transform::fromInt32BE($this->_data);
-      break;
-    }
+    else
+      $this->_counter = Transform::fromUInt32BE($this->_data);
   }
-
+  
   /**
    * Returns the counter.
    * 
    * @return integer
    */
   public function getCounter() { return $this->_counter; }
+  
+  /**
+   * Adds counter by one.
+   */
+  public function addCounter() { $this->_counter++; }
+  
+  /**
+   * Sets the counter value.
+   * 
+   * @param integer $counter The counter value.
+   */
+  public function setCounter($counter) { $this->_counter = $counter; }
+  
+  /**
+   * Returns the frame raw data.
+   *
+   * @return string
+   */
+  public function __toString()
+  {
+    $this->setData
+      ($this->_counter > 4294967295 ?
+       Transform::toInt64BE($this->_counter) :
+       Transform::toInt32BE($this->_counter));
+    return parent::__toString();
+  }
 }

@@ -41,7 +41,7 @@ require_once("ID3v2.php");
 /**#@-*/
 
 /**
- * Unit test case for ID3v1 class.
+ * Unit test case for ID3v2 class.
  *
  * @package    php-reader
  * @subpackage Tests
@@ -55,6 +55,7 @@ final class TestID3v2 extends PHPUnit_Framework_TestCase
   function testTagCreate()
   {
     $id3 = new ID3v2();
+    
     $id3->tit2->text = "Title 1";
     $this->assertEquals("Title 1",   $id3->tit2->text);
     $id3->tope->text = "Artist 1";
@@ -71,13 +72,12 @@ final class TestID3v2 extends PHPUnit_Framework_TestCase
     $this->assertEquals("Classical", $id3->tcon->text);
     
     $id3->write("id3v2.tag");
-    echo "create";
   }
 
   function testTagReadAfterCreate()
   {
     $id3 = new ID3v2("id3v2.tag");
-    echo "read after create";
+    
     $this->assertEquals("Title 1",   $id3->tit2->text);
     $this->assertEquals("Artist 1",  $id3->tope->text);
     $this->assertEquals("Album 1",   $id3->talb->text);
@@ -112,6 +112,7 @@ final class TestID3v2 extends PHPUnit_Framework_TestCase
   function testTagReadAfterChange()
   {
     $id3 = new ID3v2("id3v2.tag");
+    
     $this->assertEquals("Title 2",   $id3->tit2->text);
     $this->assertEquals("Artist 2",  $id3->tope->text);
     $this->assertEquals("Album 2",   $id3->talb->text);

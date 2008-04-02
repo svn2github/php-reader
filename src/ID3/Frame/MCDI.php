@@ -68,4 +68,11 @@ final class ID3_Frame_MCDI extends ID3_Frame
    * @return string
    */
   public function getData() { return $this->_data; }
+  
+  /**
+   * Sets the CD TOC binary dump.
+   * 
+   * @param string $data The CD TOC binary dump string.
+   */
+  public function setData($data) { parent::setData($data); }
 }

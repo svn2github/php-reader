@@ -112,6 +112,7 @@ final class ID3v2
    *
    * @todo  Only limited subset of flags are processed.
    * @todo  Utilize the SEEK frame and search for a footer to find the tag
+   * @todo  Utilize the LINK frame to fetch frames from other sources
    * @param string $filename The path to the file.
    * @param Array  $options  The options array.
    */
@@ -426,8 +427,6 @@ final class ID3v2
   public function __toString()
   {
     $data = "";
-    if ($this->hasExtendedHeader())
-      $data .= $this->getExtendedHeader();
     foreach ($this->_frames as $frames)
       foreach ($frames as $frame)
         $data .= $frame;
@@ -447,10 +446,21 @@ final class ID3v2
       else
         $padlen = ceil(log(0.2 * ($datalen / 1024 + 10), 10) * 1024);
     }
+    $data = str_pad($data, $datalen + $padlen, "\0");
     
-    $this->_header->setSize($datalen + $padlen);
+    if ($this->hasExtendedHeader()) {
+      if ($this->_extendedHeader->hasFlag(ID3_ExtendedHeader::CRC32)) {
+        $crc = crc32($data);
+        if ($crc & 0x80000000)
+          $crc = -(($crc ^ 0xffffffff) + 1);
+        $this->_extendedHeader->setCrc($crc);
+      }
+      $data = $this->getExtendedHeader() . $data;
+    }
     
-    return "ID3" . $this->_header . str_pad($data, $datalen + $padlen, "\0") .
+    $this->_header->setSize(strlen($data));
+    
+    return "ID3" . $this->_header . $data .
       ($this->hasFooter() ? "3DI" . $this->getFooter() : "");
   }
 }

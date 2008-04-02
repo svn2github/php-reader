@@ -75,7 +75,7 @@ abstract class ID3_Frame_AbstractLink extends ID3_Frame
   public function getLink() { return $this->_link; }
   
   /**
-   * Sets the link.
+   * Sets the link. The link encoding is always ISO-8859-1.
    * 
    * @param string $link The link.
    */

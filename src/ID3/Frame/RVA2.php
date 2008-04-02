@@ -70,15 +70,8 @@ final class ID3_Frame_RVA2 extends ID3_Frame
    * @var Array
    */
   public static $types = array
-    (0x00 => "Other",
-     0x01 => "Master volume",
-     0x02 => "Front right",
-     0x03 => "Front left",
-     0x04 => "Back right",
-     0x05 => "Back left",
-     0x06 => "Front centre",
-     0x07 => "Back centre",
-     0x08 => "Subwoofer");
+    ("Other", "Master volume", "Front right", "Front left", "Back right",
+     "Back left", "Front centre", "Back centre", "Subwoofer");
   
   /** @var string */
   private $_device;
@@ -91,33 +84,44 @@ final class ID3_Frame_RVA2 extends ID3_Frame
    *
    * @param Reader $reader The reader object.
    */
-  public function __construct($reader)
+  public function __construct($reader = null)
   {
     parent::__construct($reader);
-
+    
+    if ($reader === null)
+      return;
+    
     list ($this->_device, $this->_data) =
       preg_split("/\\x00/", $this->_data, 2);
     
     for ($i = $j = 0; $i < 9; $i++) {
       $this->_adjustments[$i] = array
-        ("channelType" => substr($this->_data, $j++, 1),
+        ("channelType" => Transform::fromInt8($this->_data[$j++]),
          "volumeAdjustment" =>
            Transform::fromInt16BE(substr($this->_data, $j++, 2)));
-      $bitsInPeak = ord(substr($this->_data, (++$j)++, 1));
+      $bitsInPeak = Transform::fromInt8($this->_data[(++$j)++]);
       $bytesInPeak = $bitsInPeak > 0 ? ceil($bitsInPeak / 8) : 0;
       switch ($bytesInPeak) {
-      case 32:
-      case 24:
-        $this->_adjustments[$i]["peakVolume"] =
-          Transform::fromInt32BE(substr($this->_data, $j, $bytesInPeak));
-        $j += $bytesInPeak;
-        break;
-      case 16:
-        $this->_adjustments[$i]["peakVolume"] =
-          Transform::fromInt16BE(substr($this->_data, $j, $bytesInPeak));
-        $j += $bytesInPeak;
-        break;
       case 8:
+      case 7:
+      case 6:
+      case 5:
+        $this->_adjustments[$i]["peakVolume"] =
+          Transform::fromInt64BE(substr($this->_data, $j, $bytesInPeak));
+        $j += $bytesInPeak;
+        break;
+      case 4:
+      case 3:
+        $this->_adjustments[$i]["peakVolume"] =
+          Transform::fromUInt32BE(substr($this->_data, $j, $bytesInPeak));
+        $j += $bytesInPeak;
+        break;
+      case 2:
+        $this->_adjustments[$i]["peakVolume"] =
+          Transform::fromUInt16BE(substr($this->_data, $j, $bytesInPeak));
+        $j += $bytesInPeak;
+        break;
+      case 1:
         $this->_adjustments[$i]["peakVolume"] =
           Transform::fromInt8(substr($this->_data, $j, $bytesInPeak));
         $j += $bytesInPeak;
@@ -133,6 +137,13 @@ final class ID3_Frame_RVA2 extends ID3_Frame
   public function getDevice() { return $this->_device; }
    
   /**
+   * Sets the device where the adjustments should apply.
+   *
+   * @param string $device The device.
+   */
+  public function setDevice($device) { $this->_device = $device; }
+  
+  /**
    * Returns the array containing volume adjustments for each channel. Volume
    * adjustments are arrays themselves containing the following keys:
    * channelType, volumeAdjustment, peakVolume.
@@ -140,4 +151,44 @@ final class ID3_Frame_RVA2 extends ID3_Frame
    * @return Array
    */
   public function getAdjustments() { return $this->_adjustments; }
+  
+  /**
+   * Sets the array of volume adjustments for each channel. Each volume
+   * adjustment is an array too containing the following keys: channelType,
+   * volumeAdjustment, peakVolume.
+   * 
+   * @param Array $adjustments The volume adjustments array.
+   */
+  public function setAdjustments($adjustments)
+  {
+    $this->_adjustments = $adjustments;
+  }
+  
+  /**
+   * Returns the frame raw data.
+   *
+   * @return string
+   */
+  public function __toString()
+  {
+    $data = $this->_device . "\0";
+    foreach ($this->_adjustments as $channel) {
+      $data .= Transform::toInt8($channel["channelType"]) .
+        Transform::toInt16BE($channel["volumeAdjustment"]);
+      if ($channel["peakVolume"] < 255)
+        $data .= Transform::toInt8(8) .
+          Transform::toInt8($channel["peakVolume"]);
+      else if ($channel["peakVolume"] < 65535)
+        $data .= Transform::toInt8(16) .
+          Transform::toUInt16BE($channel["peakVolume"]);
+      else if ($channel["peakVolume"] < 4294967295)
+        $data .= Transform::toInt8(32) .
+          Transform::toUInt32BE($channel["peakVolume"]);
+      else
+        $data .= Transform::toInt8(64) .
+          Transform::toUInt64BE($channel["peakVolume"]);
+    }
+    $this->setData($data);
+    return parent::__toString();
+  }
 }

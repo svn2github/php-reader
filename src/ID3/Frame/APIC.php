@@ -79,30 +79,36 @@ final class ID3_Frame_APIC extends ID3_Frame
      "Publisher/Studio logotype");
   
   /** @var integer */
-  private $_encoding;
+  private $_encoding = ID3_Encoding::UTF8;
   
   /** @var string */
-  private $_mimeType;
+  private $_mimeType = "image/unknown";
   
   /** @var integer */
-  private $_imageType;
+  private $_imageType = 0;
   
   /** @var string */
   private $_description;
+  
+  /** @var string */
+  private $_imageData;
   
   /**
    * Constructs the class with given parameters and parses object related data.
    *
    * @param Reader $reader The reader object.
    */
-  public function __construct($reader)
+  public function __construct($reader = null)
   {
     parent::__construct($reader);
+    
+    if ($reader === null)
+      return;
 
-    $this->_encoding = substr($this->_data, 0, 1);
+    $this->_encoding = Transform::fromInt8($this->_data[0]);
     $this->_mimeType = substr
       ($this->_data, 1, ($pos = strpos($this->_data, "\0", 1)) - 1);
-    $this->_pictureType = ord($this->_data{$pos++});
+    $this->_pictureType = Transform::fromInt8($this->_data[$pos++]);
     $this->_data = substr($this->_data, $pos);
     
     switch ($this->_encoding) {
@@ -128,14 +134,29 @@ final class ID3_Frame_APIC extends ID3_Frame
    * @return integer
    */
   public function getEncoding() { return $this->_encoding; }
-
+  
   /**
-   * Returns the MIME type. The MIME type is always encoded with ISO-8859-1.
+   * Sets the text encoding.
+   * 
+   * @see ID3_Encoding
+   * @param integer $encoding The text encoding.
+   */
+  public function setEncoding($encoding) { $this->_encoding = $encoding; }
+  
+  /**
+   * Returns the MIME type. The MIME type is always ISO-8859-1 encoded.
    * 
    * @return string
    */
   public function getMimeType() { return $this->_mimeType; }
-
+  
+  /**
+   * Sets the MIME type. The MIME type is always ISO-8859-1 encoded.
+   * 
+   * @param string $mimeType The MIME type.
+   */
+  public function setMimeType($mimeType) { $this->_mimeType = $mimeType; }
+  
   /**
    * Returns the image type.
    * 
@@ -144,16 +165,69 @@ final class ID3_Frame_APIC extends ID3_Frame
   public function getImageType() { return $this->_imageType; }
 
   /**
+   * Sets the image type code.
+   * 
+   * @param integer $imageType The image type code.
+   */
+  public function setImageType($imageType) { $this->_imageType = $imageType; }
+
+  /**
    * Returns the file description.
    * 
    * @return string
    */
   public function getDescription() { return $this->_description; }
-
+  
   /**
-   * Returns the embedded picture data.
+   * Sets the content description text using given encoding.
+   * 
+   * @param string $description The content description text.
+   * @param integer $encoding The text encoding.
+   */
+  public function setDescription($description, $encoding = false)
+  {
+    $this->_description = $description;
+    if ($encoding !== false)
+      $this->_encoding = $encoding;
+  }
+  
+  /**
+   * Returns the embedded image data.
    * 
    * @return string
    */
-  public function getData() { return $this->_data; }
+  public function getData() { return $this->_imageData; }
+  
+  /**
+   * Sets the embedded image data.
+   * 
+   * @param string $imageData The image data.
+   */
+  public function setData($imageData) { $this->_imageData = $imageData; }
+  
+  /**
+   * Returns the frame raw data.
+   *
+   * @return string
+   */
+  public function __toString()
+  {
+    $data = Transform::toInt8($this->_encoding) . $this->_mimeType . "\0" .
+      Transform::toInt8($this->_imageType);
+    switch ($this->_encoding) {
+    case self::UTF16:
+      $data .= Transform::toString16($this->_description) . "\0\0";
+      break;
+    case self::UTF16BE:
+      $data .= Transform::toString16BE($this->_description) . "\0\0";
+      break;
+    case self::UTF16LE:
+      $data .= Transform::toString16LE($this->_description) . "\0\0";
+      break;
+    default:
+      $data .= $this->_description . "\0";
+    }
+    parent::setData($data . $this->_imageData);
+    return parent::__toString();
+  }
 }

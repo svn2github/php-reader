@@ -85,7 +85,7 @@ final class ID3_Frame_ETCO extends ID3_Frame
      "One more byte of events follows");
   
   /** @var integer */
-  private $_format;
+  private $_format = 1;
   
   /** @var Array */
   private $_events = array();
@@ -95,15 +95,17 @@ final class ID3_Frame_ETCO extends ID3_Frame
    *
    * @param Reader $reader The reader object.
    */
-  public function __construct($reader)
+  public function __construct($reader = null)
   {
     parent::__construct($reader);
-
-    $this->_format = ord($this->_data{0});
     
+    if ($reader === null)
+      return;
+    
+    $this->_format = Transform::fromInt8($this->_data[0]);
     for ($i = 1; $i < $this->getSize(); $i += 5) {
       $this->_events[Transform::fromInt32BE(substr($this->_data, $i + 1, 4))] =
-        $data = $this->_data{$i};
+        $data = Transform::fromInt8($this->_data[$i]);
       if ($data == 0xff)
         break;
     }
@@ -116,12 +118,49 @@ final class ID3_Frame_ETCO extends ID3_Frame
    * @return integer
    */
   public function getFormat() { return $this->_format; }
-
+  
+  /**
+   * Sets the timing format.
+   * 
+   * @see ID3_Timing
+   * @param integer $format The timing format.
+   */
+  public function setFormat($format) { $this->_format = $format; }
+  
   /**
    * Returns the events as an associated array having the timestamps as keys and
    * the event types as values.
    * 
-   * @return string
+   * @return Array
    */
   public function getEvents() { return $this->_events; }
+  
+  /**
+   * Sets the events using given format. The value must be an associated array
+   * having the timestamps as keys and the event types as values.
+   * 
+   * @param Array $events The events array.
+   * @param integer $format The timing format.
+   */
+  public function setEvents($events, $format = false)
+  {
+    $this->_events = events;
+    if ($format !== false)
+      $this->_format = $format;
+  }
+  
+  /**
+   * Returns the frame raw data.
+   *
+   * @return string
+   */
+  public function __toString()
+  {
+    $data = Transform::toInt8($this->_format);
+    sort($this->_events);
+    foreach ($this->_events as $timestamp => $type)
+      $data .= Transform::toInt8($type) . Transform::toInt32BE($timestamp);
+    $this->setData($data);
+    return parent::__toString();
+  }
 }

@@ -60,7 +60,7 @@ require_once("ID3/Frame.php");
  * is connected to a arbitrary point in the stream, such as radio or multicast,
  * then the recommended buffer size frame should be included in every tag.
  *
- * The buffer size should be kept to a minimum. There may only be one "RBUF"
+ * The buffer size should be kept to a minimum. There may only be one RBUF
  * frame in each tag.
  *
  * @package    php-reader
@@ -92,22 +92,32 @@ final class ID3_Frame_RBUF extends ID3_Frame
    *
    * @param Reader $reader The reader object.
    */
-  public function __construct($reader)
+  public function __construct($reader = null)
   {
     parent::__construct($reader);
+    
+    if ($reader === null)
+      return;
 
     $this->_size = Transform::fromInt32BE(substr($this->_data, 0, 3));
-    $this->_flags = substr($this->_data, 3, 1);
+    $this->_flags = Transform::fromInt8($this->_data[3]);
     $this->_offset = Transform::fromInt32BE(substr($this->_data, 4, 4));
   }
-
+  
   /**
    * Returns the buffer size.
    * 
    * @return integer
    */
   public function getSize() { return $this->_size; }
-
+  
+  /**
+   * Sets the buffer size.
+   * 
+   * @param integer $size The buffer size.
+   */
+  public function setSize($size) { $this->_size = $size; }
+  
   /**
    * Checks whether or not the flag is set. Returns <var>true</var> if the flag
    * is set, <var>false</var> otherwise.
@@ -118,9 +128,43 @@ final class ID3_Frame_RBUF extends ID3_Frame
   public function hasFlag($flag) { return ($this->_flags & $flag) == $flag; }
   
   /**
+   * Returns the flags byte.
+   * 
+   * @return integer
+   */
+  public function getFlags($flags) { return $this->_flags; }
+  
+  /**
+   * Sets the flags byte.
+   * 
+   * @param string $flags The flags byte.
+   */
+  public function setFlags($flags) { $this->_flags = $flags; }
+  
+  /**
    * Returns the offset to next tag.
    * 
    * @return integer
    */
-  public function getOffset() { return $this->_size; }
+  public function getOffset() { return $this->_offset; }
+  
+  /**
+   * Sets the offset to next tag.
+   * 
+   * @param integer $offset The offset.
+   */
+  public function setOffset($offset) { $this->_offset = $offset; }
+  
+  /**
+   * Returns the frame raw data.
+   *
+   * @return string
+   */
+  public function __toString()
+  {
+    $this->setData
+      (substr(Transform::toInt32BE($this->_size) << 8, 0, 3) .
+       Transform::toInt8($this->_flags) . Transform::toInt32BE($this->_offset));
+    return parent::__toString();
+  }
 }

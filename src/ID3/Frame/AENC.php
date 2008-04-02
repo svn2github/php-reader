@@ -68,19 +68,25 @@ final class ID3_Frame_AENC extends ID3_Frame
   /** @var integer */
   private $_previewLength;
   
+  /** @var string */
+  private $_encryptionInfo;
+  
   /**
    * Constructs the class with given parameters and parses object related data.
    *
    * @param Reader $reader The reader object.
    */
-  public function __construct($reader)
+  public function __construct($reader = null)
   {
     parent::__construct($reader);
+    
+    if ($reader === null)
+      return;
 
     list($this->_id, $this->_data) = preg_split("/\\x00/", $this->_data, 2);
     $this->_previewStart = substr($this->_data, 0, 2);
     $this->_previewLength = substr($this->_data, 2, 2);
-    $this->_data = substr($this->_data, 4);
+    $this->_encryptionInfo = substr($this->_data, 4);
   }
 
   /**
@@ -89,25 +95,75 @@ final class ID3_Frame_AENC extends ID3_Frame
    * @return string
    */
   public function getIdentifier() { return $this->_id; }
-
+  
+  /**
+   * Sets the owner identifier string.
+   * 
+   * @param string $id The owner identifier string.
+   */
+  public function setIdentifier($id) { $this->_id = $id; }
+  
   /**
    * Returns the pointer to an unencrypted part of the audio in frames.
    * 
    * @return integer
    */
   public function getPreviewStart() { return $this->_previewStart; }
-
+  
+  /**
+   * Sets the pointer to an unencrypted part of the audio in frames.
+   * 
+   * @param integer $previewStart The pointer to an unencrypted part.
+   */
+  public function setPreviewStart($previewStart)
+  {
+    $this->_previewStart = $previewStart;
+  }
+  
   /**
    * Returns the length of the preview in frames.
    * 
    * @return integer
    */
   public function getPreviewLength() { return $this->_previewLength; }
-
+  
+  /**
+   * Sets the length of the preview in frames.
+   * 
+   * @param integer $previewLength The length of the preview.
+   */
+  public function setPreviewLength($previewLength)
+  {
+    $this->_previewLength = $previewLength;
+  }
+  
   /**
    * Returns the encryption info.
    * 
    * @return string
    */
-  public function getData() { return $this->_data; }
+  public function getEncryptionInfo() { return $this->_encryptionInfo; }
+  
+  /**
+   * Sets the encryption info binary string.
+   * 
+   * @param string $encryptionInfo The data string.
+   */
+  public function setEncryptionInfo($encryptionInfo)
+  {
+    $this->_encryptionInfo = $encryptionInfo;
+  }
+  
+  /**
+   * Returns the frame raw data.
+   *
+   * @return string
+   */
+  public function __toString()
+  {
+    $this->setData
+      ($this->_id . "\0" . Transform::toInt16BE($this->_previewStart) .
+       Transform::toInt16BE($this->_previewLength) . $this->_encryptionInfo);
+    return parent::__toString();
+  }
 }

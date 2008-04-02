@@ -59,6 +59,7 @@ require_once("ID3/Frame.php");
  *
  * There may only be one MLLT frame in each tag.
  *
+ * @todo       Data parsing and write support
  * @package    php-reader
  * @subpackage ID3
  * @author     Sven Vollbehr <svollbehr@gmail.com>
@@ -85,18 +86,21 @@ final class ID3_Frame_MLLT extends ID3_Frame
    *
    * @param Reader $reader The reader object.
    */
-  public function __construct($reader)
+  public function __construct($reader = null)
   {
     parent::__construct($reader);
+    
+    if ($reader === null)
+      throw new ID3_Exception("Write not supported yet");
 
     $this->_frames = Transform::fromInt16BE(substr($this->_data, 0, 2));
     $this->_bytes = Transform::fromInt32BE(substr($this->_data, 2, 3));
     $this->_milliseconds = Transform::fromInt32BE(substr($this->_data, 5, 3));
     
-    $byteDevBits = ord(substr($this->_data, 8, 1));
-    $millisDevBits = ord(substr($this->_data, 9, 1));
+    $byteDevBits = Transform::fromInt8($this->_data[8]);
+    $millisDevBits = Transform::fromInt8($this->_data[9]);
     
-    $this->_data = substr($this->_data, 10); // FIXME: Better parsing of data
+    // $data = substr($this->_data, 10);
   }
 
   /**
@@ -107,19 +111,43 @@ final class ID3_Frame_MLLT extends ID3_Frame
   public function getFrames() { return $this->_frames; }
   
   /**
+   * Sets the number of MPEG frames between reference.
+   * 
+   * @param integer $frames The number of MPEG frames.
+   */
+  public function setFrames($frames) { $this->_frames = $frames; }
+  
+  /**
    * Returns the number of bytes between reference.
    * 
    * @return integer
    */
   public function getBytes() { return $this->_bytes; }
-
+  
+  /**
+   * Sets the number of bytes between reference.
+   * 
+   * @param integer $bytes The number of bytes.
+   */
+  public function setBytes($bytes) { $this->_bytes = $bytes; }
+  
   /**
    * Returns the number of milliseconds between references.
    * 
    * @return integer
    */
   public function getMilliseconds() { return $this->_milliseconds; }
-
+  
+  /**
+   * Sets the number of milliseconds between references.
+   * 
+   * @param integer $milliseconds The number of milliseconds.
+   */
+  public function setMilliseconds($milliseconds)
+  {
+    return $this->_milliseconds;
+  }
+  
   /**
    * Returns the deviations as an array. Each value is an array containing two
    * values, ie the deviation in bytes, and the deviation in milliseconds,
@@ -128,4 +156,13 @@ final class ID3_Frame_MLLT extends ID3_Frame
    * @return Array
    */
   public function getDeviation() { return $this->_deviation; }
+  
+  /**
+   * Sets the deviations array. The array must consist of arrays, each of which
+   * having two values, the deviation in bytes, and the deviation in
+   * milliseconds, respectively.
+   * 
+   * @param Array $deviation The deviations array.
+   */
+  public function setDeviation($deviation) { $this->_deviation = $deviation; }
 }

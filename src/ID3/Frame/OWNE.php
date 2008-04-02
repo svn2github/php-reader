@@ -58,10 +58,10 @@ final class ID3_Frame_OWNE extends ID3_Frame
   implements ID3_Encoding
 {
   /** @var integer */
-  private $_encoding;
+  private $_encoding = ID3_Encoding::UTF8;
   
   /** @var string */
-  private $_currency;
+  private $_currency = "EUR";
 
   /** @var string */
   private $_price;
@@ -77,12 +77,16 @@ final class ID3_Frame_OWNE extends ID3_Frame
    *
    * @param Reader $reader The reader object.
    */
-  public function __construct($reader)
+  public function __construct($reader = null)
   {
     parent::__construct($reader);
+    
+    if ($reader === null)
+      return;
 
-    $this->_encoding = ord($this->_data{0});
-    list($tmp, $this->_data) = preg_split("/\\x00/", substr($this->_data, 1), 2);
+    $this->_encoding = Transform::fromInt8($this->_data[0]);
+    list($tmp, $this->_data) =
+      preg_split("/\\x00/", substr($this->_data, 1), 2);
     $this->_currency = substr($tmp, 0, 3);
     $this->_price = substr($tmp, 3);
     $this->_date = substr($this->_data, 0, 8);
@@ -108,6 +112,14 @@ final class ID3_Frame_OWNE extends ID3_Frame
   public function getEncoding() { return $this->_encoding; }
   
   /**
+   * Sets the text encoding.
+   * 
+   * @see ID3_Encoding
+   * @param integer $encoding The text encoding.
+   */
+  public function setEncoding($encoding) { $this->_encoding = $encoding; }
+  
+  /**
    * Returns the currency used in transaction, encoded according to
    * {@link http://www.iso.org/iso/support/faqs/faqs_widely_used_standards/widely_used_standards_other/currency_codes/currency_codes_list-1.htm
    * ISO 4217} alphabetic currency code.
@@ -117,6 +129,15 @@ final class ID3_Frame_OWNE extends ID3_Frame
   public function getCurrency() { return $this->_currency; }
   
   /**
+   * Sets the currency used in transaction, encoded according to
+   * {@link http://www.iso.org/iso/support/faqs/faqs_widely_used_standards/widely_used_standards_other/currency_codes/currency_codes_list-1.htm
+   * ISO 4217} alphabetic currency code.
+   * 
+   * @param string $currency The currency code.
+   */
+  public function setCurrency($currency) { $this->_currency = $currency; }
+  
+  /**
    * Returns the price as a numerical string using "." as the decimal separator.
    * 
    * @return string
@@ -124,16 +145,73 @@ final class ID3_Frame_OWNE extends ID3_Frame
   public function getPrice() { return $this->_price; }
   
   /**
+   * Sets the price.
+   * 
+   * @param integer $price The price.
+   */
+  public function setPrice($price)
+  {
+    $this->_price = number_format($price, 2, ".", "");
+  }
+  
+  /**
    * Returns the date of purchase as an 8 character date string (YYYYMMDD).
    * 
    * @return string
    */
-  public function getDate() { return $this->_price; }
-
+  public function getDate() { return $this->_date; }
+  
+  /**
+   * Sets the date of purchase. The date must be an 8 character date string
+   * (YYYYMMDD).
+   * 
+   * @param string $date The date string.
+   */
+  public function setDate($date) { $this->_date = $date; }
+  
   /**
    * Returns the name of the seller.
    * 
    * @return string
    */
   public function getSeller() { return $this->_seller; }
+  
+  /**
+   * Sets the name of the seller using given encoding.
+   * 
+   * @param string $seller The name of the seller.
+   * @param integer $encoding The text encoding.
+   */
+  public function setSeller($seller, $encoding = false)
+  {
+    $this->_seller = $seller;
+    if ($encoding !== false)
+      $this->_encoding = $encoding;
+  }
+  
+  /**
+   * Returns the frame raw data.
+   *
+   * @return string
+   */
+  public function __toString()
+  {
+    $data = Transform::toInt8($this->_encoding) . $this->_currency .
+      $this->_price . "\0" . $this->_date;
+    switch ($this->_encoding) {
+    case self::UTF16:
+      $data .= Transform::toString16($this->_seller);
+      break;
+    case self::UTF16BE:
+      $data .= Transform::toString16BE($this->_seller);
+      break;
+    case self::UTF16LE:
+      $data .= Transform::toString16LE($this->_seller);
+      break;
+    default:
+      $data .= $this->_seller;
+    }
+    $this->setData($data);
+    return parent::__toString();
+  }
 }

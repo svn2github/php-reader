@@ -57,7 +57,7 @@ final class ID3_Frame_POSS extends ID3_Frame
   implements ID3_Timing
 {
   /** @var integer */
-  private $_format;
+  private $_format = 1;
   
   /** @var string */
   private $_position;
@@ -67,12 +67,15 @@ final class ID3_Frame_POSS extends ID3_Frame
    *
    * @param Reader $reader The reader object.
    */
-  public function __construct($reader)
+  public function __construct($reader = null)
   {
     parent::__construct($reader);
+    
+    if ($reader === null)
+      return;
 
-    $this->_format = ord($this->_data{0});
-    $this->_position = Transform::fromInt32BE(substr($this->_data, 1, 4));
+    $this->_format = Transform::fromInt8($this->_data[0]);
+    $this->_position = Transform::fromUInt32BE(substr($this->_data, 1, 4));
   }
 
   /**
@@ -83,10 +86,45 @@ final class ID3_Frame_POSS extends ID3_Frame
   public function getFormat() { return $this->_format; }
 
   /**
+   * Sets the timing format.
+   * 
+   * @see ID3_Timing
+   * @param integer $format The timing format.
+   */
+  public function setFormat($format) { $this->_format = $format; }
+  
+  /**
    * Returns the position where in the audio the listener starts to receive,
    * i.e. the beginning of the next frame.
    * 
    * @return integer
    */
   public function getPosition() { return $this->_position; }
+  
+  /**
+   * Sets the position where in the audio the listener starts to receive,
+   * i.e. the beginning of the next frame, using given format.
+   * 
+   * @param integer $position The position.
+   * @param integer $format The timing format.
+   */
+  public function setPosition($position, $format = false)
+  {
+    $this->_position = $position;
+    if ($format !== false)
+      $this->_format = $format;
+  }
+  
+  /**
+   * Returns the frame raw data.
+   *
+   * @return string
+   */
+  public function __toString()
+  {
+    $this->setData
+      (Transform::toInt8($this->_format) .
+       Transform::toUInt32($this->_position));
+    return parent::__toString();
+  }
 }

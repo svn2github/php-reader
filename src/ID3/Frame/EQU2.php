@@ -61,13 +61,13 @@ final class ID3_Frame_EQU2 extends ID3_Frame
    * one adjustment level to another occurs in the middle between two adjustment
    * points.
    */
-  const BAND = 0x00;
+  const BAND = 0;
   
   /**
    * Interpolation type that defines that interpolation between adjustment
    * points is linear.
    */
-  const LINEAR = 0x01;
+  const LINEAR = 1;
 
   /** @var integer */
   private $_interpolation;
@@ -83,20 +83,24 @@ final class ID3_Frame_EQU2 extends ID3_Frame
    *
    * @param Reader $reader The reader object.
    */
-  public function __construct($reader)
+  public function __construct($reader = null)
   {
     parent::__construct($reader);
-
-    $this->_interpolation = substr($this->_data, 0, 1);
+    
+    if ($reader === null)
+      return;
+    
+    $this->_interpolation = Transform::fromInt8($this->_data[0]);
     list ($this->_device, $this->_data) =
       preg_split("/\\x00/", substr($this->_data, 1), 2);
     
     for ($i = 0; $i < strlen($this->_data); $i += 8)
-      $this->_adjustments[Transform::fromInt16BE(substr($this->_data, $j, 2))] = 
-        Transform::fromInt16BE(substr($this->_data, $j + 2, 2));
+      $this->_adjustments
+        [Transform::fromInt16BE(substr($this->_data, $j, 2)) / 2] = 
+          Transform::fromInt16BE(substr($this->_data, $j + 2, 2)) / 512;
     sort($this->_adjustments);
   }
-
+  
   /**
    * Returns the interpolation method. The interpolation method describes which
    * method is preferred when an interpolation between the adjustment point that
@@ -105,7 +109,19 @@ final class ID3_Frame_EQU2 extends ID3_Frame
    * @return integer
    */
   public function getInterpolation() { return $this->_interpolation; }
-
+  
+  /**
+   * Sets the interpolation method. The interpolation method describes which
+   * method is preferred when an interpolation between the adjustment point that
+   * follows.
+   *
+   * @param integer $interpolation The interpolation method code.
+   */
+  public function setInterpolation($interpolation)
+  {
+    $this->_interpolation = $interpolation;
+  }
+  
   /**
    * Returns the device where the adjustments should apply.
    *
@@ -114,21 +130,47 @@ final class ID3_Frame_EQU2 extends ID3_Frame
   public function getDevice() { return $this->_device; }
    
   /**
-   * Returns the array containing adjustments having fequencies as keys and
+   * Sets the device where the adjustments should apply.
+   *
+   * @param string $device The device.
+   */
+  public function setDevice($device) { $this->_device = $device; }
+   
+  /**
+   * Returns the array containing adjustments having frequencies as keys and
    * their corresponding adjustments as values.
    *
-   * The frequency is stored in units of 1/2 Hz, giving it a range from 0 to
-   * 32767 Hz.
-   *
-   * The volume adjustment is encoded as a fixed point decibel value, 16 bit
-   * signed integer representing (adjustment*512), giving +/- 64 dB with a
-   * precision of 0.001953125 dB. E.g. +2 dB is stored as $04 00 and -2 dB is
-   * $FC 00.
-   *
-   * Adjustment points are ordered by frequency and one frequency is described
-   * once in the frame.
+   * Adjustment points are ordered by frequency.
    * 
    * @return Array
    */
   public function getAdjustments() { return $this->_adjustments; }
+  
+  /**
+   * Adds a volume adjustment setting for given frequency. The frequency can
+   * have a value from 0 to 32767 Hz, and the adjustment +/- 64 dB with a
+   * precision of 0.001953125 dB.
+   * 
+   * @return Array
+   */
+  public function addAdjustment($frequency, $adjustment)
+  {
+    $this->_adjustments[$frequency * 2] = $adjustment * 512;
+    sort($this->_adjustments);
+  }
+   
+  /**
+   * Sets the adjustments array. The array must have frequencies as keys and
+   * their corresponding adjustments as values. The frequency can have a value
+   * from 0 to 32767 Hz, and the adjustment +/- 64 dB with a precision of
+   * 0.001953125 dB. One frequency should only be described once in the frame.
+   * 
+   * @param Array $adjustments The adjustments array.
+   */
+  public function setAdjustments($adjustments)
+  {
+    foreach ($adjustments as $frequency => $adjustment)
+      $this->_adjustments[$frequency * 2] = $adjustment * 512;
+    sort($this->_adjustments);
+  }
 }

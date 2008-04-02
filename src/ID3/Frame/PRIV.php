@@ -61,29 +61,61 @@ final class ID3_Frame_PRIV extends ID3_Frame
   /** @var string */
   private $_id;
   
+  /** @var string */
+  private $_privateData;
+  
   /**
    * Constructs the class with given parameters and parses object related data.
    *
    * @param Reader $reader The reader object.
    */
-  public function __construct($reader)
+  public function __construct($reader = null)
   {
     parent::__construct($reader);
-
-    list($this->_id, $this->_data) = preg_split("/\\x00/", $this->_data, 2);
+    
+    if ($reader === null)
+      return;
+    
+    list($this->_id, $this->_privateData) =
+      preg_split("/\\x00/", $this->_data, 2);
   }
-
+  
   /**
    * Returns the owner identifier string.
    * 
    * @return string
    */
   public function getIdentifier() { return $this->_id; }
-
+  
+  /**
+   * Sets the owner identifier string.
+   * 
+   * @param string $id The owner identifier string.
+   */
+  public function setIdentifier($id) { $this->_id = $id; }
+  
   /**
    * Returns the private binary data associated with the frame.
    * 
    * @return string
    */
-  public function getData() { return $this->_data; }
+  public function getData() { return $this->_privateData; }
+  
+  /**
+   * Sets the private binary data associated with the frame.
+   * 
+   * @param string $privateData The private binary data string.
+   */
+  public function setData($privateData) { $this->_privateData = $privateData; }
+  
+  /**
+   * Returns the frame raw data.
+   *
+   * @return string
+   */
+  public function __toString()
+  {
+    parent::setData($this->_id . "\0" . $this->_privateData);
+    return parent::__toString();
+  }
 }

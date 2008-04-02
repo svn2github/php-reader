@@ -50,6 +50,7 @@ require_once("ID3/Frame.php");
  * {@link ID3_Frame_TLEN} frame, indicating the duration of the file in
  * milliseconds. There may only be one audio seek point index frame in a tag.
  * 
+ * @todo       Data parsing and write support
  * @package    php-reader
  * @subpackage ID3
  * @author     Sven Vollbehr <svollbehr@gmail.com>
@@ -70,30 +71,34 @@ final class ID3_Frame_ASPI extends ID3_Frame
   private $_size;
   
   /** @var Array */
-  private $_fraction = array();
+  private $_fractions = array();
   
   /**
    * Constructs the class with given parameters and parses object related data.
    *
    * @param Reader $reader The reader object.
    */
-  public function __construct($reader)
+  public function __construct($reader = null)
   {
     parent::__construct($reader);
+    
+    if ($reader === null)
+      throw new ID3_Exception("Write not supported yet");
 
     $this->_dataStart = Transform::fromInt32BE(substr($this->_data, 0, 4));
     $this->_dataLength = Transform::fromInt32BE(substr($this->_data, 4, 4));
     $this->_size = Transform::fromInt16BE(substr($this->_data, 8, 2));
-    $bitsPerPoint = substr($this->_data, 10, 1);
-    for ($i = 0, $offset = 11; $i < $this->_size; $i++) {
+    
+    $bitsPerPoint = Transform::fromInt8($this->_data[10]);
+    /*for ($i = 0, $offset = 11; $i < $this->_size; $i++) {
       if ($bitsPerPoint == 16) {
-        $this->_fraction[$i] = substr($this->_data, $offset, 2);
+        $this->_fractions[$i] = substr($this->_data, $offset, 2);
         $offset += 2;
       } else {
-        $this->_fraction[$i] = substr($this->_data, $offset, 1);
+        $this->_fractions[$i] = substr($this->_data, $offset, 1);
         $offset ++;
       }
-    }
+    }*/
   }
 
   /**
@@ -104,6 +109,13 @@ final class ID3_Frame_ASPI extends ID3_Frame
   public function getDataStart() { return $this->_dataStart; }
 
   /**
+   * Sets the byte offset from the beginning of the file.
+   * 
+   * @param integer $dataStart The offset.
+   */
+  public function setDataStart($dataStart) { $this->_dataStart = $dataStart; }
+
+  /**
    * Returns the byte length of the audio data being indexed.
    * 
    * @return integer
@@ -111,11 +123,21 @@ final class ID3_Frame_ASPI extends ID3_Frame
   public function getDataLength() { return $this->_dataLength; }
 
   /**
+   * Sets the byte length of the audio data being indexed.
+   * 
+   * @param integer $dataLength The length.
+   */
+  public function setDataLength($dataLength)
+  {
+    $this->_dataLength = $dataLength;
+  }
+
+  /**
    * Returns the number of index points in the frame.
    * 
    * @return integer
    */
-  public function getSize() { return $this->_size; }
+  public function getSize() { return count($this->_fractions); }
 
   /**
    * Returns the numerator of the fraction representing a relative position in
@@ -125,5 +147,10 @@ final class ID3_Frame_ASPI extends ID3_Frame
    * @param integer $index The fraction numerator.
    * @return integer
    */
-  public function getFractionAt($index) { return $this->_fraction[$index]; }
+  public function getFractionAt($index)
+  {
+    if (isset($this->_fractions[$index]))
+      return $this->_fractions[$index];
+    return false;
+  }
 }

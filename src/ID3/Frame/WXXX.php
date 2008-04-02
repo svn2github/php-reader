@@ -36,7 +36,7 @@
  */
 
 /**#@+ @ignore */
-require_once("AbstractLink.php");
+require_once("ID3/Frame/AbstractLink.php");
 require_once("ID3/Encoding.php");
 /**#@-*/
 
@@ -58,7 +58,7 @@ final class ID3_Frame_WXXX extends ID3_Frame_AbstractLink
   implements ID3_Encoding
 {
   /** @var integer */
-  private $_encoding;
+  private $_encoding = ID3_Encoding::UTF8;
   
   /** @var string */
   private $_description;
@@ -68,11 +68,14 @@ final class ID3_Frame_WXXX extends ID3_Frame_AbstractLink
    *
    * @param Reader $reader The reader object.
    */
-  public function __construct($reader)
+  public function __construct($reader = null)
   {
     parent::__construct($reader);
-
-    $this->_encoding = ord($this->_data{0});
+    
+    if ($reader === null)
+      return;
+    
+    $this->_encoding = Transform::fromInt8($this->_data[0]);
     $this->_data = substr($this->_data, 1);
     
     switch ($this->_encoding) {
@@ -103,16 +106,55 @@ final class ID3_Frame_WXXX extends ID3_Frame_AbstractLink
   public function getEncoding() { return $this->_encoding; }
 
   /**
+   * Sets the text encoding.
+   * 
+   * @see ID3_Encoding
+   * @param integer $encoding The text encoding.
+   */
+  public function setEncoding($encoding) { $this->_encoding = $encoding; }
+  
+  /**
    * Returns the link description.
    * 
    * @return string
    */
   public function getDescription() { return $this->_description; }
-
+  
   /**
-   * Returns the link.
+   * Sets the content description text using given encoding.
    * 
+   * @param string $description The content description text.
+   * @param integer $encoding The text encoding.
+   */
+  public function setDescription($description, $encoding = false)
+  {
+    $this->_description = $description;
+    if ($encoding !== false)
+      $this->_encoding = $encoding;
+  }
+  
+  /**
+   * Returns the frame raw data.
+   *
    * @return string
    */
-  public function getLink() { return $this->_link; }
+  public function __toString()
+  {
+    $data = Transform::toInt8($this->_encoding);
+    switch ($this->_encoding) {
+    case self::UTF16:
+      $data .= Transform::toString16($this->_description) . "\0\0";
+      break;
+    case self::UTF16BE:
+      $data .= Transform::toString16BE($this->_description) . "\0\0";
+      break;
+    case self::UTF16LE:
+      $data .= Transform::toString16LE($this->_description) . "\0\0");
+      break;
+    default:
+      $data .= $this->_description . "\0";
+    }
+    $this->setData($data . $this->_link);
+    return parent::__toString();
+  }
 }

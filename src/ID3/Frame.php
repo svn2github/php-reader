@@ -104,12 +104,16 @@ class ID3_Frame extends ID3_Object
   /**
    * This flag indicates whether or not unsynchronisation was applied to this
    * frame.
+   *
+   * @since ID3v2.4.0
    */
   const UNSYNCHRONISATION = 2;
   
   /**
    * This flag indicates that a data length indicator has been added to the
    * frame.
+   *
+   * @since ID3v2.4.0
    */
   const DATA_LENGTH_INDICATOR = 1;
 
@@ -135,17 +139,39 @@ class ID3_Frame extends ID3_Object
    *
    * @todo  Only limited subset of flags are processed.
    * @param Reader $reader The reader object.
+   * @param Array $options The options array.
    */
-  public function __construct($reader = null)
+  public function __construct($reader = null, &$options = array())
   {
-    parent::__construct($reader);
+    parent::__construct($reader, $options);
     
     if ($reader === null) {
       $this->_identifier = substr(get_class($this), -4);
     } else {
       $this->_identifier = $this->_reader->readString8(4);
       $this->_size = $this->decodeSynchsafe32($this->_reader->readUInt32BE());
-      $this->_flags = $this->_reader->readUInt16BE();
+
+      /* ID3v2.3.0 Flags; convert to 2.4.0 format */
+      if (isset($this->_options["version"]) && $this->_options["version"] < 4) {
+        $flags = $this->_reader->readUInt16BE();
+        if (($flags & 0x8000) == 0x8000)
+          $this->_flags |= self::DISCARD_ON_TAGCHANGE;
+        if (($flags & 0x4000) == 0x4000)
+          $this->_flags |= self::DISCARD_ON_FILECHANGE;
+        if (($flags & 0x2000) == 0x2000)
+          $this->_flags |= self::READ_ONLY;
+        if (($flags & 0x80) == 0x80)
+          $this->_flags |= self::COMPRESSION;
+        if (($flags & 0x40) == 0x40)
+          $this->_flags |= self::ENCRYPTION;
+        if (($flags & 0x20) == 0x20)
+          $this->_flags |= self::GROUPING_IDENTITY;
+      }
+      
+      /* ID3v2.4.0 Flags */
+      else
+        $this->_flags = $this->_reader->readUInt16BE();
+      
       $this->_data = $this->_reader->read($this->_size);
     }
   }
@@ -216,8 +242,29 @@ class ID3_Frame extends ID3_Object
    */
   public function __toString()
   {
+    /* ID3v2.3.0 Flags; convert from 2.4.0 format */
+    if (isset($this->_options["version"]) && $this->_options["version"] < 4) {
+      $flags = 0;
+      if ($this->hasFlag(self::DISCARD_ON_TAGCHANGE))
+        $flags = $flags | 0x8000;
+      if ($this->hasFlag(self::DISCARD_ON_FILECHANGE))
+        $flags = $flags | 0x4000;
+      if ($this->hasFlag(self::READ_ONLY))
+        $flags = $flags | 0x2000;
+      if ($this->hasFlag(self::COMPRESSION))
+        $flags = $flags | 0x80;
+      if ($this->hasFlag(self::ENCRYPTION))
+        $flags = $flags | 0x40;
+      if ($this->hasFlag(self::GROUPING_IDENTITY))
+        $flags = $flags | 0x20;
+    }
+
+    /* ID3v2.4.0 Flags */
+    else
+      $flags = $this->_flags;
+    
     return Transform::toString8(substr($this->_identifier, 0, 4), 4) .
       Transform::toUInt32BE($this->encodeSynchsafe32($this->_size)) .
-      Transform::toUInt16BE($this->_flags) . $this->_data;
+      Transform::toUInt16BE($flags) . $this->_data;
   }
 }

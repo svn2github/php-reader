@@ -56,4 +56,87 @@ require_once("ID3/Frame/AbstractText.php");
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Rev$
  */
-final class ID3_Frame_TXXX extends ID3_Frame_AbstractText {}
+final class ID3_Frame_TXXX extends ID3_Frame_AbstractText
+{
+  /** @var string */
+  private $_description;
+  
+  /**
+   * Constructs the class with given parameters and parses object related data.
+   *
+   * @param Reader $reader The reader object.
+   * @param Array $options The options array.
+   */
+  public function __construct($reader = null, &$options = array())
+  {
+    parent::__construct($reader, $options);
+    
+    switch ($this->_encoding) {
+    case self::UTF16:
+      list($this->_description, $this->_text) =
+        preg_split("/\\x00\\x00/", $this->_data);
+      $this->_description = Transform::fromString16($this->_description);
+      $this->_text = array(Transform::fromString16($this->_text));
+      break;
+    case self::UTF16BE:
+      list($this->_description, $this->_text) =
+        preg_split("/\\x00\\x00/", $this->_data);
+      $this->_description = Transform::fromString16BE($this->_description);
+      $this->_text = array(Transform::fromString16BE($this->_text));
+      break;
+    default:
+      list($this->_description, $this->_text) =
+        preg_split("/\\x00/", $this->_data);
+      $this->_text = array($this->_text);
+    }
+  }
+  
+  /**
+   * Returns the description text.
+   * 
+   * @return string
+   */
+  public function getDescription() { return $this->_description; }
+  
+  /**
+   * Sets the description text using given encoding.
+   * 
+   * @param string $description The content description text.
+   * @param integer $encoding The text encoding.
+   */
+  public function setDescription($description, $encoding = false)
+  {
+    $this->_description = $description;
+    if ($encoding !== false)
+      $this->_encoding = $encoding;
+  }
+  
+  /**
+   * Returns the frame raw data.
+   *
+   * @return string
+   */
+  public function __toString()
+  {
+    $data = Transform::toInt8($this->_encoding);
+    switch ($this->_encoding) {
+    case self::UTF16:
+      $data .= Transform::toString16($this->_description) . "\0\0" .
+        Transform::toString16($this->_text[0]);
+      break;
+    case self::UTF16BE:
+      $data .= Transform::toString16BE($this->_description) . "\0\0" .
+        Transform::toString16BE($this->_text[0]);
+      break;
+    case self::UTF16LE:
+      $data .= Transform::toString16LE($this->_description) . "\0\0" .
+        Transform::toString16LE($this->_text[0]);
+      break;
+    default:
+      $data .= $this->_description . "\0" . $this->_text[0];
+    }
+    $this->setData($data);
+    return parent::__toString();
+  }
+}
+

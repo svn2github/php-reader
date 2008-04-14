@@ -59,18 +59,34 @@ abstract class ID3_Object
    *
    * @var Array
    */
-  protected $_options = array();
+  protected $_options;
   
   /**
    * Constructs the class with given parameters and reads object related data
    * from the ID3v2 tag.
    *
    * @param Reader $reader The reader object.
+   * @param Array $options The options array.
    */
-  public function __construct($reader = null)
+  public function __construct($reader = null, &$options = array())
   {
     $this->_reader = $reader;
+    $this->_options = $options;
   }
+  
+  /**
+   * Returns the options array.
+   *
+   * @return Array
+   */
+  public function getOptions() { return $this->_options; }
+  
+  /**
+   * Sets the options array. See {@link ID3v2} class for available options.
+   *
+   * @param Array $options The options array.
+   */
+  public function setOptions(&$options) { $this->_options = $options; }
   
   /**
    * Magic function so that $obj->value will work.
@@ -110,9 +126,12 @@ abstract class ID3_Object
    */
   protected function encodeSynchsafe32($val)
   {
-    for ($i = 0, $mask = 0xffffff00; $i < 4; $i++, $mask <<= 8)
-      $val = ($val << 1 & $mask) | ($val << 1 & ~$mask) >> 1;
-    return $val & 0x7fffffff;
+    if (!isset($this->_options["version"]) || $this->_options["version"] >= 4) {
+      for ($i = 0, $mask = 0xffffff00; $i < 4; $i++, $mask <<= 8)
+        $val = ($val << 1 & $mask) | ($val << 1 & ~$mask) >> 1;
+      return $val & 0x7fffffff;
+    }
+    return $val;
   }
 
   /**
@@ -123,8 +142,9 @@ abstract class ID3_Object
    */
   protected function decodeSynchsafe32($val)
   {
-    for ($i = 0, $mask = 0xff000000; $i < 3; $i++, $mask >>= 8)
-      $val = ($val & $mask) >> 1 | ($val & ~$mask);
+    if (!isset($this->_options["version"]) || $this->_options["version"] >= 4)
+      for ($i = 0, $mask = 0xff000000; $i < 3; $i++, $mask >>= 8)
+        $val = ($val & $mask) >> 1 | ($val & ~$mask);
     return $val;
   }
 }

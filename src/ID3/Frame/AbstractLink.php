@@ -58,13 +58,14 @@ abstract class ID3_Frame_AbstractLink extends ID3_Frame
    * Constructs the class with given parameters and parses object related data.
    *
    * @param Reader $reader The reader object.
+   * @param Array $options The options array.
    */
-  public function __construct($reader = null)
+  public function __construct($reader = null, &$options = array())
   {
-    parent::__construct($reader);
+    parent::__construct($reader, $options);
     
     if ($reader !== null)
-      $this->_link = preg_split("/\\x00/", $this->_data, 1);
+      $this->_link = implode(preg_split("/\\x00/", $this->_data, 1), "");
   }
 
   /**
@@ -88,7 +89,7 @@ abstract class ID3_Frame_AbstractLink extends ID3_Frame
    */
   public function __toString()
   {
-    $this->setData($link);
+    $this->setData($this->_link);
     return parent::__toString();
   }
 }

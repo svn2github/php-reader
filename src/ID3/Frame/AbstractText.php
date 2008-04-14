@@ -53,20 +53,29 @@ require_once("ID3/Encoding.php");
 abstract class ID3_Frame_AbstractText extends ID3_Frame
   implements ID3_Encoding
 {
-  /** @var integer */
-  private $_encoding = ID3_Encoding::UTF8;
+  /**
+   * The text encoding.
+   *
+   * @var integer
+   */
+  protected $_encoding = ID3_Encoding::UTF8;
   
-  /** @var string */
-  private $_text;
+  /**
+   * The text array.
+   *
+   * @var string
+   */
+  protected $_text;
   
   /**
    * Constructs the class with given parameters and parses object related data.
    *
    * @param Reader $reader The reader object.
+   * @param Array $options The options array.
    */
-  public function __construct($reader = null)
+  public function __construct($reader = null, &$options = array())
   {
-    parent::__construct($reader);
+    parent::__construct($reader, $options);
     
     if ($reader === null)
       return;

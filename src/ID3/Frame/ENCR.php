@@ -69,7 +69,7 @@ require_once("ID3/Frame.php");
 final class ID3_Frame_ENCR extends ID3_Frame
 {
   /** @var string */
-  private $_id;
+  private $_owner;
   
   /** @var integer */
   private $_method;
@@ -81,15 +81,16 @@ final class ID3_Frame_ENCR extends ID3_Frame
    * Constructs the class with given parameters and parses object related data.
    *
    * @param Reader $reader The reader object.
+   * @param Array $options The options array.
    */
-  public function __construct($reader = null)
+  public function __construct($reader = null, &$options = array())
   {
-    parent::__construct($reader);
+    parent::__construct($reader, $options);
     
     if ($reader === null)
       return;
     
-    list($this->_id, $this->_data) = preg_split("/\\x00/", $this->_data, 2);
+    list($this->_owner, $this->_data) = preg_split("/\\x00/", $this->_data, 2);
     $this->_method = Transform::fromInt8($this->_data[0]);
     $this->_encryptionData = substr($this->_data, 1);
   }
@@ -99,14 +100,14 @@ final class ID3_Frame_ENCR extends ID3_Frame
    * 
    * @return string
    */
-  public function getIdentifier() { return $this->_id; }
+  public function getOwner() { return $this->_owner; }
   
   /**
    * Sets the owner identifier string.
    * 
-   * @param string $id The owner identifier string.
+   * @param string $owner The owner identifier string.
    */
-  public function setIdentifier($id) { $this->_id = $id; }
+  public function setOwner($owner) { $this->_owner = $owner; }
   
   /**
    * Returns the method symbol.
@@ -147,7 +148,7 @@ final class ID3_Frame_ENCR extends ID3_Frame
   public function __toString()
   {
     parent::setData
-      ($this->_id . "\0" . Transform::toInt8($this->_method) .
+      ($this->_owner . "\0" . Transform::toInt8($this->_method) .
        $this->_encryptionData);
     return parent::__toString();
   }

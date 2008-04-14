@@ -33,35 +33,30 @@
  * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Id$
+ * @deprecated ID3v2.3.0
  */
 
 /**#@+ @ignore */
-require_once("ID3/Frame/AbstractLink.php");
-require_once("ID3/Encoding.php");
+require_once("ID3/Frame.php");
 /**#@-*/
 
 /**
- * This frame is intended for URL links concerning the audio file in a similar
- * way to the other "W"-frames. The frame body consists of a description of the
- * string, represented as a terminated string, followed by the actual URL. The
- * URL is always encoded with ISO-8859-1. There may be more than one "WXXX"
- * frame in each tag, but only one with the same description.
- * 
+ * The <i>Equalisation</i> frame is another subjective, alignment frame. It
+ * allows the user to predefine an equalisation curve within the audio file.
+ * There may only be one EQUA frame in each tag.
+ *
  * @package    php-reader
  * @subpackage ID3
  * @author     Sven Vollbehr <svollbehr@gmail.com>
  * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Rev$
+ * @deprecated ID3v2.3.0
  */
-final class ID3_Frame_WXXX extends ID3_Frame_AbstractLink
-  implements ID3_Encoding
+final class ID3_Frame_EQUA extends ID3_Frame
 {
-  /** @var integer */
-  private $_encoding = ID3_Encoding::UTF8;
-  
-  /** @var string */
-  private $_description;
+  /** @var Array */
+  private $_adjustments;
   
   /**
    * Constructs the class with given parameters and parses object related data.
@@ -76,60 +71,47 @@ final class ID3_Frame_WXXX extends ID3_Frame_AbstractLink
     if ($reader === null)
       return;
     
-    $this->_encoding = Transform::fromInt8($this->_data[0]);
-    $this->_data = substr($this->_data, 1);
-    
-    switch ($this->_encoding) {
-    case self::UTF16:
-      list($this->_description, $this->_link) = 
-        preg_split("/\\x00\\x00/", $this->_data, 2);
-      $this->_description = Transform::fromString16($this->_description);
-      break;
-    case self::UTF16BE:
-        list($this->_description, $this->_link) = 
-          preg_split("/\\x00\\x00/", $this->_data, 2);
-        $this->_description = Transform::fromString16BE($this->_description);
-      break;
-    default:
-      list($this->_description, $this->_link) =
-        preg_split("/\\x00/", $this->_data);
-      break;
+    $adjustmentBits = Transform::fromInt8($this->_data[0]); //16
+    for ($i = 1; $i < strlen($this->_data); $i += 4) {
+      $frequency = Transform::fromInt16BE(substr($this->_data, $i, 2));
+      $this->_adjustments[($frequency & 0x7fff)] = 
+          ($frequency & 0x2000) == 0x2000 ?
+          Transform::fromInt16BE(substr($this->_data, $j + 2, 2)) :
+          -Transform::fromInt16BE(substr($this->_data, $j + 2, 2));
     }
   }
   
   /**
-   * Returns the text encoding.
+   * Returns the array containing adjustments having frequencies as keys and
+   * their corresponding adjustments as values.
    * 
-   * @return integer The encoding.
+   * @return Array
    */
-  public function getEncoding() { return $this->_encoding; }
-
-  /**
-   * Sets the text encoding.
-   * 
-   * @see ID3_Encoding
-   * @param integer $encoding The text encoding.
-   */
-  public function setEncoding($encoding) { $this->_encoding = $encoding; }
+  public function getAdjustments() { return $this->_adjustments; }
   
   /**
-   * Returns the link description.
+   * Adds a volume adjustment setting for given frequency. The frequency can
+   * have a value from 0 to 32767 Hz.
    * 
-   * @return string
+   * @param integer $frequency The frequency, in hertz.
+   * @param integer $adjustment The adjustment, in dB.
    */
-  public function getDescription() { return $this->_description; }
-  
-  /**
-   * Sets the content description text using given encoding.
-   * 
-   * @param string $description The content description text.
-   * @param integer $encoding The text encoding.
-   */
-  public function setDescription($description, $encoding = false)
+  public function addAdjustment($frequency, $adjustment)
   {
-    $this->_description = $description;
-    if ($encoding !== false)
-      $this->_encoding = $encoding;
+    $this->_adjustments[$frequency] = $adjustment;
+  }
+   
+  /**
+   * Sets the adjustments array. The array must have frequencies as keys and
+   * their corresponding adjustments as values. The frequency can have a value
+   * from 0 to 32767 Hz. One frequency should only be described once in the
+   * frame.
+   * 
+   * @param Array $adjustments The adjustments array.
+   */
+  public function setAdjustments($adjustments)
+  {
+    $this->_adjustments = $adjustments;
   }
   
   /**
@@ -139,21 +121,12 @@ final class ID3_Frame_WXXX extends ID3_Frame_AbstractLink
    */
   public function __toString()
   {
-    $data = Transform::toInt8($this->_encoding);
-    switch ($this->_encoding) {
-    case self::UTF16:
-      $data .= Transform::toString16($this->_description) . "\0\0";
-      break;
-    case self::UTF16BE:
-      $data .= Transform::toString16BE($this->_description) . "\0\0";
-      break;
-    case self::UTF16LE:
-      $data .= Transform::toString16LE($this->_description) . "\0\0");
-      break;
-    default:
-      $data .= $this->_description . "\0";
-    }
-    $this->setData($data . $this->_link);
+    $data = Transform::toInt8(16);
+    foreach ($this->_adjustments as $frequency => $adjustment)
+      $data .= Transform::toInt16BE
+        ($adjustment > 0 ? $frequency | 0x2000 : $frequency & ~0x2000) .
+        Transform::toInt16BE(abs($adjustment));
+    $this->setData($data);
     return parent::__toString();
   }
 }

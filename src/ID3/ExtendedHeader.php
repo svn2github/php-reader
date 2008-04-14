@@ -58,27 +58,40 @@ final class ID3_ExtendedHeader extends ID3_Object
    * in the present file or stream. If frames defined as unique are found in
    * the present tag, they are to override any corresponding ones found in the
    * earlier tag. This flag has no corresponding data.
+   *
+   * @since ID3v2.4.0
    */
-  const UPDATE = 128;
+  const UPDATE = 64;
   
   /**
-   * A flag to denote that a CRC-32 data is included in the extended header.
-   * The CRC is calculated on all the data between the header and footer as
-   * indicated by the header's tag length field, minus the extended header. Note
-   * that this includes the padding (if there is any), but excludes the footer.
-   * The CRC-32 is stored as an 35 bit synchsafe integer, leaving the upper four
-   * bits always zeroed.
+   * @since ID3v2.4.0 A flag to denote that a CRC-32 data is included in the
+   * extended header. The CRC is calculated on all the data between the header
+   * and footer as indicated by the header's tag length field, minus the
+   * extended header. Note that this includes the padding (if there is any), but
+   * excludes the footer. The CRC-32 is stored as an 35 bit synchsafe integer,
+   * leaving the upper four bits always zeroed.
+   *
+   * @since ID3v2.3.0 The CRC is calculated before unsynchronisation on the data
+   * between the extended header and the padding, i.e. the frames and only the
+   * frames.
    */
-  const CRC32 = 64;
+  const CRC32 = 32;
   
-  /** A flag to denote whether or not the tag has restrictions applied on it. */
-  const RESTRICTED = 32;
+  /**
+   * A flag to denote whether or not the tag has restrictions applied on it.
+   *
+   * @since ID3v2.4.0
+   */
+  const RESTRICTED = 16;
 
   /** @var integer */
   private $_size;
 
   /** @var integer */
   private $_flags = 0;
+  
+  /** @var integer */
+  private $_padding;
   
   /** @var integer */
   private $_crc;
@@ -91,33 +104,44 @@ final class ID3_ExtendedHeader extends ID3_Object
    * from the ID3v2 tag.
    *
    * @param Reader $reader The reader object.
+   * @param Array $options The options array.
    */
-  public function __construct($reader = null)
+  public function __construct($reader = null, &$options = array())
   {
-    parent::__construct($reader);
+    parent::__construct($reader, $options);
     
     if ($reader === null)
       return;
 
     $offset = $this->_reader->getOffset();
     $this->_size = $this->decodeSynchsafe32($this->_reader->readUInt32BE());
-    $this->_reader->skip(1);
-    $this->_flags = $this->_reader->readInt8();
     
-    if ($this->hasFlag(self::UPDATE))
-      $this->_reader->skip(1);
-    if ($this->hasFlag(self::CRC32)) {
-      $this->_reader->skip(1);
-      $this->_crc =
-        Transform::fromInt8($this->_reader->read(1)) * (0xfffffff + 1) +
-        decodeSynchsafe32(Transform::fromUInt32BE($this->_reader->read(4)));
-    }
-    if ($this->hasFlag(self::RESTRICTED)) {
-      $this->_reader->skip(1);
-      $this->_restrictions = $this->_reader->readInt8(1);
+    /* ID3v2.3.0 ExtendedHeader */
+    if (isset($this->_options["version"]) && $this->_options["version"] < 4) {
+      if ($this->_reader->readUInt16BE() == 0x8000)
+        $this->_flags = self::CRC32;
+      $this->_padding = $this->_reader->readUInt32BE();
+      if ($this->hasFlag(self::CRC32))
+        $this->_crc = Transform::readUInt32BE();
     }
     
-    $this->_reader->skip($this->_size - $this->_reader->getOffset() - $offset);
+    /* ID3v2.4.0 ExtendedHeader */
+    else {
+      $this->_reader->skip(1);
+      $this->_flags = $this->_reader->readInt8();
+      if ($this->hasFlag(self::UPDATE))
+        $this->_reader->skip(1);
+      if ($this->hasFlag(self::CRC32)) {
+        $this->_reader->skip(1);
+        $this->_crc =
+          Transform::fromInt8($this->_reader->read(1)) * (0xfffffff + 1) +
+          decodeSynchsafe32(Transform::fromUInt32BE($this->_reader->read(4)));
+      }
+      if ($this->hasFlag(self::RESTRICTED)) {
+        $this->_reader->skip(1);
+        $this->_restrictions = $this->_reader->readInt8(1);
+      }
+    }
   }
   
   /**
@@ -250,19 +274,48 @@ final class ID3_ExtendedHeader extends ID3_Object
   }
   
   /**
+   * Returns the total padding size, or simply the total tag size excluding the
+   * frames and the headers.
+   *
+   * @return integer
+   * @deprecated ID3v2.3.0
+   */
+  public function getPadding() { return $this->_padding; }
+  
+  /**
+   * Sets the total padding size, or simply the total tag size excluding the
+   * frames and the headers.
+   *
+   * @param integer $padding The padding size.
+   * @deprecated ID3v2.3.0
+   */
+  public function setPadding($padding) { return $this->_padding = $padding; }
+  
+  /**
    * Returns the header raw data.
    *
    * @return string
    */
-  public function toString()
+  public function __toString()
   {
-    return Transform::toUInt32BE($this->encodeSynchsafe32($this->_size)) .
-      Transform::toInt8(1) . Transform::toInt8($this->_flags) .
-      ($this->hasFlag(self::UPDATE) ? "\0" : "") .
-      ($this->hasFlag(self::CRC32) ? Transform::toInt8(5) .
-       Transform::toInt8($this->_crc & 0xf0000000 >> 28 & 0xf /* eq >>> 28 */) .
-       Transform::toUInt32BE(encodeSynchsafe32($this->_crc)) : "") .
-      ($this->hasFlag(self::RESTRICTED) ? 
-         Transform::toInt8(1) . Transform::toInt8($this->_restrictions) : "");
+    /* ID3v2.3.0 ExtendedHeader */
+    if (isset($this->_options["version"]) && $this->_options["version"] < 4) {
+      return Transform::toUInt32BE($this->_size) .
+        Transform::toUInt16BE($this->hasFlag(self::CRC32) ? 0x8000 : 0) .
+        Transform::toUInt32BE($this->_padding) .
+        ($this->hasFlag(self::CRC32) ? Transform::toUInt32BE($this->_crc) : "");
+    }
+    
+    /* ID3v2.4.0 ExtendedHeader */
+    else {
+      return Transform::toUInt32BE($this->encodeSynchsafe32($this->_size)) .
+        Transform::toInt8(1) . Transform::toInt8($this->_flags) .
+        ($this->hasFlag(self::UPDATE) ? "\0" : "") .
+        ($this->hasFlag(self::CRC32) ? Transform::toInt8(5) .
+         Transform::toInt8($this->_crc & 0xf0000000 >> 28 & 0xf /*eq >>> 28*/) .
+         Transform::toUInt32BE(encodeSynchsafe32($this->_crc)) : "") .
+        ($this->hasFlag(self::RESTRICTED) ? 
+           Transform::toInt8(1) . Transform::toInt8($this->_restrictions) : "");
+    }
   }
 }

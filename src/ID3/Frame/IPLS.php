@@ -33,35 +33,35 @@
  * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Id$
+ * @deprecated ID3v2.3.0
  */
 
 /**#@+ @ignore */
-require_once("ID3/Frame/AbstractLink.php");
+require_once("ID3/Frame.php");
 require_once("ID3/Encoding.php");
 /**#@-*/
 
 /**
- * This frame is intended for URL links concerning the audio file in a similar
- * way to the other "W"-frames. The frame body consists of a description of the
- * string, represented as a terminated string, followed by the actual URL. The
- * URL is always encoded with ISO-8859-1. There may be more than one "WXXX"
- * frame in each tag, but only one with the same description.
- * 
+ * The <i>Involved people list</i> is a frame containing the names of those
+ * involved, and how they were involved. There may only be one IPLS frame in
+ * each tag.
+ *
  * @package    php-reader
  * @subpackage ID3
  * @author     Sven Vollbehr <svollbehr@gmail.com>
  * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Rev$
+ * @deprecated ID3v2.3.0
  */
-final class ID3_Frame_WXXX extends ID3_Frame_AbstractLink
+final class ID3_Frame_IPLS extends ID3_Frame
   implements ID3_Encoding
 {
   /** @var integer */
   private $_encoding = ID3_Encoding::UTF8;
   
-  /** @var string */
-  private $_description;
+  /** @var Array */
+  private $_people = array();
   
   /**
    * Constructs the class with given parameters and parses object related data.
@@ -75,32 +75,29 @@ final class ID3_Frame_WXXX extends ID3_Frame_AbstractLink
     
     if ($reader === null)
       return;
-    
+
     $this->_encoding = Transform::fromInt8($this->_data[0]);
-    $this->_data = substr($this->_data, 1);
-    
+    $data = array();
     switch ($this->_encoding) {
     case self::UTF16:
-      list($this->_description, $this->_link) = 
-        preg_split("/\\x00\\x00/", $this->_data, 2);
-      $this->_description = Transform::fromString16($this->_description);
+      $data = preg_split
+        ("/\\x00\\x00/", Transform::fromString16($this->_data));
       break;
     case self::UTF16BE:
-        list($this->_description, $this->_link) = 
-          preg_split("/\\x00\\x00/", $this->_data, 2);
-        $this->_description = Transform::fromString16BE($this->_description);
+      $data = preg_split
+        ("/\\x00\\x00/", Transform::fromString16BE($this->_data));
       break;
     default:
-      list($this->_description, $this->_link) =
-        preg_split("/\\x00/", $this->_data);
-      break;
+      $data = preg_split("/\\x00/", $this->_data);
     }
+    for ($i = 0; $i < count($data); $i+=2)
+      $this->_people[] = array($data[$i] => @$data[$i + 1]);
   }
   
   /**
    * Returns the text encoding.
    * 
-   * @return integer The encoding.
+   * @return integer
    */
   public function getEncoding() { return $this->_encoding; }
 
@@ -113,24 +110,32 @@ final class ID3_Frame_WXXX extends ID3_Frame_AbstractLink
   public function setEncoding($encoding) { $this->_encoding = $encoding; }
   
   /**
-   * Returns the link description.
+   * Returns the involved people list as an array. For each person, the array
+   * contains an entry, which too is an associate array with involvement as its
+   * key and involvee as its value.
+   * 
+   * @return Array
+   */
+  public function getPeople() { return $this->_people; }
+  
+  /**
+   * Adds a person with his involvement.
    * 
    * @return string
    */
-  public function getDescription() { return $this->_description; }
+  public function addPerson($involvement, $person)
+  {
+    $this->_people[] = array($involvement => $person);
+  }
   
   /**
-   * Sets the content description text using given encoding.
+   * Sets the involved people list array. For each person, the array must
+   * contain an associate array with involvement as its key and involvee as its
+   * value.
    * 
-   * @param string $description The content description text.
-   * @param integer $encoding The text encoding.
+   * @param Array $people The involved people list.
    */
-  public function setDescription($description, $encoding = false)
-  {
-    $this->_description = $description;
-    if ($encoding !== false)
-      $this->_encoding = $encoding;
-  }
+  public function setPeople($people) { $this->_people = $people; }
   
   /**
    * Returns the frame raw data.
@@ -140,20 +145,24 @@ final class ID3_Frame_WXXX extends ID3_Frame_AbstractLink
   public function __toString()
   {
     $data = Transform::toInt8($this->_encoding);
-    switch ($this->_encoding) {
-    case self::UTF16:
-      $data .= Transform::toString16($this->_description) . "\0\0";
-      break;
-    case self::UTF16BE:
-      $data .= Transform::toString16BE($this->_description) . "\0\0";
-      break;
-    case self::UTF16LE:
-      $data .= Transform::toString16LE($this->_description) . "\0\0");
-      break;
-    default:
-      $data .= $this->_description . "\0";
+    foreach ($this->_people as $entry) {
+      foreach ($entry as $key => $val) {
+        switch ($this->_encoding) {
+        case self::UTF16:
+          $data .= Transform::toString16($key . "\0\0" . $val . "\0\0");
+          break;
+        case self::UTF16BE:
+          $data .= Transform::toString16BE($key . "\0\0" . $val . "\0\0");
+          break;
+        case self::UTF16LE:
+          $data .= Transform::toString16LE($key . "\0\0" . $val . "\0\0");
+          break;
+        default:
+          $data .= $key . "\0" . $val . "\0";
+        }
+      }
     }
-    $this->setData($data . $this->_link);
+    $this->setData($data);
     return parent::__toString();
   }
 }

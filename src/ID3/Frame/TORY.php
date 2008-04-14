@@ -33,19 +33,18 @@
  * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Id$
- * @since      ID3v2.4.0
+ * @deprecated ID3v2.3.0
  */
 
 /**#@+ @ignore */
-require_once("ID3/Frame.php");
+require_once("ID3/Frame/AbstractText.php");
 /**#@-*/
 
 /**
- * This frame enables a group of frames, grouped with the
- * <i>Group identification registration</i>, to be signed. Although signatures
- * can reside inside the registration frame, it might be desired to store the
- * signature elsewhere, e.g. in watermarks. There may be more than one signature
- * frame in a tag, but no two may be identical.
+ * The <i>Original release year</i> frame is intended for the year when the
+ * original recording, if for example the music in the file should be a cover of
+ * a previously released song, was released. The field is formatted as in the
+ * {@link ID3_Frame_TYER} frame.
  * 
  * @package    php-reader
  * @subpackage ID3
@@ -53,69 +52,6 @@ require_once("ID3/Frame.php");
  * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Rev$
- * @since      ID3v2.4.0
+ * @deprecated ID3v2.3.0
  */
-final class ID3_Frame_SIGN extends ID3_Frame
-{
-  /** @var integer */
-  private $_group;
-  
-  /** @var string */
-  private $_signature;
-  
-  /**
-   * Constructs the class with given parameters and parses object related data.
-   *
-   * @param Reader $reader The reader object.
-   * @param Array $options The options array.
-   */
-  public function __construct($reader = null, &$options = array())
-  {
-    parent::__construct($reader, $options);
-    
-    if ($reader === null)
-      return;
-
-    $this->_group = substr($this->_data, 0, 1);
-    $this->_signature = substr($this->_data, 1);
-  }
-  
-  /**
-   * Returns the group symbol byte.
-   * 
-   * @return integer
-   */
-  public function getGroup() { return $this->_group; }
-  
-  /**
-   * Sets the group symbol byte.
-   * 
-   * @param integer $group The group symbol byte.
-   */
-  public function setGroup($group) { $this->_group = $group; }
-  
-  /**
-   * Returns the signature binary data.
-   * 
-   * @return string
-   */
-  public function getSignature() { return $this->_signature; }
-  
-  /**
-   * Sets the signature binary data.
-   * 
-   * @param string $signature The signature binary data string.
-   */
-  public function setSignature($signature) { $this->_signature = $signature; }
-  
-  /**
-   * Returns the frame raw data.
-   *
-   * @return string
-   */
-  public function __toString()
-  {
-    $this->setData(Transform::toInt8($this->_group) . $this->_signature);
-    return parent::__toString();
-  }
-}
+final class ID3_Frame_TORY extends ID3_Frame_AbstractText {}

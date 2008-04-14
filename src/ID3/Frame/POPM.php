@@ -65,7 +65,7 @@ require_once("ID3/Frame.php");
 final class ID3_Frame_POPM extends ID3_Frame
 {
   /** @var string */
-  private $_id;
+  private $_owner;
   
   /** @var integer */
   private $_rating = 0;
@@ -77,15 +77,16 @@ final class ID3_Frame_POPM extends ID3_Frame
    * Constructs the class with given parameters and parses object related data.
    *
    * @param Reader $reader The reader object.
+   * @param Array $options The options array.
    */
-  public function __construct($reader = null)
+  public function __construct($reader = null, &$options = array())
   {
-    parent::__construct($reader);
+    parent::__construct($reader, $options);
     
     if ($reader === null)
       return;
 
-    list($this->_id, $this->_data) = preg_split("/\\x00/", $this->_data, 2);
+    list($this->_owner, $this->_data) = preg_split("/\\x00/", $this->_data, 2);
     $this->_rating = Transform::fromInt8($this->_data[0]);
     $this->_data = substr($this->_data, 1);
     
@@ -96,18 +97,18 @@ final class ID3_Frame_POPM extends ID3_Frame
   }
   
   /**
-   * Returns the user identifier string.
+   * Returns the owner identifier string.
    * 
    * @return string
    */
-  public function getIdentifier() { return $this->_id; }
+  public function getOwner() { return $this->_owner; }
   
   /**
-   * Sets the user identifier string.
+   * Sets the owner identifier string.
    * 
-   * @param string $id The user identifier string.
+   * @param string $owner The owner identifier string.
    */
-  public function setIdentifier($id) { return $this->_id = $id; }
+  public function setOwner($owner) { return $this->_owner = $owner; }
   
   /**
    * Returns the user rating.
@@ -150,7 +151,7 @@ final class ID3_Frame_POPM extends ID3_Frame
   public function __toString()
   {
     $this->setData
-      ($this->_id . "\0" . Transform::toInt8($this->_rating) .
+      ($this->_owner . "\0" . Transform::toInt8($this->_rating) .
        ($this->_counter > 4294967295 ?
         Transform::toInt64BE($this->_counter) :
         ($this->_counter > 0 ? Transform::toInt32BE($this->_counter) : 0)));

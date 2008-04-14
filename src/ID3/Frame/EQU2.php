@@ -82,10 +82,11 @@ final class ID3_Frame_EQU2 extends ID3_Frame
    * Constructs the class with given parameters and parses object related data.
    *
    * @param Reader $reader The reader object.
+   * @param Array $options The options array.
    */
-  public function __construct($reader = null)
+  public function __construct($reader = null, &$options = array())
   {
-    parent::__construct($reader);
+    parent::__construct($reader, $options);
     
     if ($reader === null)
       return;
@@ -96,8 +97,8 @@ final class ID3_Frame_EQU2 extends ID3_Frame
     
     for ($i = 0; $i < strlen($this->_data); $i += 8)
       $this->_adjustments
-        [Transform::fromInt16BE(substr($this->_data, $j, 2)) / 2] = 
-          Transform::fromInt16BE(substr($this->_data, $j + 2, 2)) / 512;
+        [Transform::fromInt16BE(substr($this->_data, $i, 2)) / 2] = 
+          Transform::fromInt16BE(substr($this->_data, $i + 2, 2)) / 512;
     sort($this->_adjustments);
   }
   
@@ -151,7 +152,8 @@ final class ID3_Frame_EQU2 extends ID3_Frame
    * have a value from 0 to 32767 Hz, and the adjustment +/- 64 dB with a
    * precision of 0.001953125 dB.
    * 
-   * @return Array
+   * @param integer $frequency The frequency, in hertz.
+   * @param integer $adjustment The adjustment, in dB.
    */
   public function addAdjustment($frequency, $adjustment)
   {
@@ -172,5 +174,20 @@ final class ID3_Frame_EQU2 extends ID3_Frame
     foreach ($adjustments as $frequency => $adjustment)
       $this->_adjustments[$frequency * 2] = $adjustment * 512;
     sort($this->_adjustments);
+  }
+  
+  /**
+   * Returns the frame raw data.
+   *
+   * @return string
+   */
+  public function __toString()
+  {
+    $data = Transform::toInt8($this->_interpolation) . $this->_device . "\0";
+    foreach ($this->_adjustments as $frequency => $adjustment)
+      $data .=
+        Transform::toInt16BE($frequency) . Transform::toInt16BE($adjustment);
+    $this->setData($data);
+    return parent::__toString();
   }
 }

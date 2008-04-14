@@ -60,7 +60,7 @@ require_once("ID3/Frame.php");
 final class ID3_Frame_AENC extends ID3_Frame
 {
   /** @var string */
-  private $_id;
+  private $_owner;
   
   /** @var integer */
   private $_previewStart;
@@ -75,15 +75,16 @@ final class ID3_Frame_AENC extends ID3_Frame
    * Constructs the class with given parameters and parses object related data.
    *
    * @param Reader $reader The reader object.
+   * @param Array $options The options array.
    */
-  public function __construct($reader = null)
+  public function __construct($reader = null, &$options = array())
   {
-    parent::__construct($reader);
+    parent::__construct($reader, $options);
     
     if ($reader === null)
       return;
 
-    list($this->_id, $this->_data) = preg_split("/\\x00/", $this->_data, 2);
+    list($this->_owner, $this->_data) = preg_split("/\\x00/", $this->_data, 2);
     $this->_previewStart = substr($this->_data, 0, 2);
     $this->_previewLength = substr($this->_data, 2, 2);
     $this->_encryptionInfo = substr($this->_data, 4);
@@ -94,14 +95,14 @@ final class ID3_Frame_AENC extends ID3_Frame
    * 
    * @return string
    */
-  public function getIdentifier() { return $this->_id; }
+  public function getOwner() { return $this->_owner; }
   
   /**
    * Sets the owner identifier string.
    * 
-   * @param string $id The owner identifier string.
+   * @param string $owner The owner identifier string.
    */
-  public function setIdentifier($id) { $this->_id = $id; }
+  public function setOwner($owner) { $this->_owner = $owner; }
   
   /**
    * Returns the pointer to an unencrypted part of the audio in frames.
@@ -162,7 +163,7 @@ final class ID3_Frame_AENC extends ID3_Frame
   public function __toString()
   {
     $this->setData
-      ($this->_id . "\0" . Transform::toInt16BE($this->_previewStart) .
+      ($this->_owner . "\0" . Transform::toInt16BE($this->_previewStart) .
        Transform::toInt16BE($this->_previewLength) . $this->_encryptionInfo);
     return parent::__toString();
   }

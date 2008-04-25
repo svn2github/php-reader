@@ -59,26 +59,6 @@ require_once("ID3/Frame.php");
  * need not be known to the software that encounters them. Each frame has an
  * unique and predefined identifier which allows software to skip unknown
  * frames.
- *
- * Overall tag structure:
- *
- * <pre>
- *   +-----------------------------+
- *   |      Header (10 bytes)      |
- *   +-----------------------------+
- *   |       Extended Header       |
- *   | (variable length, OPTIONAL) |
- *   +-----------------------------+
- *   |   Frames (variable length)  |
- *   +-----------------------------+
- *   |           Padding           |
- *   | (variable length, OPTIONAL) |
- *   +-----------------------------+
- *   | Footer (10 bytes, OPTIONAL) |
- *   +-----------------------------+
- * </pre>
- * 
- * In general, padding and footer are mutually exclusive.
  * 
  * @package    php-reader
  * @subpackage ID3
@@ -105,7 +85,7 @@ final class ID3v2
   private $_frames = array();
   
   /** @var string */
-  private $_filename;
+  private $_filename = false;
   
   /** @var Array */
   private $_options;
@@ -118,11 +98,15 @@ final class ID3v2
    *   o version -- The ID3v2 tag version to use in write operation. This option
    *     is automatically set when a tag is read from a file and defaults to 
    *     version 4.0 for tag write.
+   *   o readonly -- Indicates that the tag is read from a temporary file or
+   *     another source it cannot be written back to. The tag can, however,
+   *     still be written to another file.
    *
    * @todo  Only limited subset of flags are processed.
    * @todo  Utilize the SEEK frame and search for a footer to find the tag
    * @todo  Utilize the LINK frame to fetch frames from other sources
-   * @param string $filename The path to the file.
+   * @param string $filename The path to the file, file descriptor of an opened
+   *                         file, or {@link Reader} instance.
    * @param Array  $options  The options array.
    */
   public function __construct($filename = false, $options = array())
@@ -133,11 +117,17 @@ final class ID3v2
     }
     
     $this->_options = &$options;
-    if (($this->_filename = $filename) === false ||
-        file_exists($filename) === false) {
+    if ($filename === false ||
+        (is_string($filename) && file_exists($filename) === false) ||
+        (is_resource($filename) && get_resource_type($filename) != "file")) {
       $this->_header = new ID3_Header(null, $options);
     } else {
-      $this->_reader = new Reader($filename);
+      if (is_string($filename) && !isset($options["readonly"]))
+        $this->_filename = $filename;
+      if ($filename instanceof Reader)
+        $this->_reader = $filename;
+      else
+        $this->_reader = new Reader($filename);
       if ($this->_reader->readString8(3) != "ID3")
         throw new ID3_Exception
           ("File does not contain ID3v2 tag: " . $filename);
@@ -246,10 +236,7 @@ final class ID3v2
    * 
    * @return Array
    */
-  public function getFrames()
-  {
-    return $this->_frames;
-  }
+  public function getFrames() { return $this->_frames; }
   
   /**
    * Returns an array of frames matching the given identifier or an empty array

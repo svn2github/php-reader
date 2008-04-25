@@ -68,7 +68,9 @@ class Reader
    */
   public function __construct($filename, $mode = "rb")
   {
-    if (($this->_fd = fopen($filename, $mode)) === false)
+    if (is_resource($filename) && get_resource_type($filename) == "file")
+      $this->_fd = $filename;
+    else if (($this->_fd = fopen($filename, $mode)) === false)
       throw new Reader_Exception("Unable to open file:" . $filename);
     
     fseek($this->_fd, 0, SEEK_END);
@@ -156,10 +158,7 @@ class Reader
    * 
    * @return integer
    */
-  public function getSize()
-  {
-    return $this->_size;
-  }
+  public function getSize() { return $this->_size; }
   
   /**
    * Magic function so that $obj->value will work.

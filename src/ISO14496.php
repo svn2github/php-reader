@@ -67,6 +67,12 @@ require_once("ISO14496/Box.php");
  */
 class ISO14496 extends ISO14496_Box
 {
+  /**
+   * Constructs the ISO14496 class with given file.
+   *
+   * @param string $filename The path to the file or file descriptor of an
+   *                         opened file.
+   */
   public function __construct($filename)
   {
     $this->_reader = new Reader($filename);

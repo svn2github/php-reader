@@ -92,7 +92,7 @@ final class ISO14496_Box_ELST extends ISO14496_Box_Full
    *     media time scale units, in composition time). If this field is set to
    *     –1, it is an empty edit. The last edit in a track shall never be an
    *     empty edit. Any difference between the duration in the
-   *     {@link ISO14496_Box_MVHD Movie Header Box}, and the track’s duration is
+   *     {@link ISO14496_Box_MVHD Movie Header Box}, and the track's duration is
    *     expressed as an implicit empty edit at the end.
    *   o mediaRate: the relative rate at which to play the media corresponding
    *     to this edit segment. If this value is 0, then the edit is specifying

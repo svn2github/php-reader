@@ -69,15 +69,13 @@ final class ISO14496_Box_STSS extends ISO14496_Box_Full
     
     $entryCount = $this->_reader->readUInt32BE();
     for ($i = 1; $i < $entryCount; $i++)
-      $this->_syncSampleTable[$i] = array
-        ("sampleNumber" => $this->_reader->readUInt32BE());
+      $this->_syncSampleTable[$i] = $this->_reader->readUInt32BE();
   }
   
   /**
-   * Returns an array of values. Each entry is an array containing the following
-   * keys.
-   *   o sampleNumber -- gives the numbers of the samples that are random access
-   *     points in the stream.
+   * Returns an array of values. Each entry has the entry number as its index
+   * and an integer that gives the numbers of the samples that are random access
+   * points in the stream as its value.
    *
    * @return Array
    */

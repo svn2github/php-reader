@@ -62,7 +62,7 @@ require_once("ISO14496/Box/Full.php");
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Rev$
  */
-final class ISO14496_Box_STGP extends ISO14496_Box_Full
+final class ISO14496_Box_SBGP extends ISO14496_Box_Full
 {
   /** @var integer */
   private $_groupingType;

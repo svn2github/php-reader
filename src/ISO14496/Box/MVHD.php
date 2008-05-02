@@ -131,7 +131,7 @@ final class ISO14496_Box_MVHD extends ISO14496_Box_Full
   
   /**
    * Returns the length of the presentation in the indicated timescale. This
-   * property is derived from the presentation’s tracks: the value of this field
+   * property is derived from the presentation's tracks: the value of this field
    * corresponds to the duration of the longest track in the presentation.
    * 
    * @return integer

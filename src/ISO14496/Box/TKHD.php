@@ -146,7 +146,7 @@ final class ISO14496_Box_TKHD extends ISO14496_Box_Full
   /**
    * Returns the duration of this track (in the timescale indicated in the
    * {@link MVHD Movie Header Box}). The value of this field is equal to the sum
-   * of the durations of all of the track’s edits. If there is no edit list,
+   * of the durations of all of the track's edits. If there is no edit list,
    * then the duration is the sum of the sample durations, converted into the
    * timescale in the {@link MVHD Movie Header Box}. If the duration of this
    * track cannot be determined then duration is set to all 32-bit maxint.

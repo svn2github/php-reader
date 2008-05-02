@@ -65,7 +65,6 @@ final class ISO14496_Box_PITM extends ISO14496_Box_Full
    * the ISO Base Media file.
    *
    * @param Reader  $reader The reader object.
-   * @todo The sample flags could be parsed further
    */
   public function __construct($reader)
   {

@@ -80,15 +80,13 @@ final class ISO14496_Box_CO64 extends ISO14496_Box_Full
     
     $entryCount = $this->_reader->readUInt32BE();
     for ($i = 1; $i < $entryCount; $i++)
-      $this->_chunkOffsetTable[$i] = array
-        ("chunkOffset" => $this->_reader->readInt64BE());
+      $this->_chunkOffsetTable[$i] = $this->_reader->readInt64BE();
   }
   
   /**
-   * Returns an array of values. Each entry is an array containing the following
-   * keys.
-   *   o chunkOffset -- a 64 bit integer that gives the offset of the start of a
-   *     chunk into its containing media file.
+   * Returns an array of values. Each entry has the entry number as its index
+   * and a 64 bit integer that gives the offset of the start of a chunk into
+   * its containing media file as its value.
    *
    * @return Array
    */

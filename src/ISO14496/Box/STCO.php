@@ -79,16 +79,14 @@ final class ISO14496_Box_STCO extends ISO14496_Box_Full
     parent::__construct($reader);
     
     $entryCount = $this->_reader->readUInt32BE();
-    for ($i = 0; $i < $entryCount; $i++)
-      $this->_chunkOffsetTable[] = array
-        ("chunkOffset" => $this->_reader->readUInt32BE());
+    for ($i = 1; $i < $entryCount; $i++)
+      $this->_chunkOffsetTable[$i] = $this->_reader->readUInt32BE();
   }
   
   /**
-   * Returns an array of values. Each entry is an array containing the following
-   * keys.
-   *   o chunkOffset -- a 32 bit integer that gives the offset of the start of a
-   *     chunk into its containing media file.
+   * Returns an array of values. Each entry has the entry number as its index
+   * and a 32 bit integer that gives the offset of the start of a chunk into
+   * its containing media file as its value.
    *
    * @return Array
    */

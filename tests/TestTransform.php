@@ -70,6 +70,23 @@ final class TestTransform extends PHPUnit_Framework_TestCase
   {
     $this->assertEquals
       (0x7fffffff, Transform::fromInt32(Transform::toInt32(0x7fffffff)));
+    $this->assertEquals(-1, Transform::fromInt32(Transform::toInt32(-1)));
+  }
+
+  function testInt32LE()
+  {
+    $this->assertEquals(1, Transform::fromInt32LE("\x01\x00\x00\x00"));
+    $this->assertEquals
+      (0x7fffffff, Transform::fromInt32LE(Transform::toInt32LE(0x7fffffff)));
+    $this->assertEquals(-1, Transform::fromInt32LE(Transform::toInt32LE(-1)));
+  }
+
+  function testInt32BE()
+  {
+    $this->assertEquals(1, Transform::fromInt32BE("\x00\x00\x00\x01"));
+    $this->assertEquals
+      (0x7fffffff, Transform::fromInt32BE(Transform::toInt32BE(0x7fffffff)));
+    $this->assertEquals(-1, Transform::fromInt32BE(Transform::toInt32BE(-1)));
   }
 
   function testUInt32LE()
@@ -92,6 +109,23 @@ final class TestTransform extends PHPUnit_Framework_TestCase
   {
     $this->assertEquals
       (0x7fff, Transform::fromInt16(Transform::toInt16(0x7fff)));
+    $this->assertEquals(-1, Transform::fromInt16(Transform::toInt16(-1)));
+  }
+
+  function testInt16LE()
+  {
+    $this->assertEquals(1, Transform::fromInt16LE("\x01\x00"));
+    $this->assertEquals
+      (0x7fff, Transform::fromInt16LE(Transform::toInt16LE(0x7fff)));
+    $this->assertEquals(-1, Transform::fromInt16LE(Transform::toInt16LE(-1)));
+  }
+
+  function testInt16BE()
+  {
+    $this->assertEquals(1, Transform::fromInt16BE("\x00\x01"));
+    $this->assertEquals
+      (0x7fff, Transform::fromInt16BE(Transform::toInt16BE(0x7fff)));
+    $this->assertEquals(-1, Transform::fromInt16BE(Transform::toInt16BE(-1)));
   }
 
   function testUInt16LE()

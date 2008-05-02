@@ -52,4 +52,16 @@ require_once("ISO14496/Box.php");
  */
 final class ISO14496_Box_MINF extends ISO14496_Box
 {
+  /**
+   * Constructs the class with given parameters and reads box related data from
+   * the ISO Base Media file.
+   *
+   * @param Reader $reader The reader object.
+   */
+  public function __construct($reader)
+  {
+    parent::__construct($reader);
+    $this->setContainer(true);
+    $this->constructBoxes();
+  }
 }

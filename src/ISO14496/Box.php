@@ -242,11 +242,25 @@ class ISO14496_Box
    * @param string $name The box or field name.
    * @return mixed
    */
-  public function __get($name) {
+  public function __get($name)
+  {
     if ($this->isContainer() && isset($this->_boxes[$name]))
       return $this->_boxes[$name][0];
     if (method_exists($this, "get" . ucfirst($name)))
       return call_user_func(array($this, "get" . ucfirst($name)));
     throw new ISO14496_Exception("Unknown box/field: " . $name);
+  }
+  
+  /**
+   * Magic function so that isset($obj->value) will work. This method checks
+   * whether the box is a container and contains a box that matches the
+   * identifier.
+   *
+   * @param string $name The box name.
+   * @return boolean
+   */
+  public function __isset($name)
+  {
+    return ($this->isContainer() && isset($this->_boxes[$name]));
   }
 }

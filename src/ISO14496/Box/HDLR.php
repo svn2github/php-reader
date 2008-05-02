@@ -76,7 +76,7 @@ final class ISO14496_Box_HDLR extends ISO14496_Box_Full
     $this->_reader->skip(4);
     $this->_handlerType = $this->_reader->read(4);
     $this->_reader->skip(12);
-    $this->_name = $this->_reader->read
+    $this->_name = $this->_reader->readString8
       ($this->_offset + $this->_size - $this->_reader->getOffset());
   }
   

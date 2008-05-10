@@ -124,8 +124,8 @@ final class ISO14496_Box_ID32 extends ISO14496_Box_Full
   {
     return parent::__toString
       (Transform::toUInt16BE
-       (((ord($language[0]) - 0x60) << 10) |
-        ((ord($language[1]) - 0x60) << 5) |
-          ord($language[2]) - 0x60) . $this->_tag);
+       (((ord($this->_language[0]) - 0x60) << 10) |
+        ((ord($this->_language[1]) - 0x60) << 5) |
+          ord($this->_language[2]) - 0x60) . $this->_tag);
   }
 }

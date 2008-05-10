@@ -263,7 +263,7 @@ class ISO14496_Box
       if ($size == 0)
         $size = $this->_reader->getSize() - $offset;
       
-      if (preg_match("/^\xa9?[a-z]{3,4}$/i", $type) &&
+      if (preg_match("/^\xa9?[a-z0-9]{3,4}$/i", $type) &&
           substr($base, 0, min(strlen($base), strlen
                                ($tmp = $path . ($path ? "." : "") . $type))) ==
           substr($tmp,  0, min(strlen($base), strlen($tmp))))
@@ -285,14 +285,6 @@ class ISO14496_Box
     }
     
     array_pop(self::$_path);
-  }
-  
-  protected function getPath()
-  {
-    $path = "";
-    echo "box: " .$this->getType() . ", parent: " . $this->getParent()."\n";
-    for ($child = $this; ($parent = $child->getParent()) !== null; $child = $parent){echo "parent found";$path = $parent->getType() . "." . $path;};
-    return $path;
   }
   
   /**

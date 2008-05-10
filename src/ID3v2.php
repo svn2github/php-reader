@@ -132,6 +132,8 @@ final class ID3v2
         throw new ID3_Exception
           ("File does not contain ID3v2 tag: " . $filename);
       
+      $startOffset = $this->_reader->getOffset();
+      
       $this->_header = new ID3_Header($this->_reader, $options);
       if ($this->_header->getVersion() < 3 || $this->_header->getVersion() > 4)
         throw new ID3_Exception
@@ -146,7 +148,7 @@ final class ID3v2
         $offset = $this->_reader->getOffset();
         
         // Jump off the loop if we reached the end of the tag
-        if ($offset - 10 >= $this->_header->getSize() -
+        if ($offset - $startOffset - 10 >= $this->_header->getSize() -
             ($this->hasFooter() ? 10 : 0))
           break;
         
@@ -337,9 +339,6 @@ final class ID3v2
    */
   public function write($filename = false)
   {
-    if (empty($this->_frames))
-      throw new ID3_Exception("Tag must contain at least one frame");
-    
     if ($filename === false && ($filename = $this->_filename) === false)
       throw new ID3_Exception("No file given to write the tag to");
     
@@ -349,9 +348,10 @@ final class ID3v2
     
     $oldTagSize = $this->_header->getSize();
     $tag = "" . $this;
-    $tagSize = strlen($tag);
+    $tagSize = empty($this->_frames) ? 0 : strlen($tag);
 
-    if ($this->_reader === null || $tagSize - 10 > $oldTagSize) {
+    if ($this->_reader === null ||
+        $tagSize - 10 > $oldTagSize || $tagSize == 0) {
       fseek($fd, 0, SEEK_END);
       $oldFileSize = ftell($fd);
       ftruncate($fd, $newFileSize = $tagSize - $oldTagSize + $oldFileSize);
@@ -363,7 +363,8 @@ final class ID3v2
       }
     }
     fseek($fd, 0);
-    fwrite($fd, $tag);
+    fwrite($fd, $tag, $tagLength);
+    fclose($fd);
 
     $this->_filename = $filename;
   }
@@ -392,6 +393,23 @@ final class ID3v2
       return $this->addFrame(new $classname());
     throw new ID3_Exception("Unknown frame/field: " . $name);
   }
+  
+  /**
+   * Magic function so that isset($obj->value) will work. This method checks
+   * whether the frame matching the identifier exists.
+   *
+   * @param string $name The frame identifier.
+   * @return boolean
+   */
+  public function __isset($name) { return isset($this->_boxes[$name]); }
+  
+  /**
+   * Magic function so that unset($obj->value) will work. This method removes
+   * all the frames matching the identifier.
+   *
+   * @param string $name The frame identifier.
+   */
+  public function __unset($name) { unset($this->_boxes[$name]); }
   
   /**
    * Returns the tag raw data.

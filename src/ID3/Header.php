@@ -119,7 +119,7 @@ final class ID3_Header extends ID3_Object
    */
   public function setVersion($version)
   {
-    $this->_version = $this->_options["version"] = $version;
+    $this->setOption("version", $this->_version = $version);
   }
   
   /**

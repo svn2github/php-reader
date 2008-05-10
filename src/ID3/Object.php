@@ -59,7 +59,7 @@ abstract class ID3_Object
    *
    * @var Array
    */
-  protected $_options;
+  private $_options;
   
   /**
    * Constructs the class with given parameters and reads object related data
@@ -82,11 +82,36 @@ abstract class ID3_Object
   public function getOptions() { return $this->_options; }
   
   /**
+   * Returns the given option value, or the default value if the option is not
+   * defined.
+   *
+   * @param string $option The name of the option.
+   * @param mixed $defaultValue The default value to be returned.
+   */
+  public function getOption($option, $defaultValue = false)
+  {
+    if (isset($this->_options[$option]))
+      return $this->_options[$option];
+    return $defaultValue;
+  }
+  
+  /**
    * Sets the options array. See {@link ID3v2} class for available options.
    *
    * @param Array $options The options array.
    */
   public function setOptions(&$options) { $this->_options = $options; }
+  
+  /**
+   * Sets the given option the given value.
+   *
+   * @param string $option The name of the option.
+   * @param mixed $value The value to set for the option.
+   */
+  public function setOption($option, $value)
+  {
+    $this->_options[$option] = $value;
+  }
   
   /**
    * Magic function so that $obj->value will work.

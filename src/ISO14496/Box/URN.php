@@ -69,13 +69,13 @@ final class ISO14496_Box_URN extends ISO14496_Box_Full
    *
    * @param Reader  $reader The reader object.
    */
-  public function __construct($reader)
+  public function __construct($reader, &$options = array())
   {
-    parent::__construct($reader);
+    parent::__construct($reader, $options);
     
     list ($this->_name, $this->_location) = preg_split
       ("/\\x00/", $this->_reader->read
-       ($this->_offset + $this->_size - $this->_reader->getOffset()));
+       ($this->getOffset() + $this->getSize() - $this->_reader->getOffset()));
   }
   
   /**

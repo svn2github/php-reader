@@ -72,15 +72,16 @@ final class ISO14496_Box_INFE extends ISO14496_Box_Full
    *
    * @param Reader  $reader The reader object.
    */
-  public function __construct($reader)
+  public function __construct($reader, &$options = array())
   {
-    parent::__construct($reader);
+    parent::__construct($reader, $options);
     
     $this->_itemId = $this->_reader->readUInt16BE();
     $this->_itemProtectionIndex = $this->_reader->readUInt16BE();
     list($this->_itemName, $this->_contentType, $this->_contentEncoding) =
-      preg_split("/\\x00/", $this->_reader->read
-                 ($this->_offset + $this->_size - $this->_reader->getOffset()));
+      preg_split
+        ("/\\x00/", $this->_reader->read
+         ($this->getOffset() + $this->getSize() - $this->_reader->getOffset()));
   }
   
   /**

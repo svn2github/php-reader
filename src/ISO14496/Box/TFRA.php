@@ -73,9 +73,9 @@ final class ISO14496_Box_TFRA extends ISO14496_Box_Full
    *
    * @param Reader  $reader The reader object.
    */
-  public function __construct($reader)
+  public function __construct($reader, &$options = array())
   {
-    parent::__construct($reader);
+    parent::__construct($reader, $options);
     
     $this->_trackId = $this->_reader->readUInt32BE();
     
@@ -83,7 +83,7 @@ final class ISO14496_Box_TFRA extends ISO14496_Box_Full
     $trunNumberSize = ($tmp >> 2) & 0x3;
     $sampleNumberSize = $tmp & 0x3;
     $entryCount = $this->_reader->readUInt32BE();
-    for ($i = 1; $i < $entryCount; $i++) {
+    for ($i = 1; $i <= $entryCount; $i++) {
       $entry = array();
       if ($this->getVersion() == 1) {
         $entry["time"] = $this->_reader->readInt64BE();

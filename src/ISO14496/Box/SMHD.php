@@ -59,8 +59,8 @@ final class ISO14496_Box_SMHD extends ISO14496_Box_Full
    *
    * @param Reader  $reader The reader object.
    */
-  public function __construct($reader)
+  public function __construct($reader, &$options = array())
   {
-    parent::__construct($reader);
+    parent::__construct($reader, $options);
   }
 }

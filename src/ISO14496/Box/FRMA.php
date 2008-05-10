@@ -61,9 +61,9 @@ final class ISO14496_Box_FRMA extends ISO14496_Box
    *
    * @param Reader  $reader The reader object.
    */
-  public function __construct($reader)
+  public function __construct($reader, &$options = array())
   {
-    parent::__construct($reader);
+    parent::__construct($reader, $options);
     
     $this->_dataFormat = $this->_reader->read(4);
   }

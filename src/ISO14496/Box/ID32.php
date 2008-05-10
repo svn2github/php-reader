@@ -54,7 +54,7 @@ require_once("ISO14496/Box/Full.php");
 final class ISO14496_Box_ID32 extends ISO14496_Box_Full
 {
   /** @var string */
-  private $_language;
+  private $_language = "und";
   
   /** @var ID3v2 */
   private $_tag;
@@ -65,9 +65,12 @@ final class ISO14496_Box_ID32 extends ISO14496_Box_Full
    *
    * @param Reader $reader The reader object.
    */
-  public function __construct($reader)
+  public function __construct($reader = null, &$options = array())
   {
-    parent::__construct($reader);
+    parent::__construct($reader, $options);
+    
+    if ($reader === null)
+      return;
     
     $this->_language =
       chr(((($tmp = $this->_reader->readUInt16BE()) >> 10) & 0x1f) + 0x60) .
@@ -85,9 +88,44 @@ final class ISO14496_Box_ID32 extends ISO14496_Box_Full
   public function getLanguage() { return $this->_language; }
   
   /**
+   * Sets the three byte language code as specified in the
+   * {@link http://www.loc.gov/standards/iso639-2/ ISO 639-2} standard.
+   * 
+   * @param string $language The language code.
+   */
+  public function setLanguage($language) { $this->_language = $language; }
+  
+  /**
    * Returns the {@link ID3v2} tag class instance.
    *
    * @return string
    */
   public function getTag() { return $this->_tag; }
+  
+  /**
+   * Sets the {@link ID3v2} tag class instance using given language.
+   *
+   * @param ID3v2 $tag The tag instance.
+   * @param string $language The language code.
+   */
+  public function setTag($tag, $language = false)
+  {
+    $this->_tag = $tag;
+    if ($language !== false)
+      $this->_language = $language;
+  }
+  
+  /**
+   * Returns the box raw data.
+   *
+   * @return string
+   */
+  public function __toString($data = "")
+  {
+    return parent::__toString
+      (Transform::toUInt16BE
+       (((ord($language[0]) - 0x60) << 10) |
+        ((ord($language[1]) - 0x60) << 5) |
+          ord($language[2]) - 0x60) . $this->_tag);
+  }
 }

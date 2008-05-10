@@ -60,10 +60,14 @@ final class ISO14496_Box_SKIP extends ISO14496_Box
    *
    * @param Reader $reader The reader object.
    */
-  public function __construct($reader)
+  public function __construct($reader = null, &$options = array())
   {
-    parent::__construct($reader);
+    parent::__construct($reader, $options);
     $this->setContainer(true);
+    
+    if ($reader === null)
+      return;
+    
     $this->constructBoxes();
   }
 }

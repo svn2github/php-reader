@@ -76,16 +76,20 @@ final class ISO14496_Box_SBGP extends ISO14496_Box_Full
    *
    * @param Reader $reader The reader object.
    */
-  public function __construct($reader)
+  public function __construct($reader, &$options = array())
   {
-    parent::__construct($reader);
+    parent::__construct($reader, $options);
     
     $groupingType = $this->_reader->readUInt32BE();
     $entryCount = $this->_reader->readUInt32BE();
-    for ($i = 1; $i < $entryCount; $i++)
+    $data = $this->_reader->read
+      ($this->getOffset() + $this->getSize() - $this->_reader->getOffset());
+    for ($i = 1; $i <= $entryCount; $i++)
       $this->_sampleToGroupTable[$i] = array
-        ("sampleCount" => $this->_reader->readUInt32BE(),
-         "groupDescriptionIndex" => $this->_reader->readUInt32BE());
+        ("sampleCount" =>
+           Transform::fromUInt32BE(substr($data, ($i - 1) * 8, 4)),
+         "groupDescriptionIndex" =>
+           Transform::fromUInt32BE(substr($data, $i * 8 - 4, 4)));
   }
   
   /**

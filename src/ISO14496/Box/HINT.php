@@ -62,11 +62,11 @@ final class ISO14496_Box_HINT extends ISO14496_Box
    *
    * @param Reader  $reader The reader object.
    */
-  public function __construct($reader)
+  public function __construct($reader, &$options = array())
   {
-    parent::__construct($reader);
+    parent::__construct($reader, $options);
     
-    while ($this->_reader->getOffset <= $this->_size)
+    while ($this->_reader->getOffset <= $this->getSize())
       $this->_trackId[] = $this->_reader->readUInt32BE();
   }
   

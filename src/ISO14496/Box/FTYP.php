@@ -108,13 +108,13 @@ final class ISO14496_Box_FTYP extends ISO14496_Box
    *
    * @param Reader  $reader The reader object.
    */
-  public function __construct($reader)
+  public function __construct($reader, &$options = array())
   {
-    parent::__construct($reader);
+    parent::__construct($reader, $options);
     
     $this->_majorBrand   = $this->_reader->readString8(4);
     $this->_minorVersion = $this->_reader->readUInt32BE();
-    while ($this->_reader->getOffset() < $this->_size)
+    while ($this->_reader->getOffset() < $this->getSize())
       if (($brand = $this->_reader->readString8(4)) != "")
         $this->_compatibleBrands[] = $brand;
   }

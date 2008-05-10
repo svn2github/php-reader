@@ -79,9 +79,9 @@ final class ISO14496_Box_SUBS extends ISO14496_Box_Full
    *
    * @param Reader $reader The reader object.
    */
-  public function __construct($reader)
+  public function __construct($reader, &$options = array())
   {
-    parent::__construct($reader);
+    parent::__construct($reader, $options);
     
     $entryCount = $this->_reader->readUInt32BE();
     for ($i = 0; $i < $entryCount; $i++) {

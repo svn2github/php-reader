@@ -86,15 +86,19 @@ final class ISO14496_Box_STSH extends ISO14496_Box_Full
    *
    * @param Reader $reader The reader object.
    */
-  public function __construct($reader)
+  public function __construct($reader, &$options = array())
   {
-    parent::__construct($reader);
+    parent::__construct($reader, $options);
     
     $entryCount = $this->_reader->readUInt32BE();
+    $data = $this->_reader->read
+      ($this->getOffset() + $this->getSize() - $this->_reader->getOffset());
     for ($i = 0; $i < $entryCount; $i++)
       $this->_shadowSyncSampleTable[$i] = array
-        ("shadowedSampleNumber" => $this->_reader->readUInt32BE(),
-         "syncSampleNumber" => $this->_reader->readUInt32BE());
+        ("shadowedSampleNumber" =>
+           Transform::fromUInt32BE(substr($data, ($i - 1) * 8, 4)),
+         "syncSampleNumber" =>
+           Transform::fromUInt32BE(substr($data, $i * 8 - 4, 4)));
   }
   
   /**

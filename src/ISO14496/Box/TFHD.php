@@ -111,9 +111,9 @@ final class ISO14496_Box_TFHD extends ISO14496_Box_Full
    * @param Reader  $reader The reader object.
    * @todo The sample flags could be parsed further
    */
-  public function __construct($reader)
+  public function __construct($reader, &$options = array())
   {
-    parent::__construct($reader);
+    parent::__construct($reader, $options);
     
     $this->_trackId = $this->_reader->readUInt32BE();
     if ($this->hasFlag(self::BASE_DATA_OFFSET))

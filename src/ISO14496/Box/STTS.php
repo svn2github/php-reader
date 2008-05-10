@@ -78,15 +78,19 @@ final class ISO14496_Box_STTS extends ISO14496_Box_Full
    *
    * @param Reader $reader The reader object.
    */
-  public function __construct($reader)
+  public function __construct($reader, &$options = array())
   {
-    parent::__construct($reader);
+    parent::__construct($reader, $options);
     
     $entryCount = $this->_reader->readUInt32BE();
-    for ($i = 1; $i < $entryCount; $i++)
+    $data = $this->_reader->read
+      ($this->getOffset() + $this->getSize() - $this->_reader->getOffset());
+    for ($i = 1; $i <= $entryCount; $i++)
       $this->_timeToSampleTable[$i] = array
-        ("sampleCount" => $this->_reader->readUInt32BE(),
-         "sampleDelta" => $this->_reader->readUInt32BE());
+        ("sampleCount" =>
+           Transform::fromUInt32BE(substr($data, ($i - 1) * 8, 4)),
+         "sampleDelta" =>
+           Transform::fromUInt32BE(substr($data, $i * 8 - 4, 4)));
   }
   
   /**

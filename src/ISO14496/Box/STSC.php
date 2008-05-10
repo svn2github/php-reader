@@ -69,16 +69,21 @@ final class ISO14496_Box_STSC extends ISO14496_Box_Full
    *
    * @param Reader $reader The reader object.
    */
-  public function __construct($reader)
+  public function __construct($reader, &$options = array())
   {
-    parent::__construct($reader);
+    parent::__construct($reader, $options);
     
     $entryCount = $this->_reader->readUInt32BE();
-    for ($i = 1; $i < $entryCount; $i++)
+    $data = $this->_reader->read
+      ($this->getOffset() + $this->getSize() - $this->_reader->getOffset());
+    for ($i = 1; $i <= $entryCount; $i++)
       $this->_sampleToChunkTable[$i] = array
-        ("firstChunk" => $this->_reader->readUInt32BE(),
-         "samplesPerChunk" => $this->_reader->readUInt32BE(),
-         "sampleDescriptionIndex" => $this->_reader->readUInt32BE());
+        ("firstChunk" =>
+           Transform::fromUInt32BE(substr($data, ($i - 1) * 12, 4)),
+         "samplesPerChunk" =>
+           Transform::fromUInt32BE(substr($data, $i * 12 - 8, 4)),
+         "sampleDescriptionIndex" =>
+           Transform::fromUInt32BE(substr($data, $i * 12 - 4, 4)));
   }
   
   /**

@@ -73,15 +73,19 @@ final class ISO14496_Box_STSZ extends ISO14496_Box_Full
    *
    * @param Reader $reader The reader object.
    */
-  public function __construct($reader)
+  public function __construct($reader, &$options = array())
   {
-    parent::__construct($reader);
+    parent::__construct($reader, $options);
     
     $this->_sampleSize = $this->_reader->readUInt32BE();
     $sampleCount = $this->_reader->readUInt32BE();
-    if ($this->_sampleSize == 0)
-      for ($i = 1; $i < $sampleCount; $i++)
-        $this->_sampleSizeTable[$i] = $this->_reader->readUInt32BE();
+    if ($this->_sampleSize == 0) {
+      $data = $this->_reader->read
+        ($this->getOffset() + $this->getSize() - $this->_reader->getOffset());
+      for ($i = 1; $i <= $sampleCount; $i++)
+        $this->_sampleSizeTable[$i] =
+          Transform::fromUInt32BE(substr($data, ($i - 1) * 4, 4));
+    }
   }
   
   /**

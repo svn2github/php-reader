@@ -52,10 +52,10 @@ require_once("ISO14496/Box.php");
 abstract class ISO14496_Box_Full extends ISO14496_Box
 {
   /** @var integer */
-  protected $_version;
+  protected $_version = 0;
   
   /** @var integer */
-  protected $_flags;
+  protected $_flags = 0;
   
   /**
    * Constructs the class with given parameters and reads box related data from
@@ -63,10 +63,13 @@ abstract class ISO14496_Box_Full extends ISO14496_Box
    *
    * @param Reader $reader The reader object.
    */
-  public function __construct($reader)
+  public function __construct($reader, &$options = array())
   {
-    parent::__construct($reader);
+    parent::__construct($reader, $options);
     
+    if ($reader === null)
+      return;
+
     $this->_version = (($field = $this->_reader->readUInt32BE()) >> 24) & 0xff;
     $this->_flags = $field & 0xffffff;
   }
@@ -77,6 +80,13 @@ abstract class ISO14496_Box_Full extends ISO14496_Box
    * @return integer
    */
   public function getVersion() { return $this->_version; }
+  
+  /**
+   * Sets the version of this format of the box.
+   * 
+   * @param integer $version The version.
+   */
+  public function setVersion($version) { $this->_version = $version; }
   
   /**
    * Checks whether or not the flag is set. Returns <var>true</var> if the flag
@@ -93,4 +103,22 @@ abstract class ISO14496_Box_Full extends ISO14496_Box
    * @return integer
    */
   public function getFlags() { return $this->_flags; }
+  
+  /**
+   * Sets the map of flags.
+   * 
+   * @param string $flags The map of flags.
+   */
+  public function setFlags($flags) { $this->_flags = $flags; }
+  
+  /**
+   * Returns the box raw data.
+   *
+   * @return string
+   */
+  public function __toString($data = "")
+  {
+    return parent::__toString
+      (Transform::toUInt32BE($this->_version << 24 | $this->_flags) . $data);
+  }
 }

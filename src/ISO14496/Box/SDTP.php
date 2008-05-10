@@ -87,14 +87,17 @@ final class ISO14496_Box_SDTP extends ISO14496_Box_Full
    *
    * @param Reader $reader The reader object.
    */
-  public function __construct($reader)
+  public function __construct($reader, &$options = array())
   {
-    parent::__construct($reader);
+    parent::__construct($reader, $options);
     
-    for ($i = 0; $this->_reader->getOffset() <
-                 $this->_offset + $this->_size; $i++)
+    $data = $this->_reader->read
+      ($this->getOffset() + $this->getSize() - $this->_reader->getOffset());
+    $dataSize = strlen($data);
+    for ($i = 1; $i <= $dataSize; $i++)
       $this->_sampleDependencyTypeTable[$i] = array
-        ("sampleDependsOn" => (($tmp = $this->_reader->readInt8()) >> 4) & 0x3,
+        ("sampleDependsOn" => (($tmp = Transform::fromInt8
+                                ($data[$i - 1])) >> 4) & 0x3,
          "sampleIsDependedOn" => ($tmp >> 2) & 0x3,
          "sampleHasRedundancy" => $tmp & 0x3);
   }

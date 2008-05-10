@@ -66,16 +66,16 @@ final class ISO14496_Box_SCHM extends ISO14496_Box_Full
    *
    * @param Reader  $reader The reader object.
    */
-  public function __construct($reader)
+  public function __construct($reader, &$options = array())
   {
-    parent::__construct($reader);
+    parent::__construct($reader, $options);
     
     $this->_schemeType = $this->_reader->read(4);
     $this->_schemeVersion = $this->_reader->readUInt32BE();
     if ($this->hasFlag(1))
       $this->_schemeUri = preg_split
         ("/\\x00/", $this->_reader->read
-         ($this->_offset + $this->_size - $this->_reader->getOffset()));
+         ($this->getOffset() + $this->getSize() - $this->_reader->getOffset()));
   }
   
   /**

@@ -75,9 +75,9 @@ final class ISO14496_Box_TREX extends ISO14496_Box_Full
    * @param Reader  $reader The reader object.
    * @todo The sample flags could be parsed further
    */
-  public function __construct($reader)
+  public function __construct($reader, &$options = array())
   {
-    parent::__construct($reader);
+    parent::__construct($reader, $options);
     
     $this->_trackId = $this->_reader->readUInt32BE();
     $this->_defaultSampleDescriptionIndex = $this->_reader->readUInt32BE();

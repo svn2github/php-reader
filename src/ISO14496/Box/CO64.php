@@ -74,13 +74,16 @@ final class ISO14496_Box_CO64 extends ISO14496_Box_Full
    *
    * @param Reader $reader The reader object.
    */
-  public function __construct($reader)
+  public function __construct($reader, &$options = array())
   {
-    parent::__construct($reader);
+    parent::__construct($reader, $options);
     
     $entryCount = $this->_reader->readUInt32BE();
-    for ($i = 1; $i < $entryCount; $i++)
-      $this->_chunkOffsetTable[$i] = $this->_reader->readInt64BE();
+    $data = $this->_reader->read
+      ($this->getOffset() + $this->getSize() - $this->_reader->getOffset());
+    for ($i = 1; $i <= $entryCount; $i++)
+      $this->_chunkOffsetTable[$i] =
+        Transform::fromInt64BE(substr($data, ($i - 1) * 8, 8));
   }
   
   /**
@@ -90,8 +93,30 @@ final class ISO14496_Box_CO64 extends ISO14496_Box_Full
    *
    * @return Array
    */
-  public function getChunkOffsetTable()
+  public function getChunkOffsetTable() { return $this->_chunkOffsetTable; }
+  
+  /**
+   * Sets an array of chunk offsets. Each entry must have the entry number as
+   * its index and a 64 bit integer that gives the offset of the start of a
+   * chunk into its containing media file as its value.
+   *
+   * @param Array $chunkOffsetTable The chunk offset array.
+   */
+  public function setChunkOffsetTable($chunkOffsetTable)
   {
-    return $this->_chunkOffsetTable;
+    $this->_chunkOffsetTable = $chunkOffsetTable;
+  }
+  
+  /**
+   * Returns the box raw data.
+   *
+   * @return string
+   */
+  public function __toString($data = "")
+  {
+    $data = Transform::toUInt32BE(count($this->_chunkOffsetTable));
+    foreach ($this->_chunkOffsetTable as $chunkOffset)
+      $data .= Transform::toInt64BE($chunkOffset);
+    return parent::__toString($data);
   }
 }

@@ -59,7 +59,7 @@ require_once("ISO14496/Box/Full.php");
 final class ISO14496_Box_MFRO extends ISO14496_Box_Full
 {
   /** @var integer */
-  private $_size;
+  private $_parentSize;
 
   /**
    * Constructs the class with given parameters and reads box related data from
@@ -67,11 +67,11 @@ final class ISO14496_Box_MFRO extends ISO14496_Box_Full
    *
    * @param Reader  $reader The reader object.
    */
-  public function __construct($reader)
+  public function __construct($reader, &$options = array())
   {
-    parent::__construct($reader);
+    parent::__construct($reader, $options);
     
-    $this->_size = $this->_reader->readUInt32BE();
+    $this->_parentSize = $this->_reader->readUInt32BE();
   }
   
   /**
@@ -81,5 +81,5 @@ final class ISO14496_Box_MFRO extends ISO14496_Box_Full
    * 
    * @return integer
    */
-  public function getSize() { return $this->_size; }
+  public function getParentSize() { return $this->_parentSize; }
 }

@@ -66,12 +66,12 @@ final class ISO14496_Box_URL extends ISO14496_Box_Full
    *
    * @param Reader  $reader The reader object.
    */
-  public function __construct($reader)
+  public function __construct($reader, &$options = array())
   {
-    parent::__construct($reader);
+    parent::__construct($reader, $options);
     
     $this->_location = $this->_reader->read
-      ($this->_offset + $this->_size - $this->_reader->getOffset());
+      ($this->getOffset() + $this->getSize() - $this->_reader->getOffset());
   }
   
   /**

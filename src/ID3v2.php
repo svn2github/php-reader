@@ -363,7 +363,7 @@ final class ID3v2
       }
     }
     fseek($fd, 0);
-    fwrite($fd, $tag, $tagLength);
+    fwrite($fd, $tag, $tagSize);
     fclose($fd);
 
     $this->_filename = $filename;

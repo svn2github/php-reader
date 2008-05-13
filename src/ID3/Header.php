@@ -136,7 +136,7 @@ final class ID3_Header extends ID3_Object
    * 
    * @return integer
    */
-  public function getFlags($flags) { return $this->_flags; }
+  public function getFlags() { return $this->_flags; }
   
   /**
    * Sets the flags byte.

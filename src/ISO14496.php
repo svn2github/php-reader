@@ -170,7 +170,7 @@ require_once("ISO14496/Box.php");
  *     <li>trun -- <i>{@link ISO14496_Box_TRUN Track Fragment Run}</i>
  *     <li>sdtp -- <i>{@link ISO14496_Box_SDTP Independent and Disposable
  *         Samples}</i>
- *     <li>sbgp -- <i>{@link ISO14496_Box_SBGP SampleToGroup Box}</i>
+ *     <li>sbgp -- <i>{@link ISO14496_Box_SBGP !SampleToGroup Box}</i>
  *     <li>subs -- <i>{@link ISO14496_Box_SUBS Sub-Sample Information Box}</i>
  *     </ul>
  *   </ul>

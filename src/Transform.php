@@ -471,7 +471,8 @@ final class Transform
   public static function fromString16LE($value)
   {
     $string = "";
-    foreach (unpack("v*", $value) as $char)
+    foreach (unpack("v*", substr($value, -2) == "\0\0" ?
+                    substr($value, 0, -2) : $value) as $char)
       $string .= pack("S", $char);
     return $string;
   }
@@ -496,7 +497,8 @@ final class Transform
   public static function fromString16BE($value)
   {
     $string = "";
-    foreach (unpack("n*", $value) as $char)
+    foreach (unpack("n*", substr($value, -2) == "\0\0" ?
+                    substr($value, 0, -2) : $value) as $char)
       $string .= pack("S", $char);
     return $string;
   }

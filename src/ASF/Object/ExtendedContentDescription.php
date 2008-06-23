@@ -37,14 +37,14 @@
  */
 
 /**#@+ @ignore */
-require_once("Object.php");
+require_once("ASF/Object.php");
 /**#@-*/
 
 /**
- * The <i>ASF_Content_Description_Object</i> object implementation. This object
- * contains five core attribute fields giving more information about the file:
- * title, author, description, copyright and rating.
- *
+ * The <i>ASF_Extended_Content_Description_Object</i> object implementation.
+ * This object contains unlimited number of attribute fields giving more
+ * information about the file.
+ * 
  * @package    php-reader
  * @subpackage ASF
  * @author     Sven Vollbehr <svollbehr@gmail.com>
@@ -52,78 +52,63 @@ require_once("Object.php");
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Rev$
  */
-final class ASF_ContentDescriptionObject extends ASF_Object
+final class ASF_Object_ExtendedContentDescription extends ASF_Object
 {
-  /** @var string */
-  private $_title;
-
-  /** @var string */
-  private $_author;
-
-  /** @var string */
-  private $_copyright;
-
-  /** @var string */
-  private $_description;
-
-  /** @var string */
-  private $_rating;
+  /** @var Array */
+  private $_contentDescriptors = array();
 
   /**
    * Constructs the class with given parameters and reads object related data
    * from the ASF file.
    *
    * @param Reader  $reader The reader object.
-   * @param string  $id     The object GUID identifier.
-   * @param integer $size   The object size.
+   * @param Array  $options The options array.
    */
-  public function __construct($reader, $id, $size)
+  public function __construct($reader, &$options = array())
   {
-    parent::__construct($reader, $id, $size);
+    parent::__construct($reader, $options);
 
-    $titleLen = $this->_reader->readUInt16LE();
-    $authorLen = $this->_reader->readUInt16LE();
-    $copyrightLen = $this->_reader->readUInt16LE();
-    $descriptionLen = $this->_reader->readUInt16LE();
-    $ratingLen = $this->_reader->readUInt16LE();
-
-    $this->_title = $this->_reader->readString16LE($titleLen);
-    $this->_author = $this->_reader->readString16LE($authorLen);
-    $this->_copyright = $this->_reader->readString16LE($copyrightLen);
-    $this->_description = $this->_reader->readString16LE($descriptionLen);
-    $this->_rating = $this->_reader->readString16LE($ratingLen);
+    $contentDescriptorsCount = $this->_reader->readUInt16LE();
+    for ($i = 0; $i < $contentDescriptorsCount; $i++) {
+      $nameLen = $this->_reader->readUInt16LE();
+      $name = iconv
+        ("utf-16le", $this->getOption("encoding"),
+         $this->_reader->readString16LE($nameLen));
+      $valueDataType = $this->_reader->readUInt16LE();
+      $valueLen = $this->_reader->readUInt16LE();
+      switch ($valueDataType) {
+      case 0:
+      case 1: // string
+        $this->_contentDescriptors[$name] = iconv
+          ("utf-16le", $this->getOption("encoding"),
+           $this->_reader->readString16LE($valueLen));
+        break;
+      case 2: // bool
+      case 3: // 32-bit integer
+        $this->_contentDescriptors[$name] = $this->_reader->readUInt32LE();
+        break;
+      case 4: // 64-bit integer
+        $this->_contentDescriptors[$name] = $this->_reader->readInt64LE();
+        break;
+      case 5: // 16-bit integer
+        $this->_contentDescriptors[$name] = $this->_reader->readUInt16LE();
+        break;
+      default:
+      }
+    }
   }
 
   /**
-   * Returns the title field.
-   */
-  public function getTitle() { return $this->_title; }
-
-  /**
-   * Returns the author field.
+   * Returns the value of the specified descriptor or <var>false</var> if there
+   * is no such descriptor defined.
    *
-   * @return string
+   * @param  string $name The name of the descriptor (ie the name of the field).
+   * @return string|false
    */
-  public function getAuthor() { return $this->_author; }
-
-  /**
-   * Returns the copyright field.
-   *
-   * @return string
-   */
-  public function getCopyright() { return $this->_copyright; }
-
-  /**
-   * Returns the description field.
-   *
-   * @return string
-   */
-  public function getDescription() { return $this->_description; }
-
-  /**
-   * Returns the rating field.
-   *
-   * @return string
-   */
-  public function getRating() { return $this->_rating; }
+  public function getDescriptor($name)
+  {
+    if (isset($this->_contentDescriptors[$name]))
+      return $this->_contentDescriptors[$name];
+    return false;
+  }
 }

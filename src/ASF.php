@@ -38,11 +38,9 @@
 
 /**#@+ @ignore */
 require_once("Reader.php");
-require_once("ASF/Object.php");
-require_once("ASF/HeaderObject.php");
-require_once("ASF/ContentDescriptionObject.php");
-require_once("ASF/ExtendedContentDescriptionObject.php");
-require_once("ASF/FilePropertiesObject.php");
+require_once("ASF/Object/Container.php");
+//require_once("ASF/Object/Header.php");
+//require_once("ASF/Object/Data.php");
 /**#@-*/
 
 /**
@@ -52,9 +50,6 @@ require_once("ASF/FilePropertiesObject.php");
  * types of information ranging from audio and video to script commands and
  * developer defined custom streams.
  *
- * This is hardly a full implementation of a ASF reader but provides you with
- * the ability to read metadata out of an ASF based file (WMA, WMV, etc).
- * 
  * The ASF file consists of code blocks that are called content objects. Each
  * of these objects have a format of their own. They may contain other objects
  * or other specific data. Each supported object has been implemented as their
@@ -67,58 +62,92 @@ require_once("ASF/FilePropertiesObject.php");
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Rev$
  */
-class ASF
+class ASF extends ASF_Object_Container
 {
-  /** @var Reader */
-  private $_reader;
+  const HEADER = "75b22630-668e-11cf-a6d9-00aa0062ce6c";
+  const DATA = "75b22636-668e-11cf-a6d9-00aa0062ce6c";
+  const SIMPLE_INDEX = "33000890-e5b1-11cf-89f4-00a0c90349cb";
+  const INDEX = "d6e229d3-35da-11d1-9034-00a0c90349be";
+  const MEDIA_OBJECT_INDEX = "feb103f8-12ad-4c64-840f-2a1d2f7ad48c";
+  const TIMECODE_INDEX = "3cb73fd0-0c4a-4803-953d-edf7b6228f0c";
+  
+  /** @var string */
+  private $_filename;
   
   /**
-   * Constructs the ASF class with given file.
+   * Constructs the ASF class with given file and options.
    *
-   * @param string $filename The path to the file.
+   * The following options are currently recognized:
+   *   o encoding -- Indicates the encoding that all the texts are presented
+   *     with. By default this is set to utf-8. See the documentation of iconv
+   *     for accepted values.
+   *   o readonly -- Indicates that the file is read from a temporary location
+   *     or another source it cannot be written back to.
+   *
+   * @param string $filename The path to the file or file descriptor of an
+   *                         opened file.
+   * @param Array  $options  The options array.
    */
-  public function __construct($filename)
+  public function __construct($filename, $options = array())
   {
-    $this->_reader = new Reader($filename);
+    $this->_reader = new Reader($this->_filename = $filename);
+    $this->setOptions($options);
+    if ($this->getOption("encoding", false) === false)
+      $this->setOption("encoding", "utf-8");
+    $this->setOffset(0);
+    $this->setSize($this->_reader->getSize());
+    $this->constructObjects
+      (array
+       (self::HEADER => "Header",
+        self::DATA => "Data",
+        self::SIMPLE_INDEX => "SimpleIndex",
+        self::INDEX => "Index",
+        self::MEDIA_OBJECT_INDEX => "MediaObjectIndex",
+        self::TIMECODE_INDEX => "TimecodeIndex"));
   }
   
   /**
-   * Checks whether there are objects left in the stream. Returns
-   * <var>true</var> if there are objects left in the stream, <var>false</var>
-   * otherwise.
+   * Returns the mandatory header object contained in this file.
    * 
-   * @return boolean
+   * @return ASF_Object_Header
    */
-  public function hasObjects()
+  public function getHeader()
   {
-    return $this->_reader->available();
+    $header = $this->getObjectsByIdentifier(self::HEADER);
+    return $header[0];
   }
   
   /**
-   * Returns the next ASF object or <var>false</var> if end of stream has been
-   * reached. Returned objects are of the type ASF_Object or of any of its child
-   * types.
+   * Returns the mandatory data object contained in this file.
    * 
-   * @todo   Only the ASF_Header_Object top level object is regognized. 
-   * @return ASF_Object
+   * @return ASF_Object_Data
    */
-  public function nextObject()
+  public function getData()
   {
-    $object = false;
-    if ($this->hasObjects()) {
-      $guid = $this->_reader->readGUID();
-      $size = $this->_reader->readInt64LE();
-      $offset = $this->_reader->getOffset();
-
-      switch ($guid) {
-      case "75b22630-668e-11cf-a6d9-00aa0062ce6c": /* ASF_Header_Object */
-        $object = new ASF_HeaderObject($this->_reader, $guid, $size);
-        break;
-      default:
-        $object = new ASF_Object($this->_reader, $guid, $size);
-      }
-      $this->_reader->setOffset($offset - 24 + $size);
-    }
-    return $object;
+    $data = $this->getObjectsByIdentifier(self::DATA);
+    return $data[0];
+  }
+  
+  /**
+   * Returns an array of index objects contained in this file.
+   * 
+   * @return Array
+   */
+  public function getIndices()
+  {
+    return $this->getObjectsByIdentifier
+      (self::SIMPLE_INDEX . "|" . self::INDEX . "|" .
+       self::MEDIA_OBJECT_INDEX . "|" . self::TIMECODE_INDEX);
+  }
+  
+  /**
+   * Writes the changes back to the original media file.
+   *
+   * Please note: currently the method writes only Content Description and
+   * Extended Content Description Objects.
+   */
+  public function write()
+  {
+    throw new ASF_Exception("Not yet supported");
   }
 }

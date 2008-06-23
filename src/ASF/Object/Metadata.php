@@ -2,8 +2,7 @@
 /**
  * PHP Reader Library
  *
- * Copyright (c) 2006-2008 The PHP Reader Project Workgroup. All rights
- * reserved.
+ * Copyright (c) 2008 The PHP Reader Project Workgroup. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -31,82 +30,84 @@
  *
  * @package    php-reader
  * @subpackage ASF
- * @copyright  Copyright (c) 2006-2008 The PHP Reader Project Workgroup
+ * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Id$
  */
 
 /**#@+ @ignore */
-require_once("Object.php");
+require_once("ASF/Object.php");
 /**#@-*/
 
 /**
- * The <i>ASF_Extended_Content_Description_Object</i> object implementation.
- * This object contains unlimited number of attribute fields giving more
- * information about the file.
- * 
+ * The <i>Metadata Object</i> permits authors to store stream-based metadata in
+ * a file. This object supports the same types of metadata information as the
+ * <i>Extended Content Description Object</i> except that it also allows a
+ * stream number to be specified.
+ *
  * @package    php-reader
  * @subpackage ASF
  * @author     Sven Vollbehr <svollbehr@gmail.com>
- * @copyright  Copyright (c) 2006-2008 The PHP Reader Project Workgroup
+ * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Rev$
  */
-final class ASF_ExtendedContentDescriptionObject extends ASF_Object
+final class ASF_Object_Metadata extends ASF_Object
 {
   /** @var Array */
-  private $_contentDescriptors = array();
-
+  private $_descriptions = array();
+  
   /**
    * Constructs the class with given parameters and reads object related data
    * from the ASF file.
    *
-   * @param Reader  $reader The reader object.
-   * @param string  $id     The object GUID identifier.
-   * @param integer $size   The object size.
+   * @param Reader $reader  The reader object.
+   * @param Array  $options The options array.
    */
-  public function __construct($reader, $id, $size)
+  public function __construct($reader, &$options = array())
   {
-    parent::__construct($reader, $id, $size);
-
-    $contentDescriptorsCount = $this->_reader->readUInt16LE();
-    for ($i = 0; $i < $contentDescriptorsCount; $i++) {
-      $nameLen = $this->_reader->readUInt16LE();
-      $name = $this->_reader->readString16LE($nameLen);
-      $valueDataType = $this->_reader->readUInt16LE();
-      $valueLen = $this->_reader->readUInt16LE();
-      switch ($valueDataType) {
+    parent::__construct($reader, $options);
+    
+    $descriptionRecordsCount = $this->_reader->readUInt16LE();
+    for ($i = 0; $i < $descriptionRecordsCount; $i++) {
+      $this->_reader->skip(2);
+      $record = array("streamNumber" => $this->_reader->readUInt16LE());
+      $nameLength = $this->_reader->readUInt16LE();
+      $dataType = $this->_reader->readUInt16LE();
+      $dataLength = $this->_reader->readUInt32LE();
+      $record["name"] = iconv
+        ("utf-16le", $this->getOption("encoding"),
+         $this->_reader->readString16LE($nameLength));
+      switch ($dataType) {
       case 0:
-      case 1: // string
-        $this->_contentDescriptors[$name] =
-          $this->_reader->readString16LE($valueLen);
+        $record["data"] = iconv
+          ("utf-16le", $this->getOption("encoding"),
+           $this->_reader->readString16LE($dataLength));
         break;
-      case 2: // bool
-      case 3: // 32-bit integer
-        $this->_contentDescriptors[$name] = $this->_reader->readUInt32LE();
+      case 1:
+        $record["data"] = $this->_reader->readString16LE($dataLength);
         break;
-      case 4: // 64-bit integer
-        $this->_contentDescriptors[$name] = $this->_reader->readInt64LE();
+      case 2:
+        $record["data"] = $this->_reader->readUInt16LE() ? true : false;
         break;
-      case 5: // 16-bit integer
-        $this->_contentDescriptors[$name] = $this->_reader->readUInt16LE();
+      case 3:
+        $record["data"] = $this->_reader->readUInt32LE();
         break;
-      default:
+      case 4:
+        $record["data"] = $this->_reader->readInt64LE();
+        break;
+      case 5:
+        $record["data"] = $this->_reader->readUInt16LE();
+        break;
       }
+      $this->_descriptions[] = $record;
     }
   }
 
   /**
-   * Returns the value of the specified descriptor or <var>false</var> if there
-   * is no such descriptor defined.
+   * Returns the array of description records.
    *
-   * @param  string $name The name of the descriptor (ie the name of the field).
-   * @return string|false
+   * @return Array
    */
-  public function getDescriptor($name)
-  {
-    if (isset($this->_contentDescriptors[$name]))
-      return $this->_contentDescriptors[$name];
-    return false;
-  }
+  public function getDescriptions() { return $this->_descriptions; }
 }

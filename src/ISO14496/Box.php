@@ -85,9 +85,10 @@ class ISO14496_Box
   private static $_path = array();
   
   /**
-   * Constructs the class with given parameters.
+   * Constructs the class with given parameters and options.
    *
-   * @param Reader $reader The reader object.
+   * @param Reader $reader  The reader object.
+   * @param Array  $options The options array.
    */
   public function __construct($reader, &$options = array())
   {
@@ -176,7 +177,6 @@ class ISO14496_Box
    *
    * The method will propagate size change to box parents.
    * 
-   * @todo Size does not propagate to parent
    * @param integer $size The box size.
    */
   public function setSize($size)
@@ -397,8 +397,7 @@ class ISO14496_Box
   public function __set($name, $value)
   {
     if (method_exists($this, "set" . ucfirst($name)))
-      call_user_func
-        (array($this, "set" . ucfirst($name)), $value);
+      call_user_func(array($this, "set" . ucfirst($name)), $value);
     else throw new ISO14496_Exception("Unknown field: " . $name);
   }
   

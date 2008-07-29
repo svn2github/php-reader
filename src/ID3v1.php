@@ -43,10 +43,11 @@ require_once("ID3/Exception.php");
 /**
  * This class represents a file containing ID3v1 headers as described in
  * {@link http://www.id3.org/id3v2-00 The ID3-Tag Specification Appendix}.
- * 
+ *
  * @package    php-reader
  * @subpackage ID3
  * @author     Sven Vollbehr <svollbehr@gmail.com>
+ * @author     Ryan Butterfield <buttza@gmail.com>
  * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Rev$
@@ -55,22 +56,22 @@ final class ID3v1
 {
   /** @var string */
   private $_title;
-  
+
   /** @var string */
   private $_artist;
-  
+
   /** @var string */
   private $_album;
-  
+
   /** @var string */
   private $_year;
-  
+
   /** @var string */
   private $_comment;
-  
+
   /** @var integer */
   private $_track;
-  
+
   /** @var integer */
   private $_genre = 255;
 
@@ -102,13 +103,13 @@ final class ID3v1
      "Tango", "Samba", "Folklore", "Ballad", "Power Ballad", "Rhythmic Soul",
      "Freestyle", "Duet", "Punk Rock", "Drum Solo", "A capella", "Euro-House",
      "Dance Hall", 255 => "Unknown");
-  
+
   /** @var Reader */
   private $_reader;
-  
+
   /** @var string */
   private $_filename;
-  
+
   /**
    * Constructs the ID3v1 class with given file. The file is not mandatory
    * argument and may be omitted. A new tag can be written to a file also by
@@ -118,19 +119,22 @@ final class ID3v1
    */
   public function __construct($filename = false)
   {
-    if (($this->_filename = $filename) === false ||
-        file_exists($filename) === false)
+    if (($this->_filename = $filename) !== false &&
+        file_exists($filename) !== false)
+      $this->_reader = new Reader($filename);
+    else if ($filename instanceof Reader)
+      $this->_reader = &$filename;
+    else
       return;
-    
-    $this->_reader = new Reader($filename);
+
     if ($this->_reader->getSize() < 128)
-      return;
+      throw new ID3_Exception("File does not contain ID3v1 tag");
     $this->_reader->setOffset(-128);
     if ($this->_reader->read(3) != "TAG") {
       $this->_reader = false; // reset reader, see write
-      return;
+      throw new ID3_Exception("File does not contain ID3v1 tag");
     }
-    
+
     $this->_title = rtrim($this->_reader->readString8(30), " \0");
     $this->_artist = rtrim($this->_reader->readString8(30), " \0");
     $this->_album = rtrim($this->_reader->readString8(30), " \0");
@@ -144,17 +148,17 @@ final class ID3v1
       $this->_track = ord($v11_track);
     else
       $this->_comment = rtrim($this->_comment . $v11_null . $v11_track, " \0");
-    
+
     $this->_genre = $this->_reader->readInt8();
   }
-  
+
   /**
    * Returns the title field.
    *
    * @return string
    */
   public function getTitle() { return $this->_title; }
-  
+
   /**
    * Sets a new value for the title field. The field cannot exceed 30
    * characters in length.
@@ -162,14 +166,14 @@ final class ID3v1
    * @param string $title The title.
    */
   public function setTitle($title) { $this->_title = $title; }
-  
+
   /**
    * Returns the artist field.
    *
    * @return string
    */
   public function getArtist() { return $this->_artist; }
-  
+
   /**
    * Sets a new value for the artist field. The field cannot exceed 30
    * characters in length.
@@ -177,14 +181,14 @@ final class ID3v1
    * @param string $artist The artist.
    */
   public function setArtist($artist) { $this->_artist = $artist; }
-  
+
   /**
    * Returns the album field.
    *
    * @return string
    */
   public function getAlbum() { return $this->_album; }
-  
+
   /**
    * Sets a new value for the album field. The field cannot exceed 30
    * characters in length.
@@ -192,14 +196,14 @@ final class ID3v1
    * @param string $album The album.
    */
   public function setAlbum($album) { $this->_album = $album; }
-  
+
   /**
    * Returns the year field.
    *
    * @return string
    */
   public function getYear() { return $this->_year; }
-  
+
   /**
    * Sets a new value for the year field. The field cannot exceed 4
    * characters in length.
@@ -207,14 +211,14 @@ final class ID3v1
    * @param string $year The year.
    */
   public function setYear($year) { $this->_year = $year; }
-  
+
   /**
    * Returns the comment field.
    *
    * @return string
    */
   public function getComment() { return $this->_comment; }
-  
+
   /**
    * Sets a new value for the comment field. The field cannot exceed 30
    * characters in length.
@@ -222,7 +226,7 @@ final class ID3v1
    * @param string $comment The comment.
    */
   public function setComment($comment) { $this->_comment = $comment; }
-  
+
   /**
    * Returns the track field.
    *
@@ -230,7 +234,7 @@ final class ID3v1
    * @return integer
    */
   public function getTrack() { return $this->_track; }
-  
+
   /**
    * Sets a new value for the track field. By setting this field you enforce the
    * 1.1 version to be used.
@@ -239,7 +243,7 @@ final class ID3v1
    * @param integer $track The track number.
    */
   public function setTrack($track) { $this->_track = $track; }
-  
+
   /**
    * Returns the genre.
    *
@@ -252,7 +256,7 @@ final class ID3v1
     else
       return self::$genres[255]; // unknown
   }
-  
+
   /**
    * Sets a new value for the genre field. The value may either be a numerical
    * code representing one of the genres, or its string variant.
@@ -270,7 +274,7 @@ final class ID3v1
     else
       $this->_genre = 255; // unknown
   }
-  
+
   /**
    * Writes the possibly altered ID3v1 tag back to the file where it was read.
    * If the class was constructed without a file name, one can be provided here
@@ -283,17 +287,17 @@ final class ID3v1
   {
     if ($filename === false && ($filename = $this->_filename) === false)
       throw new ID3_Exception("No file given to write the tag to");
-    
+
     if (($fd = fopen
          ($filename, file_exists($filename) ? "r+b" : "wb")) === false)
       throw new ID3_Exception("Unable to open file for writing: " . $filename);
-    
+
     fseek($fd, $this->_reader !== false ? -128 : 0, SEEK_END);
     fwrite($fd, $this, 128);
-    
+
     $this->_filename = $filename;
   }
-  
+
   /**
    * Magic function so that $obj->value will work.
    *
@@ -306,7 +310,7 @@ final class ID3v1
       return call_user_func(array($this, "get" . ucfirst(strtolower($name))));
     else throw new ID3_Exception("Unknown field: " . $name);
   }
-  
+
   /**
    * Magic function so that assignments with $obj->value will work.
    *
@@ -321,7 +325,7 @@ final class ID3v1
         (array($this, "set" . ucfirst(strtolower($name))), $value);
     else throw new ID3_Exception("Unknown field: " . $name);
   }
-  
+
   /**
    * Returns the tag raw data.
    *

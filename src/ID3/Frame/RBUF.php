@@ -66,6 +66,7 @@ require_once("ID3/Frame.php");
  * @package    php-reader
  * @subpackage ID3
  * @author     Sven Vollbehr <svollbehr@gmail.com>
+ * @author     Ryan Butterfield <buttza@gmail.com>
  * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Rev$
@@ -79,13 +80,13 @@ final class ID3_Frame_RBUF extends ID3_Frame
   const EMBEDDED = 0x1;
   
   /** @var integer */
-  private $_size;
+  private $_bufferSize;
   
   /** @var integer */
-  private $_flags;
+  private $_infoFlags;
   
   /** @var integer */
-  private $_offset;
+  private $_offset = 0;
   
   /**
    * Constructs the class with given parameters and parses object related data.
@@ -99,10 +100,12 @@ final class ID3_Frame_RBUF extends ID3_Frame
     
     if ($reader === null)
       return;
-
-    $this->_size = Transform::fromInt32BE(substr($this->_data, 0, 3));
-    $this->_flags = Transform::fromInt8($this->_data[3]);
-    $this->_offset = Transform::fromInt32BE(substr($this->_data, 4, 4));
+    
+    $this->_bufferSize =
+      Transform::fromUInt32BE("\0" . substr($this->_data, 0, 3));
+    $this->_infoFlags = Transform::fromInt8($this->_data[3]);
+    if ($this->getSize() > 4)
+      $this->_offset = Transform::fromInt32BE(substr($this->_data, 4, 4));
   }
   
   /**
@@ -110,14 +113,17 @@ final class ID3_Frame_RBUF extends ID3_Frame
    * 
    * @return integer
    */
-  public function getSize() { return $this->_size; }
+  public function getBufferSize() { return $this->_bufferSize; }
   
   /**
    * Sets the buffer size.
    * 
    * @param integer $size The buffer size.
    */
-  public function setSize($size) { $this->_size = $size; }
+  public function setBufferSize($bufferSize)
+  {
+    $this->_bufferSize = $bufferSize;
+  }
   
   /**
    * Checks whether or not the flag is set. Returns <var>true</var> if the flag
@@ -126,21 +132,24 @@ final class ID3_Frame_RBUF extends ID3_Frame
    * @param integer $flag The flag to query.
    * @return boolean
    */
-  public function hasFlag($flag) { return ($this->_flags & $flag) == $flag; }
+  public function hasInfoFlag($flag)
+  {
+    return ($this->_infoFlags & $flag) == $flag;
+  }
   
   /**
    * Returns the flags byte.
    * 
    * @return integer
    */
-  public function getFlags($flags) { return $this->_flags; }
+  public function getInfoFlags() { return $this->_infoFlags; }
   
   /**
    * Sets the flags byte.
    * 
    * @param string $flags The flags byte.
    */
-  public function setFlags($flags) { $this->_flags = $flags; }
+  public function setInfoFlags($infoFlags) { $this->_infoFlags = $infoFlags; }
   
   /**
    * Returns the offset to next tag.
@@ -164,8 +173,9 @@ final class ID3_Frame_RBUF extends ID3_Frame
   public function __toString()
   {
     $this->setData
-      (substr(Transform::toInt32BE($this->_size) << 8, 0, 3) .
-       Transform::toInt8($this->_flags) . Transform::toInt32BE($this->_offset));
+      (substr(Transform::toUInt32BE($this->_bufferSize), 1, 3) .
+       Transform::toInt8($this->_infoFlags) .
+       Transform::toInt32BE($this->_offset));
     return parent::__toString();
   }
 }

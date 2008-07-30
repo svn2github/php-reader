@@ -57,6 +57,7 @@ require_once("ID3/Timing.php");
  * @package    php-reader
  * @subpackage ID3
  * @author     Sven Vollbehr <svollbehr@gmail.com>
+ * @author     Ryan Butterfield <buttza@gmail.com>
  * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Rev$
@@ -85,7 +86,7 @@ final class ID3_Frame_ETCO extends ID3_Frame
      "One more byte of events follows");
   
   /** @var integer */
-  private $_format = 1;
+  private $_format = ID3_Timing::MPEG_FRAMES;
   
   /** @var Array */
   private $_events = array();
@@ -103,14 +104,14 @@ final class ID3_Frame_ETCO extends ID3_Frame
     if ($reader === null)
       return;
     
-    $this->_format = Transform::fromInt8($this->_data[0]);
+    $this->_format = Transform::fromUInt8($this->_data[0]);
     for ($i = 1; $i < $this->getSize(); $i += 5) {
-      $this->_events[Transform::fromInt32BE(substr($this->_data, $i + 1, 4))] =
-        $data = Transform::fromInt8($this->_data[$i]);
+      $this->_events[Transform::fromUInt32BE(substr($this->_data, $i + 1, 4))] =
+        $data = Transform::fromUInt8($this->_data[$i]);
       if ($data == 0xff)
         break;
     }
-    sort($this->_events);
+    ksort($this->_events);
   }
   
   /**
@@ -145,9 +146,10 @@ final class ID3_Frame_ETCO extends ID3_Frame
    */
   public function setEvents($events, $format = false)
   {
-    $this->_events = events;
+    $this->_events = $events;
     if ($format !== false)
       $this->_format = $format;
+    ksort($this->_events);
   }
   
   /**
@@ -157,10 +159,9 @@ final class ID3_Frame_ETCO extends ID3_Frame
    */
   public function __toString()
   {
-    $data = Transform::toInt8($this->_format);
-    sort($this->_events);
+    $data = Transform::toUInt8($this->_format);
     foreach ($this->_events as $timestamp => $type)
-      $data .= Transform::toInt8($type) . Transform::toInt32BE($timestamp);
+      $data .= Transform::toUInt8($type) . Transform::toUInt32BE($timestamp);
     $this->setData($data);
     return parent::__toString();
   }

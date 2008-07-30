@@ -47,6 +47,7 @@ require_once("ID3/Object.php");
  * @package    php-reader
  * @subpackage ID3
  * @author     Sven Vollbehr <svollbehr@gmail.com>
+ * @author     Ryan Butterfield <buttza@gmail.com>
  * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Rev$
@@ -114,7 +115,7 @@ final class ID3_ExtendedHeader extends ID3_Object
       return;
 
     $offset = $this->_reader->getOffset();
-    $this->_size = $this->decodeSynchsafe32($this->_reader->readUInt32BE());
+    $this->_size = $this->_reader->readUInt32BE();
     
     /* ID3v2.3.0 ExtendedHeader */
     if ($this->getOption("version", 4) < 4) {
@@ -127,6 +128,7 @@ final class ID3_ExtendedHeader extends ID3_Object
     
     /* ID3v2.4.0 ExtendedHeader */
     else {
+      $this->_size = $this->decodeSynchsafe32($this->_size);
       $this->_reader->skip(1);
       $this->_flags = $this->_reader->readInt8();
       if ($this->hasFlag(self::UPDATE))
@@ -313,7 +315,7 @@ final class ID3_ExtendedHeader extends ID3_Object
         ($this->hasFlag(self::UPDATE) ? "\0" : "") .
         ($this->hasFlag(self::CRC32) ? Transform::toInt8(5) .
          Transform::toInt8($this->_crc & 0xf0000000 >> 28 & 0xf /*eq >>> 28*/) .
-         Transform::toUInt32BE(encodeSynchsafe32($this->_crc)) : "") .
+         Transform::toUInt32BE($this->encodeSynchsafe32($this->_crc)) : "") .
         ($this->hasFlag(self::RESTRICTED) ? 
            Transform::toInt8(1) . Transform::toInt8($this->_restrictions) : "");
     }

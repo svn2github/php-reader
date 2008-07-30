@@ -51,10 +51,10 @@ require_once("ID3/Timing.php");
  * There may be more than one SYLT frame in each tag, but only one with the
  * same language and content descriptor.
  *
- * @todo       The data could be parsed further; data samples needed
  * @package    php-reader
  * @subpackage ID3
  * @author     Sven Vollbehr <svollbehr@gmail.com>
+ * @author     Ryan Butterfield <buttza@gmail.com>
  * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Rev$
@@ -68,17 +68,17 @@ final class ID3_Frame_SYLT extends ID3_Frame
    * @var Array
    */
   public static $types = array
-    ("Other", "Lyrics", "Text transcription", "Movement/Part name", "Eevents",
+    ("Other", "Lyrics", "Text transcription", "Movement/Part name", "Events",
      "Chord", "Trivia", "URLs to webpages", "URLs to images");
   
   /** @var integer */
   private $_encoding = ID3_Encoding::UTF8;
   
   /** @var string */
-  private $_language = "eng";
+  private $_language = "und";
 
   /** @var integer */
-  private $_format = 1;
+  private $_format = ID3_Timing::MPEG_FRAMES;
   
   /** @var integer */
   private $_type = 0;
@@ -87,7 +87,7 @@ final class ID3_Frame_SYLT extends ID3_Frame
   private $_description;
   
   /** @var Array */
-  private $_text;
+  private $_events = array();
   
   /**
    * Constructs the class with given parameters and parses object related data.
@@ -102,30 +102,53 @@ final class ID3_Frame_SYLT extends ID3_Frame
     if ($reader === null)
       return;
     
-    $this->_encoding = Transform::fromInt8($this->_data[0]);
+    $this->_encoding = Transform::fromUInt8($this->_data[0]);
     $this->_language = substr($this->_data, 1, 3);
-    $this->_format = Transform::fromInt8($this->_data[3]);
-    $this->_type = Transform::fromInt8($this->_data[4]);
-    $this->_data = substr($this->_data, 5);
+    if ($this->_language == "XXX")
+      $this->_language = "und";
+    $this->_format = Transform::fromUInt8($this->_data[4]);
+    $this->_type = Transform::fromUInt8($this->_data[5]);
+    $this->_data = substr($this->_data, 6);
     
     switch ($this->_encoding) {
     case self::UTF16:
       list($this->_description, $this->_data) =
-        preg_split("/\\x00\\x00/", $this->_data, 2);
+        $this->explodeString16($this->_data, 2);
       $this->_description = Transform::fromString16($this->_description);
       break;
     case self::UTF16BE:
       list($this->_description, $this->_data) =
-        preg_split("/\\x00\\x00/", $this->_data, 2);
+        $this->explodeString16($this->_data, 2);
       $this->_description = Transform::fromString16BE($this->_description);
       break;
     default:
       list($this->_description, $this->_data) =
-        preg_split("/\\x00/", $this->_data, 2);
+        $this->explodeString8($this->_data, 2);
       $this->_description = Transform::fromString8($this->_description);
     }
     
-    $this->_text = $this->_data; // FIXME: Better parsing of data
+    while (strlen($this->_data) > 0) {
+      switch ($this->_encoding) {
+      case self::UTF16:
+        list($syllable, $this->_data) = 
+          $this->explodeString16($this->_data, 2);
+        $syllable = Transform::fromString16($syllable);
+        break;
+      case self::UTF16BE:
+        list($syllable, $this->_data) = 
+          $this->explodeString16($this->_data, 2);
+        $syllable = Transform::fromString16BE($syllable);
+        break;
+      default:
+        list($syllable, $this->_data) = 
+          $this->explodeString8($this->_data, 2);
+        $syllable = Transform::fromString8($syllable);
+      }
+      $this->_events[Transform::fromUInt32BE(substr($this->_data, 0, 4))] =
+        $syllable;
+      $this->_data = substr($this->_data, 4);
+    }
+    ksort($this->_events);
   }
 
   /**
@@ -147,7 +170,6 @@ final class ID3_Frame_SYLT extends ID3_Frame
    * Returns the language code as specified in the
    * {@link http://www.loc.gov/standards/iso639-2/ ISO-639-2} standard.
    * 
-   * @see ID3_Language#ISO_639_2
    * @return string
    */
   public function getLanguage() { return $this->_language; }
@@ -159,7 +181,12 @@ final class ID3_Frame_SYLT extends ID3_Frame
    * @see ID3_Language
    * @param string $language The language code.
    */
-  public function setLanguage($language) { $this->_language = $language; }
+  public function setLanguage($language)
+  {
+    if ($language == "XXX")
+      $language = "und";
+    $this->_language = substr($language, 0, 3);
+  }
   
   /**
    * Returns the timing format.
@@ -210,33 +237,34 @@ final class ID3_Frame_SYLT extends ID3_Frame
   {
     $this->_description = $description;
     if ($language !== false)
-      $this->_language = $language;
+      $this->setLanguage($language);
     if ($encoding !== false)
-      $this->_encoding = $encoding;
+      $this->setEncoding($encoding);
   }
   
   /**
-   * Returns the texts with their timestamps.
+   * Returns the syllable events with their timestamps.
    * 
    * @return Array
    */
-  public function getText() { return $this->_text; }
+  public function getEvents() { return $this->_events; }
   
   /**
-   * Sets the text using given encoding. The text language and encoding must be
-   * that of the description text.
+   * Sets the syllable events with their timestamps using given encoding. 
+   * The text language and encoding must be that of the description text.
    * 
-   * @param mixed $text The test string.
+   * @param Array $text The test string.
    * @param string $language The language code.
    * @param integer $encoding The text encoding.
    */
-  public function setText($text, $language = false, $encoding = false)
+  public function setEvents($events, $language = false, $encoding = false)
   {
-    $this->_text = $text;
+    $this->_events = $events;
     if ($language !== false)
-      $this->_language = $language;
+      $this->setLanguage($language);
     if ($encoding !== false)
-      $this->_encoding = $encoding;
+      $this->setEncoding($encoding);
+    ksort($this->_events);
   }
   
   /**
@@ -246,23 +274,38 @@ final class ID3_Frame_SYLT extends ID3_Frame
    */
   public function __toString()
   {
-    $data = Transform::toInt8($this->_encoding) . $this->_language .
-      Transform::toInt8($this->_format) . Transform::toInt8($this->_type);
+    $data = Transform::toUInt8($this->_encoding) . $this->_language .
+      Transform::toUInt8($this->_format) . Transform::toUInt8($this->_type);
     switch ($this->_encoding) {
     case self::UTF16:
-      $data .= Transform::toString16($this->_description) . "\0\0" .
-        Transform::toString16($this->_text);
+    case self::UTF16LE:
+      $data .= Transform::toString16
+        ($this->_description, $this->_encoding == self::UTF16 ?
+         Transform::MACHINE_ENDIAN_ORDER : Transform::LITTLE_ENDIAN_ORDER) .
+        "\0\0";
       break;
     case self::UTF16BE:
-      $data .= Transform::toString16BE($this->_description) . "\0\0" .
-        Transform::toString16BE($this->_text);
-      break;
-    case self::UTF16LE:
-      $data .= Transform::toString16LE($this->_description) . "\0\0" .
-        Transform::toString16LE($this->_text);
+      $data .= Transform::toString16BE($this->_description) . "\0\0";
       break;
     default:
-      $data .= $this->_description . "\0" . $this->_text;
+      $data .= $this->_description . "\0";
+    }
+    foreach ($this->_events as $timestamp => $syllable) {
+      switch ($this->_encoding) {
+      case self::UTF16:
+      case self::UTF16LE:
+        $data .= Transform::toString16
+          ($syllable, $this->_encoding == self::UTF16 ?
+           Transform::MACHINE_ENDIAN_ORDER : Transform::LITTLE_ENDIAN_ORDER) .
+          "\0\0";
+        break;
+      case self::UTF16BE:
+        $data .= Transform::toString16BE($syllable) . "\0\0";
+        break;
+      default:
+        $data .= $syllable . "\0";
+      }
+      $data .= Transform::toUInt32BE($timestamp);
     }
     $this->setData($data);
     return parent::__toString();

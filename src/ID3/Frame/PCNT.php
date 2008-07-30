@@ -47,6 +47,7 @@ require_once("ID3/Frame.php");
  * @package    php-reader
  * @subpackage ID3
  * @author     Sven Vollbehr <svollbehr@gmail.com>
+ * @author     Ryan Butterfield <buttza@gmail.com>
  * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Rev$
@@ -70,7 +71,7 @@ final class ID3_Frame_PCNT extends ID3_Frame
       return;
 
     if (strlen($this->_data) > 4)
-      $this->_counter = Transform::fromInt64BE($this->_data);
+      $this->_counter = Transform::fromInt64BE($this->_data); // UInt64
     else
       $this->_counter = Transform::fromUInt32BE($this->_data);
   }
@@ -103,8 +104,8 @@ final class ID3_Frame_PCNT extends ID3_Frame
   {
     $this->setData
       ($this->_counter > 4294967295 ?
-       Transform::toInt64BE($this->_counter) :
-       Transform::toInt32BE($this->_counter));
+       Transform::toInt64BE($this->_counter) : // UInt64
+       Transform::toUInt32BE($this->_counter));
     return parent::__toString();
   }
 }

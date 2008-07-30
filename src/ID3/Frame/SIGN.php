@@ -50,6 +50,7 @@ require_once("ID3/Frame.php");
  * @package    php-reader
  * @subpackage ID3
  * @author     Sven Vollbehr <svollbehr@gmail.com>
+ * @author     Ryan Butterfield <buttza@gmail.com>
  * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Rev$
@@ -76,7 +77,7 @@ final class ID3_Frame_SIGN extends ID3_Frame
     if ($reader === null)
       return;
 
-    $this->_group = substr($this->_data, 0, 1);
+    $this->_group = Transform::fromUInt8(substr($this->_data, 0, 1));
     $this->_signature = substr($this->_data, 1);
   }
   
@@ -115,7 +116,7 @@ final class ID3_Frame_SIGN extends ID3_Frame
    */
   public function __toString()
   {
-    $this->setData(Transform::toInt8($this->_group) . $this->_signature);
+    $this->setData(Transform::toUInt8($this->_group) . $this->_signature);
     return parent::__toString();
   }
 }

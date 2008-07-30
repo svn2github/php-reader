@@ -61,6 +61,7 @@ require_once("ID3/Frame.php");
  * @package    php-reader
  * @subpackage ID3
  * @author     Sven Vollbehr <svollbehr@gmail.com>
+ * @author     Ryan Butterfield <buttza@gmail.com>
  * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Rev$
@@ -89,8 +90,8 @@ final class ID3_Frame_GRID extends ID3_Frame
     if ($reader === null)
       return;
 
-    list($this->_owner, $this->_data) = preg_split("/\\x00/", $this->_data, 2);
-    $this->_group = Transform::fromInt8($this->_data[0]);
+    list($this->_owner, $this->_data) = $this->explodeString8($this->_data, 2);
+    $this->_group = Transform::fromUInt8($this->_data[0]);
     $this->_groupData = substr($this->_data, 1);
   }
 
@@ -127,14 +128,14 @@ final class ID3_Frame_GRID extends ID3_Frame
    * 
    * @return string
    */
-  public function getData() { return $this->_groupData; }
+  public function getGroupData() { return $this->_groupData; }
   
   /**
    * Sets the group dependent data.
    * 
    * @param string $groupData The data.
    */
-  public function setData($groupData) { $this->_groupData = $groupData; }
+  public function setGroupData($groupData) { $this->_groupData = $groupData; }
   
   /**
    * Returns the frame raw data.
@@ -144,7 +145,7 @@ final class ID3_Frame_GRID extends ID3_Frame
   public function __toString()
   {
     parent::setData
-      ($this->_owner . "\0" . Transform::toInt8($this->_group) .
+      ($this->_owner . "\0" . Transform::toUInt8($this->_group) .
        $this->_groupData);
     return parent::__toString();
   }

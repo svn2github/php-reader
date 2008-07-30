@@ -46,6 +46,7 @@ require_once("ID3/Encoding.php");
  * @package    php-reader
  * @subpackage ID3
  * @author     Sven Vollbehr <svollbehr@gmail.com>
+ * @author     Ryan Butterfield <buttza@gmail.com>
  * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Rev$
@@ -80,20 +81,20 @@ abstract class ID3_Frame_AbstractText extends ID3_Frame
     if ($reader === null)
       return;
     
-    $this->_encoding = Transform::fromInt8($this->_data[0]);
+    $this->_encoding = Transform::fromUInt8($this->_data[0]);
     $this->_data = substr($this->_data, 1);
     switch ($this->_encoding) {
     case self::UTF16:
       $this->_text =
-        preg_split("/\\x00\\x00/", Transform::fromString16($this->_data));
+        $this->explodeString16(Transform::fromString16($this->_data));
       break;
     case self::UTF16BE:
       $this->_text =
-        preg_split("/\\x00\\x00/", Transform::fromString16BE($this->_data));
+        $this->explodeString16(Transform::fromString16BE($this->_data));
       break;
     default:
       $this->_text =
-        preg_split("/\\x00/", Transform::fromString8($this->_data));
+        $this->explodeString8(Transform::fromString8($this->_data));
     }
   }
   
@@ -146,16 +147,19 @@ abstract class ID3_Frame_AbstractText extends ID3_Frame
    */
   public function __toString()
   {
-    $data = Transform::toInt8($this->_encoding);
+    $data = Transform::toUInt8($this->_encoding);
     switch ($this->_encoding) {
     case self::UTF16:
-      $data .= Transform::toString16(implode("\0\0", $this->_text));
+    case self::UTF16LE:
+      $array = $this->_text;
+      foreach ($array as &$text)
+        $text = Transform::toString16($str);
+      $data .= Transform::toString16
+        (implode("\0\0", $array), $this->_encoding == self::UTF16 ?
+         Transform::MACHINE_ENDIAN_ORDER : Transform::LITTLE_ENDIAN_ORDER);
       break;
     case self::UTF16BE:
       $data .= Transform::toString16BE(implode("\0\0", $this->_text));
-      break;
-    case self::UTF16LE:
-      $data .= Transform::toString16LE(implode("\0\0", $this->_text));
       break;
     default:
       $data .= implode("\0", $this->_text);

@@ -53,6 +53,7 @@ require_once("ID3/Frame.php");
  * @package    php-reader
  * @subpackage ID3
  * @author     Sven Vollbehr <svollbehr@gmail.com>
+ * @author     Ryan Butterfield <buttza@gmail.com>
  * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Rev$
@@ -60,6 +61,46 @@ require_once("ID3/Frame.php");
  */
 final class ID3_Frame_RVAD extends ID3_Frame
 {
+  /* The required keys. */
+  
+  /** @var string */
+  const right = "right";
+  
+  /** @var string */
+  const left = "left";
+  
+  /** @var string */
+  const peakRight = "peakRight";
+  
+  /** @var string */
+  const peakLeft = "peakLeft";
+  
+  /* The optional keys. */
+  
+  /** @var string */
+  const rightBack = "rightBack";
+  
+  /** @var string */
+  const leftBack = "leftBack";
+  
+  /** @var string */
+  const peakRightBack = "peakRightBack";
+  
+  /** @var string */
+  const peakLeftBack = "peakLeftBack";
+  
+  /** @var string */
+  const center = "center";
+  
+  /** @var string */
+  const peakCenter = "peakCenter";
+  
+  /** @var string */
+  const bass = "bass";
+  
+  /** @var string */
+  const peakBass = "peakBass";
+  
   /** @var Array */
   private $_adjustments;
   
@@ -77,56 +118,59 @@ final class ID3_Frame_RVAD extends ID3_Frame
       return;
     
     $flags = Transform::fromInt8($this->_data[0]);
-    $descriptionBits = Transform::fromInt8($this->_data[0]); //16
+    $descriptionBits = Transform::fromInt8($this->_data[1]);
+    if ($descriptionBits <= 8 || $descriptionBits > 16)
+      throw new ID3_Exception
+          ("Unsupported description bit size of: " . $descriptionBits);
     
-    $this->_adjustments["right"] =
-      ($flags & 0x20) == 0x20 ?
-       Transform::fromUInt16BE(substr($this->_data, 0, 2)) :
-       -Transform::fromUInt16BE(substr($this->_data, 0, 2));
-    $this->_adjustments["left"] =
-      ($flags & 0x10) == 0x10 ?
+    $this->_adjustments[self::right] =
+      ($flags & 0x1) == 0x1 ?
        Transform::fromUInt16BE(substr($this->_data, 2, 2)) :
        -Transform::fromUInt16BE(substr($this->_data, 2, 2));
-    $this->_adjustments["peakRight"] =
-      Transform::fromUInt16BE(substr($this->_data, 4, 2));
-    $this->_adjustments["peakLeft"] =
+    $this->_adjustments[self::left] =
+      ($flags & 0x2) == 0x2 ?
+       Transform::fromUInt16BE(substr($this->_data, 4, 2)) :
+       -Transform::fromUInt16BE(substr($this->_data, 4, 2));
+    $this->_adjustments[self::peakRight] =
       Transform::fromUInt16BE(substr($this->_data, 6, 2));
+    $this->_adjustments[self::peakLeft] =
+      Transform::fromUInt16BE(substr($this->_data, 8, 2));
 
-    if ($this->getSize() <= 8)
+    if ($this->getSize() <= 10)
       return;
     
-    $this->_adjustments["rightBack"] =
-      ($flags & 0x8) == 0x8 ?
-       Transform::fromUInt16BE(substr($this->_data, 8, 2)) :
-       -Transform::fromUInt16BE(substr($this->_data, 8, 2));
-    $this->_adjustments["leftBack"] =
+    $this->_adjustments[self::rightBack] =
       ($flags & 0x4) == 0x4 ?
        Transform::fromUInt16BE(substr($this->_data, 10, 2)) :
        -Transform::fromUInt16BE(substr($this->_data, 10, 2));
-    $this->_adjustments["peakRightBack"] =
-      Transform::fromUInt16BE(substr($this->_data, 12, 2));
-    $this->_adjustments["peakLeftBack"] =
+    $this->_adjustments[self::leftBack] =
+      ($flags & 0x8) == 0x8 ?
+       Transform::fromUInt16BE(substr($this->_data, 12, 2)) :
+       -Transform::fromUInt16BE(substr($this->_data, 12, 2));
+    $this->_adjustments[self::peakRightBack] =
       Transform::fromUInt16BE(substr($this->_data, 14, 2));
+    $this->_adjustments[self::peakLeftBack] =
+      Transform::fromUInt16BE(substr($this->_data, 16, 2));
 
-    if ($this->getSize() <= 16)
+    if ($this->getSize() <= 18)
       return;
     
-    $this->_adjustments["center"] =
-      ($flags & 0x2) == 0x2 ?
-       Transform::fromUInt16BE(substr($this->_data, 16, 2)) :
-       -Transform::fromUInt16BE(substr($this->_data, 16, 2));
-    $this->_adjustments["peakCenter"] =
-      Transform::fromUInt16BE(substr($this->_data, 18, 2));
+    $this->_adjustments[self::center] =
+      ($flags & 0x10) == 0x10 ?
+       Transform::fromUInt16BE(substr($this->_data, 18, 2)) :
+       -Transform::fromUInt16BE(substr($this->_data, 18, 2));
+    $this->_adjustments[self::peakCenter] =
+      Transform::fromUInt16BE(substr($this->_data, 20, 2));
     
-    if ($this->getSize() <= 20)
+    if ($this->getSize() <= 22)
       return;
     
-    $this->_adjustments["bass"] =
-      ($flags & 0x1) == 0x1 ?
-       Transform::fromUInt16BE(substr($this->_data, 20, 2)) :
-       -Transform::fromUInt16BE(substr($this->_data, 20, 2));
-    $this->_adjustments["peakBass"] =
-      Transform::fromUInt16BE(substr($this->_data, 22, 2));
+    $this->_adjustments[self::bass] =
+      ($flags & 0x20) == 0x20 ?
+       Transform::fromUInt16BE(substr($this->_data, 22, 2)) :
+       -Transform::fromUInt16BE(substr($this->_data, 22, 2));
+    $this->_adjustments[self::peakBass] =
+      Transform::fromUInt16BE(substr($this->_data, 24, 2));
   }
 
   /**
@@ -160,47 +204,47 @@ final class ID3_Frame_RVAD extends ID3_Frame
   public function __toString()
   {
     $flags = 0;
-    if ($this->_adjustments["right"] > 0)
-      $flags = $flags | 0x20;
-    if ($this->_adjustments["left"] > 0)
-      $flags = $flags | 0x10;
+    if ($this->_adjustments[self::right] > 0)
+      $flags = $flags | 0x1;
+    if ($this->_adjustments[self::left] > 0)
+      $flags = $flags | 0x2;
     $data = Transform::toInt8(16) . 
-      Transform::toUInt16BE(abs($this->_adjustments["right"])) .
-      Transform::toUInt16BE(abs($this->_adjustments["left"])) .
-      Transform::toUInt16BE(abs($this->_adjustments["peakRight"])) .
-      Transform::toUInt16BE(abs($this->_adjustments["peakLeft"]));
+      Transform::toUInt16BE(abs($this->_adjustments[self::right])) .
+      Transform::toUInt16BE(abs($this->_adjustments[self::left])) .
+      Transform::toUInt16BE(abs($this->_adjustments[self::peakRight])) .
+      Transform::toUInt16BE(abs($this->_adjustments[self::peakLeft]));
     
-    if (isset($this->_adjustments["rightBack"]) &&
-        isset($this->_adjustments["leftBack"]) &&
-        isset($this->_adjustments["peakRightBack"]) &&
-        isset($this->_adjustments["peakLeftBack"])) {
-      if ($this->_adjustments["rightBack"] > 0)
-        $flags = $flags | 0x8;
-      if ($this->_adjustments["leftBack"] > 0)
+    if (isset($this->_adjustments[self::rightBack]) &&
+        isset($this->_adjustments[self::leftBack]) &&
+        isset($this->_adjustments[self::peakRightBack]) &&
+        isset($this->_adjustments[self::peakLeftBack])) {
+      if ($this->_adjustments[self::rightBack] > 0)
         $flags = $flags | 0x4;
+      if ($this->_adjustments[self::leftBack] > 0)
+        $flags = $flags | 0x8;
       $data .= 
-        Transform::toUInt16BE(abs($this->_adjustments["rightBack"])) .
-        Transform::toUInt16BE(abs($this->_adjustments["leftBack"])) .
-        Transform::toUInt16BE(abs($this->_adjustments["peakRightBack"])) .
-        Transform::toUInt16BE(abs($this->_adjustments["peakLeftBack"]));
+        Transform::toUInt16BE(abs($this->_adjustments[self::rightBack])) .
+        Transform::toUInt16BE(abs($this->_adjustments[self::leftBack])) .
+        Transform::toUInt16BE(abs($this->_adjustments[self::peakRightBack])) .
+        Transform::toUInt16BE(abs($this->_adjustments[self::peakLeftBack]));
     }
     
-    if (isset($this->_adjustments["center"]) &&
-        isset($this->_adjustments["peakCenter"])) {
-      if ($this->_adjustments["center"] > 0)
-        $flags = $flags | 0x2;
+    if (isset($this->_adjustments[self::center]) &&
+        isset($this->_adjustments[self::peakCenter])) {
+      if ($this->_adjustments[self::center] > 0)
+        $flags = $flags | 0x10;
       $data .= 
-        Transform::toUInt16BE(abs($this->_adjustments["center"])) .
-        Transform::toUInt16BE(abs($this->_adjustments["peakCenter"]));
+        Transform::toUInt16BE(abs($this->_adjustments[self::center])) .
+        Transform::toUInt16BE(abs($this->_adjustments[self::peakCenter]));
     }
     
-    if (isset($this->_adjustments["bass"]) &&
-        isset($this->_adjustments["peakBass"])) {
-      if ($this->_adjustments["bass"] > 0)
-        $flags = $flags | 0x1;
+    if (isset($this->_adjustments[self::bass]) &&
+        isset($this->_adjustments[self::peakBass])) {
+      if ($this->_adjustments[self::bass] > 0)
+        $flags = $flags | 0x20;
       $data .= 
-        Transform::toUInt16BE(abs($this->_adjustments["bass"])) .
-        Transform::toUInt16BE(abs($this->_adjustments["peakBass"]));
+        Transform::toUInt16BE(abs($this->_adjustments[self::bass])) .
+        Transform::toUInt16BE(abs($this->_adjustments[self::peakBass]));
     }
     $this->setData(Transform::toInt8($flags) . $data);
     return parent::__toString();

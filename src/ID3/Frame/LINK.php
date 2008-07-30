@@ -79,6 +79,7 @@ require_once("ID3/Frame.php");
  * @package    php-reader
  * @subpackage ID3
  * @author     Sven Vollbehr <svollbehr@gmail.com>
+ * @author     Ryan Butterfield <buttza@gmail.com>
  * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Rev$
@@ -109,7 +110,7 @@ final class ID3_Frame_LINK extends ID3_Frame
 
     $this->_target = substr($this->_data, 0, 4);
     list($this->_url, $this->_qualifier) =
-      preg_split("/\\x00/", substr($this->_data, 4), 2);
+      $this->explodeString8(substr($this->_data, 4), 2);
   }
   
   /**

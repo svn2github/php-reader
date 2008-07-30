@@ -47,6 +47,7 @@ require_once("ID3/Encoding.php");
  * @package    php-reader
  * @subpackage ID3
  * @author     Sven Vollbehr <svollbehr@gmail.com>
+ * @author     Ryan Butterfield <buttza@gmail.com>
  * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Rev$
@@ -82,27 +83,27 @@ final class ID3_Frame_GEOB extends ID3_Frame
     if ($reader === null)
       return;
 
-    $this->_encoding = Transform::fromInt8($this->_data[0]);
+    $this->_encoding = Transform::fromUInt8($this->_data[0]);
     $this->_mimeType = substr
       ($this->_data, 1, ($pos = strpos($this->_data, "\0", 1)) - 1);
-    $this->_data = substr($this->_data, $pos);
+    $this->_data = substr($this->_data, $pos + 1);
     
     switch ($this->_encoding) {
     case self::UTF16:
-      list ($this->_filename, $this->_description, $this->_data) =
-        preg_split("/\\x00\\x00/", $this->_data, 3);
+      list ($this->_filename, $this->_description, $this->_objectData) =
+        $this->explodeString16($this->_data, 3);
       $this->_filename = Transform::fromString16($this->_filename);
       $this->_description = Transform::fromString16($this->_description);
       break;
     case self::UTF16BE:
-      list ($this->_filename, $this->_description, $this->_data) =
-        preg_split("/\\x00\\x00/", $this->_data, 3);
+      list ($this->_filename, $this->_description, $this->_objectData) =
+        $this->explodeString16($this->_data, 3);
       $this->_filename = Transform::fromString16BE($this->_filename);
       $this->_description = Transform::fromString16BE($this->_description);
       break;
     default:
-      list ($this->_filename, $this->_description, $this->_data) =
-        preg_split("/\\x00/", $this->_data, 3);
+      list ($this->_filename, $this->_description, $this->_objectData) =
+        $this->explodeString8($this->_data, 3);
       $this->_filename = Transform::fromString8($this->_filename);
       $this->_description = Transform::fromString8($this->_description);
     }
@@ -184,14 +185,17 @@ final class ID3_Frame_GEOB extends ID3_Frame
    * 
    * @return string
    */
-  public function getData() { return $this->_objectData; }
+  public function getObjectData() { return $this->_objectData; }
   
   /**
    * Sets the embedded object binary data.
    * 
    * @param string $objectData The object data.
    */
-  public function setData($objectData) { $this->_objectData = $objectData; }
+  public function setObjectData($objectData)
+  {
+    $this->_objectData = $objectData;
+  }
   
   /**
    * Returns the frame raw data.
@@ -200,19 +204,18 @@ final class ID3_Frame_GEOB extends ID3_Frame
    */
   public function __toString()
   {
-    $data = Transform::toInt8($this->_encoding) . $this->_mimeType . "\0";
+    $data = Transform::toUInt8($this->_encoding) . $this->_mimeType . "\0";
     switch ($this->_encoding) {
     case self::UTF16:
-      $data .= Transform::toString16($this->_filename) . "\0\0" .
-        Transform::toString16($this->_description) . "\0\0";
+    case self::UTF16LE:
+      $order = $this->_encoding == self::UTF16 ?
+        Transform::MACHINE_ENDIAN_ORDER : Transform::LITTLE_ENDIAN_ORDER;
+      $data .= Transform::toString16($this->_filename, $order) . "\0\0" .
+        Transform::toString16($this->_description, $order) . "\0\0";
       break;
     case self::UTF16BE:
-      $data .= Transform::toString16BE($this->_filename) . "\0\0" .
-        Transform::toString16BE($this->_description) . "\0\0";
-      break;
-    case self::UTF16LE:
-      $data .= Transform::toString16LE($this->_filename) . "\0\0" .
-        Transform::toString16LE($this->_description) . "\0\0";
+      $data .= Transform::toString16BE
+        ($this->_filename . "\0\0" . $this->_description . "\0\0");
       break;
     default:
       $data .= $this->_filename . "\0" . $this->_description . "\0";

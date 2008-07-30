@@ -56,6 +56,7 @@ require_once("ID3/Encoding.php");
  * @package    php-reader
  * @subpackage ID3
  * @author     Sven Vollbehr <svollbehr@gmail.com>
+ * @author     Ryan Butterfield <buttza@gmail.com>
  * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Rev$
@@ -93,6 +94,9 @@ final class ID3_Frame_APIC extends ID3_Frame
   /** @var string */
   private $_imageData;
   
+  /** @var integer */
+  private $_imageSize = 0;
+  
   /**
    * Constructs the class with given parameters and parses object related data.
    *
@@ -106,27 +110,29 @@ final class ID3_Frame_APIC extends ID3_Frame
     if ($reader === null)
       return;
 
-    $this->_encoding = Transform::fromInt8($this->_data[0]);
+    $this->_encoding = Transform::fromUInt8($this->_data[0]);
     $this->_mimeType = substr
       ($this->_data, 1, ($pos = strpos($this->_data, "\0", 1)) - 1);
-    $this->_imageType = Transform::fromInt8($this->_data[$pos++]);
-    $this->_data = substr($this->_data, $pos);
+    $this->_imageType = Transform::fromUInt8($this->_data[++$pos]);
+    $this->_data = substr($this->_data, $pos + 1);
     
     switch ($this->_encoding) {
     case self::UTF16:
-      list ($this->_description, $this->_data) =
-        preg_split("/\\x00\\x00/", $this->_data, 2);
+      list ($this->_description, $this->_imageData) =
+        $this->explodeString16($this->_data, 2);
       $this->_description = Transform::fromString16($this->_description);
       break;
     case self::UTF16BE:
-      list ($this->_description, $this->_data) =
-        preg_split("/\\x00\\x00/", $this->_data, 2);
+      list ($this->_description, $this->_imageData) =
+        $this->explodeString16($this->_data, 2);
       $this->_description = Transform::fromString16BE($this->_description);
       break;
     default:
-      list ($this->_description, $this->_data) =
-        preg_split("/\\x00/", $this->_data, 2);
+      list ($this->_description, $this->_imageData) =
+        $this->explodeString8($this->_data, 2);
     }
+    
+    $this->_imageSize = strlen($this->_imageData);
   }
   
   /**
@@ -197,14 +203,26 @@ final class ID3_Frame_APIC extends ID3_Frame
    * 
    * @return string
    */
-  public function getData() { return $this->_imageData; }
+  public function getImageData() { return $this->_imageData; }
   
   /**
-   * Sets the embedded image data.
+   * Sets the embedded image data. Also updates the image size field to
+   * correspond the new data.
    * 
    * @param string $imageData The image data.
    */
-  public function setData($imageData) { $this->_imageData = $imageData; }
+  public function setImageData($imageData)
+  {
+    $this->_imageData = $imageData;
+    $this->_imageSize = strlen($imageData);
+  }
+  
+  /**
+   * Returns the size of the embedded image data.
+   * 
+   * @return integer
+   */
+  public function getImageSize() { return $this->_imageSize; }
   
   /**
    * Returns the frame raw data.
@@ -213,17 +231,18 @@ final class ID3_Frame_APIC extends ID3_Frame
    */
   public function __toString()
   {
-    $data = Transform::toInt8($this->_encoding) . $this->_mimeType . "\0" .
-      Transform::toInt8($this->_imageType);
+    $data = Transform::toUInt8($this->_encoding) . $this->_mimeType . "\0" .
+      Transform::toUInt8($this->_imageType);
     switch ($this->_encoding) {
     case self::UTF16:
-      $data .= Transform::toString16($this->_description) . "\0\0";
+    case self::UTF16LE:
+      $data .= Transform::toString16
+        ($this->_description, $this->_encoding == self::UTF16 ?
+         Transform::MACHINE_ENDIAN_ORDER : Transform::LITTLE_ENDIAN_ORDER) .
+        "\0\0";
       break;
     case self::UTF16BE:
       $data .= Transform::toString16BE($this->_description) . "\0\0";
-      break;
-    case self::UTF16LE:
-      $data .= Transform::toString16LE($this->_description) . "\0\0";
       break;
     default:
       $data .= $this->_description . "\0";

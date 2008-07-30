@@ -45,6 +45,7 @@ require_once("ID3/Frame.php");
  * @package    php-reader
  * @subpackage ID3
  * @author     Sven Vollbehr <svollbehr@gmail.com>
+ * @author     Ryan Butterfield <buttza@gmail.com>
  * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Rev$
@@ -65,7 +66,7 @@ abstract class ID3_Frame_AbstractLink extends ID3_Frame
     parent::__construct($reader, $options);
     
     if ($reader !== null)
-      $this->_link = implode(preg_split("/\\x00/", $this->_data, 1), "");
+      $this->_link = implode($this->explodeString8($this->_data, 1), "");
   }
 
   /**

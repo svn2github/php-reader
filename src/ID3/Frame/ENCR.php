@@ -62,6 +62,7 @@ require_once("ID3/Frame.php");
  * @package    php-reader
  * @subpackage ID3
  * @author     Sven Vollbehr <svollbehr@gmail.com>
+ * @author     Ryan Butterfield <buttza@gmail.com>
  * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Rev$
@@ -90,7 +91,7 @@ final class ID3_Frame_ENCR extends ID3_Frame
     if ($reader === null)
       return;
     
-    list($this->_owner, $this->_data) = preg_split("/\\x00/", $this->_data, 2);
+    list($this->_owner, $this->_data) = $this->explodeString8($this->_data, 2);
     $this->_method = Transform::fromInt8($this->_data[0]);
     $this->_encryptionData = substr($this->_data, 1);
   }
@@ -128,14 +129,14 @@ final class ID3_Frame_ENCR extends ID3_Frame
    * 
    * @return string
    */
-  public function getData() { return $this->_encryptionData; }
+  public function getEncryptionData() { return $this->_encryptionData; }
   
   /**
    * Sets the encryption data.
    * 
    * @param string $encryptionData The encryption data string.
    */
-  public function setData($encryptionData)
+  public function setEncryptionData($encryptionData)
   {
     $this->_encryptionData = $encryptionData;
   }

@@ -54,8 +54,8 @@ interface ID3_Encoding
   /** The UTF-16 Unicode encoding with BOM. */
   const UTF16    = 1;
   
-  /** The UTF-16 Unicode encoding with BOM. */
-  const UTF16LE  = 1;
+  /** The UTF-16LE Unicode encoding without BOM. */
+  const UTF16LE  = 4;
   
   /** The UTF-16BE Unicode encoding without BOM. */
   const UTF16BE  = 2;

@@ -62,6 +62,7 @@ require_once("ID3/Timing.php");
  * @package    php-reader
  * @subpackage ID3
  * @author     Sven Vollbehr <svollbehr@gmail.com>
+ * @author     Ryan Butterfield <buttza@gmail.com>
  * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Rev$
@@ -69,11 +70,17 @@ require_once("ID3/Timing.php");
 final class ID3_Frame_SYTC extends ID3_Frame
   implements ID3_Timing
 {
-  /** @var integer */
-  private $_format = 1;
+  /** Describes a beat-free time period. */
+  const BEAT_FREE = 0x00;
   
-  /** @var string */
-  private $_tempoData;
+  /** Indicate one single beat-stroke followed by a beat-free period. */
+  const SINGLE_BEAT = 0x01;
+  
+  /** @var integer */
+  private $_format = ID3_Timing::MPEG_FRAMES;
+  
+  /** @var Array */
+  private $_events = array();
   
   /**
    * Constructs the class with given parameters and parses object related data.
@@ -88,8 +95,17 @@ final class ID3_Frame_SYTC extends ID3_Frame
     if ($reader === null)
       return;
 
-    $this->_format = Transform::fromInt8($this->_data[0]);
-    $this->_tempoData = substr($this->_data, 1); // FIXME: Better parsing of data
+    $offset = 0;
+    $this->_format = Transform::fromUInt8($this->_data[$offset++]);
+    while ($offset < strlen($this->_data)) {
+      $tempo = Transform::fromUInt8($this->_data[$offset++]);
+      if ($tempo == 0xFF)
+        $tempo += Transform::fromUInt8($this->_data[$offset++]);
+      $this->_events
+        [Transform::fromUInt32BE(substr($this->_data, $offset, 4))] = $tempo;
+      $offset += 4;
+    }
+    ksort($this->_events);
   }
   
   /**
@@ -108,18 +124,22 @@ final class ID3_Frame_SYTC extends ID3_Frame
   public function setFormat($format) { $this->_format = $format; }
   
   /**
-   * Returns the tempo data.
+   * Returns the time-bpm tempo events.
    * 
-   * @return string
+   * @return Array
    */
-  public function getData() { return $this->_tempoData; }
+  public function getEvents() { return $this->_events; }
   
   /**
-   * Sets the tempo data.
+   * Sets the time-bpm tempo events.
    * 
-   * @param string $data The data string.
+   * @param Array $events The time-bpm tempo events.
    */
-  public function setData($tempoData) { $this->_tempoData = $tempoData; }
+  public function setEvents($events)
+  {
+    $this->_events = $events;
+    ksort($this->_events);
+  }
 
   /**
    * Returns the frame raw data.
@@ -128,7 +148,15 @@ final class ID3_Frame_SYTC extends ID3_Frame
    */
   public function __toString()
   {
-    parent::setData(Transform::toInt8($this->_format) . $this->_tempoData);
+    $data = Transform::toUInt8($this->_format);
+    foreach ($this->_events as $timestamp => $tempo) {
+      if ($tempo >= 0xff)
+        $data .= Transform::toUInt8(0xff) . Transform::toUInt8($tempo - 0xff);
+      else
+        $data .= Transform::toUInt8($tempo);
+      $data .= Transform::toUInt32BE($timestamp);
+    }
+    parent::setData($data);
     return parent::__toString();
   }
 }

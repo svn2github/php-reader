@@ -58,6 +58,7 @@ require_once("ID3/Frame.php");
  * @package    php-reader
  * @subpackage ID3
  * @author     Sven Vollbehr <svollbehr@gmail.com>
+ * @author     Ryan Butterfield <buttza@gmail.com>
  * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Rev$
@@ -66,13 +67,13 @@ final class ID3_Frame_POPM extends ID3_Frame
 {
   /** @var string */
   private $_owner;
-  
+
   /** @var integer */
   private $_rating = 0;
-  
+
   /** @var integer */
   private $_counter = 0;
-  
+
   /**
    * Constructs the class with given parameters and parses object related data.
    *
@@ -82,67 +83,67 @@ final class ID3_Frame_POPM extends ID3_Frame
   public function __construct($reader = null, &$options = array())
   {
     parent::__construct($reader, $options);
-    
+
     if ($reader === null)
       return;
 
-    list($this->_owner, $this->_data) = preg_split("/\\x00/", $this->_data, 2);
-    $this->_rating = Transform::fromInt8($this->_data[0]);
+    list($this->_owner, $this->_data) = $this->explodeString8($this->_data, 2);
+    $this->_rating = Transform::fromUInt8($this->_data[0]);
     $this->_data = substr($this->_data, 1);
-    
+
     if (strlen($this->_data) > 4)
-      $this->_counter = Transform::fromInt64BE($this->_data);
+      $this->_counter = Transform::fromInt64BE($this->_data); // UInt64
     else if (strlen($this->_data) > 0)
       $this->_counter = Transform::fromUInt32BE($this->_data);
   }
-  
+
   /**
    * Returns the owner identifier string.
-   * 
+   *
    * @return string
    */
   public function getOwner() { return $this->_owner; }
-  
+
   /**
    * Sets the owner identifier string.
-   * 
+   *
    * @param string $owner The owner identifier string.
    */
   public function setOwner($owner) { return $this->_owner = $owner; }
-  
+
   /**
    * Returns the user rating.
-   * 
+   *
    * @return integer
    */
   public function getRating() { return $this->_rating; }
-  
+
   /**
    * Sets the user rating.
-   * 
+   *
    * @param integer $rating The user rating.
    */
   public function setRating($rating) { $this->_rating = $rating; }
-  
+
   /**
    * Returns the counter.
-   * 
+   *
    * @return integer
    */
   public function getCounter() { return $this->_counter; }
-  
+
   /**
    * Adds counter by one.
    */
   public function addCounter() { $this->_counter++; }
-  
+
   /**
    * Sets the counter value.
-   * 
+   *
    * @param integer $counter The counter value.
    */
   public function setCounter($counter) { $this->_counter = $counter; }
-  
+
   /**
    * Returns the frame raw data.
    *
@@ -152,9 +153,9 @@ final class ID3_Frame_POPM extends ID3_Frame
   {
     $this->setData
       ($this->_owner . "\0" . Transform::toInt8($this->_rating) .
-       ($this->_counter > 4294967295 ?
+       ($this->_counter > 0xffffffff ?
         Transform::toInt64BE($this->_counter) :
-        ($this->_counter > 0 ? Transform::toInt32BE($this->_counter) : 0)));
+        ($this->_counter > 0 ? Transform::toUInt32BE($this->_counter) : 0)));
     return parent::__toString();
   }
 }

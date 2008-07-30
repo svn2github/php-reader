@@ -52,6 +52,7 @@ require_once("ID3/Encoding.php");
  * @package    php-reader
  * @subpackage ID3
  * @author     Sven Vollbehr <svollbehr@gmail.com>
+ * @author     Ryan Butterfield <buttza@gmail.com>
  * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Rev$
@@ -100,6 +101,9 @@ final class ID3_Frame_COMR extends ID3_Frame
   /** @var string */
   private $_imageData;
   
+  /** @var integer */
+  private $_imageSize = 0;  
+  
   /**
    * Constructs the class with given parameters and parses object related data.
    *
@@ -113,33 +117,33 @@ final class ID3_Frame_COMR extends ID3_Frame
     if ($reader === null)
       return;
 
-    $this->_encoding = Transform::fromInt8($this->_data[0]);
+    $this->_encoding = Transform::fromUInt8($this->_data[0]);
     list($pricing, $this->_data) =
-      preg_split("/\\x00/", substr($this->_data, 1), 2);
+      $this->explodeString8(substr($this->_data, 1), 2);
     $this->_currency = substr($pricing, 0, 3);
     $this->_price = substr($pricing, 3);
     $this->_date = substr($this->_data, 0, 8);
     list($this->_contact, $this->_data) =
-      preg_split("/\\x00/", substr($this->_data, 8), 2);
-    $this->_delivery = Transform::fromInt8($this->_data[0]);
+      $this->explodeString8(substr($this->_data, 8), 2);
+    $this->_delivery = Transform::fromUInt8($this->_data[0]);
     $this->_data = substr($this->_data, 1);
     
     switch ($this->_encoding) {
     case self::UTF16:
       list ($this->_seller, $this->_description, $this->_data) =
-        preg_split("/\\x00\\x00/", $this->_data, 3);
+        $this->explodeString16($this->_data, 3);
       $this->_seller = Transform::fromString16($this->_seller);
       $this->_description = Transform::fromString16($this->_description);
       break;
     case self::UTF16BE:
       list ($this->_seller, $this->_description, $this->_data) =
-        preg_split("/\\x00\\x00/", $this->_data, 3);
+        $this->explodeString16($this->_data, 3);
       $this->_seller = Transform::fromString16BE($this->_seller);
       $this->_description = Transform::fromString16BE($this->_description);
       break;
     default:
       list ($this->_seller, $this->_description, $this->_data) =
-        preg_split("/\\x00/", $this->_data, 3);
+        $this->explodeString8($this->_data, 3);
       $this->_seller = Transform::fromString8($this->_seller);
       $this->_description = Transform::fromString8($this->_description);
     }
@@ -148,7 +152,9 @@ final class ID3_Frame_COMR extends ID3_Frame
       return;
     
     list($this->_mimeType, $this->_imageData) =
-      preg_split("/\\x00/", $this->_imageData, 2);
+      $this->explodeString8($this->_data, 2);
+      
+    $this->_imageSize = strlen($this->_imageData);
   }
   
   /**
@@ -211,7 +217,7 @@ final class ID3_Frame_COMR extends ID3_Frame
    * 
    * @return string
    */
-  public function getDate() { return $this->_price; }
+  public function getDate() { return $this->_date; }
 
   /**
    * Sets the date describing for how long the price is valid for. The date must
@@ -313,14 +319,26 @@ final class ID3_Frame_COMR extends ID3_Frame
    * 
    * @return string
    */
-  public function getData() { return $this->_imageData; }
+  public function getImageData() { return $this->_imageData; }
   
   /**
-   * Sets the embedded image data.
+   * Sets the embedded image data. Also updates the image size to correspond the
+   * new data.
    * 
    * @param string $imageData The image data.
    */
-  public function setData($imageData) { $this->_imageData = $imageData; }
+  public function setImageData($imageData)
+  {
+    $this->_imageData = $imageData;
+    $this->_imageSize = strlen($imageData);
+  }
+  
+  /**
+   * Returns the size of the embedded image data.
+   * 
+   * @return integer
+   */
+  public function getImageSize() { return $this->_imageSize; }
   
   /**
    * Returns the frame raw data.
@@ -329,28 +347,27 @@ final class ID3_Frame_COMR extends ID3_Frame
    */
   public function __toString()
   {
-    $data = Transform::toInt8($this->_encoding) . $this->_price . "\0" .
-      $this->_date . $this->_contact . "\0" .
-      Transform::toInt8($this->_delivery);
+    $data = Transform::toUInt8($this->_encoding) . $this->_currency .
+      $this->_price . "\0" . $this->_date . $this->_contact . "\0" .
+      Transform::toUInt8($this->_delivery);
     switch ($this->_encoding) {
     case self::UTF16:
-      $data .= Transform::toString16($this->_seller) . "\0\0" .
-        Transform::toString16($this->_description) . "\0\0";
+    case self::UTF16LE:
+      $order = $this->_encoding == self::UTF16 ?
+        Transform::MACHINE_ENDIAN_ORDER : Transform::LITTLE_ENDIAN_ORDER;
+      $data .= Transform::toString16($this->_seller, $order) . "\0\0" .
+        Transform::toString16($this->_description, $order) . "\0\0";
       break;
     case self::UTF16BE:
-      $data .= Transform::toString16BE($this->_seller) . "\0\0";
-        Transform::toString16($this->_description) . "\0\0";
-      break;
-    case self::UTF16LE:
-      $data .= Transform::toString16LE($this->_seller) . "\0\0";
-        Transform::toString16($this->_description) . "\0\0";
+      $data .= Transform::toString16BE
+        ($this->_seller . "\0\0" . $this->_description . "\0\0");
       break;
     default:
       $data .= $this->_seller . "\0" . $this->_description . "\0";
     }
     parent::setData
       ($data . ($this->_mimeType ?
-                $this->_mimeType . "\0" . $this->_imageData : 0));
+                $this->_mimeType . "\0" . $this->_imageData : ""));
     return parent::__toString();
   }
 }

@@ -49,6 +49,7 @@ require_once("ID3/Timing.php");
  * @package    php-reader
  * @subpackage ID3
  * @author     Sven Vollbehr <svollbehr@gmail.com>
+ * @author     Ryan Butterfield <buttza@gmail.com>
  * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Rev$
@@ -57,9 +58,9 @@ final class ID3_Frame_POSS extends ID3_Frame
   implements ID3_Timing
 {
   /** @var integer */
-  private $_format = 1;
+  private $_format = ID3_Timing::MPEG_FRAMES;
   
-  /** @var string */
+  /** @var integer */
   private $_position;
   
   /**
@@ -74,8 +75,8 @@ final class ID3_Frame_POSS extends ID3_Frame
     
     if ($reader === null)
       return;
-
-    $this->_format = Transform::fromInt8($this->_data[0]);
+    
+    $this->_format = Transform::fromUInt8($this->_data[0]);
     $this->_position = Transform::fromUInt32BE(substr($this->_data, 1, 4));
   }
 
@@ -124,8 +125,8 @@ final class ID3_Frame_POSS extends ID3_Frame
   public function __toString()
   {
     $this->setData
-      (Transform::toInt8($this->_format) .
-       Transform::toUInt32($this->_position));
+      (Transform::toUInt8($this->_format) .
+       Transform::toUInt32BE($this->_position));
     return parent::__toString();
   }
 }

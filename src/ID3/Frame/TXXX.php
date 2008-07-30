@@ -52,6 +52,7 @@ require_once("ID3/Frame/AbstractText.php");
  * @package    php-reader
  * @subpackage ID3
  * @author     Sven Vollbehr <svollbehr@gmail.com>
+ * @author     Ryan Butterfield <buttza@gmail.com>
  * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Rev$
@@ -69,24 +70,30 @@ final class ID3_Frame_TXXX extends ID3_Frame_AbstractText
    */
   public function __construct($reader = null, &$options = array())
   {
-    parent::__construct($reader, $options);
+    ID3_Frame::__construct($reader, $options);
+    
+    if ($reader === null)
+      return;
+    
+    $this->_encoding = Transform::fromUInt8($this->_data[0]);
+    $this->_data = substr($this->_data, 1);
     
     switch ($this->_encoding) {
     case self::UTF16:
       list($this->_description, $this->_text) =
-        preg_split("/\\x00\\x00/", $this->_data);
+        $this->explodeString16($this->_data, 2);
       $this->_description = Transform::fromString16($this->_description);
       $this->_text = array(Transform::fromString16($this->_text));
       break;
     case self::UTF16BE:
       list($this->_description, $this->_text) =
-        preg_split("/\\x00\\x00/", $this->_data);
+        $this->explodeString16($this->_data, 2);
       $this->_description = Transform::fromString16BE($this->_description);
       $this->_text = array(Transform::fromString16BE($this->_text));
       break;
     default:
       list($this->_description, $this->_text) =
-        preg_split("/\\x00/", $this->_data);
+        $this->explodeString8($this->_data, 2);
       $this->_text = array($this->_text);
     }
   }
@@ -118,25 +125,24 @@ final class ID3_Frame_TXXX extends ID3_Frame_AbstractText
    */
   public function __toString()
   {
-    $data = Transform::toInt8($this->_encoding);
+    $data = Transform::toUInt8($this->_encoding);
     switch ($this->_encoding) {
     case self::UTF16:
-      $data .= Transform::toString16($this->_description) . "\0\0" .
-        Transform::toString16($this->_text[0]);
+    case self::UTF16LE:
+      $order = $this->_encoding == self::UTF16 ?
+        Transform::MACHINE_ENDIAN_ORDER : Transform::LITTLE_ENDIAN_ORDER;
+      $data .= Transform::toString16($this->_description, $order) . "\0\0" .
+        Transform::toString16($this->_text[0], $order);
       break;
     case self::UTF16BE:
       $data .= Transform::toString16BE($this->_description) . "\0\0" .
         Transform::toString16BE($this->_text[0]);
       break;
-    case self::UTF16LE:
-      $data .= Transform::toString16LE($this->_description) . "\0\0" .
-        Transform::toString16LE($this->_text[0]);
-      break;
     default:
       $data .= $this->_description . "\0" . $this->_text[0];
     }
     $this->setData($data);
-    return parent::__toString();
+    return ID3_Frame::__toString();
   }
 }
 

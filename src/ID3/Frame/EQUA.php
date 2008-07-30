@@ -48,6 +48,7 @@ require_once("ID3/Frame.php");
  * @package    php-reader
  * @subpackage ID3
  * @author     Sven Vollbehr <svollbehr@gmail.com>
+ * @author     Ryan Butterfield <buttza@gmail.com>
  * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Rev$
@@ -71,14 +72,19 @@ final class ID3_Frame_EQUA extends ID3_Frame
     if ($reader === null)
       return;
     
-    $adjustmentBits = Transform::fromInt8($this->_data[0]); //16
+    $adjustmentBits = Transform::fromInt8($this->_data[0]);
+    if ($adjustmentBits <= 8 || $adjustmentBits > 16)
+      throw new ID3_Exception
+          ("Unsupported adjustment bit size of: " . $adjustmentBits);
+    
     for ($i = 1; $i < strlen($this->_data); $i += 4) {
-      $frequency = Transform::fromInt16BE(substr($this->_data, $i, 2));
+      $frequency = Transform::fromUInt16BE(substr($this->_data, $i, 2));
       $this->_adjustments[($frequency & 0x7fff)] = 
-          ($frequency & 0x2000) == 0x2000 ?
-          Transform::fromInt16BE(substr($this->_data, $j + 2, 2)) :
-          -Transform::fromInt16BE(substr($this->_data, $j + 2, 2));
+          ($frequency & 0x8000) == 0x8000 ?
+          Transform::fromUInt16BE(substr($this->_data, $i + 2, 2)) :
+          -Transform::fromUInt16BE(substr($this->_data, $i + 2, 2));
     }
+    ksort($this->_adjustments);
   }
   
   /**
@@ -99,8 +105,9 @@ final class ID3_Frame_EQUA extends ID3_Frame
   public function addAdjustment($frequency, $adjustment)
   {
     $this->_adjustments[$frequency] = $adjustment;
+    ksort($this->_adjustments);
   }
-   
+  
   /**
    * Sets the adjustments array. The array must have frequencies as keys and
    * their corresponding adjustments as values. The frequency can have a value
@@ -112,6 +119,7 @@ final class ID3_Frame_EQUA extends ID3_Frame
   public function setAdjustments($adjustments)
   {
     $this->_adjustments = $adjustments;
+    ksort($this->_adjustments);
   }
   
   /**
@@ -123,9 +131,9 @@ final class ID3_Frame_EQUA extends ID3_Frame
   {
     $data = Transform::toInt8(16);
     foreach ($this->_adjustments as $frequency => $adjustment)
-      $data .= Transform::toInt16BE
-        ($adjustment > 0 ? $frequency | 0x2000 : $frequency & ~0x2000) .
-        Transform::toInt16BE(abs($adjustment));
+      $data .= Transform::toUInt16BE
+        ($adjustment > 0 ? $frequency | 0x8000 : $frequency & ~0x8000) .
+        Transform::toUInt16BE(abs($adjustment));
     $this->setData($data);
     return parent::__toString();
   }

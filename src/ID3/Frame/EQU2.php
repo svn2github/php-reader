@@ -49,6 +49,7 @@ require_once("ID3/Frame.php");
  * @package    php-reader
  * @subpackage ID3
  * @author     Sven Vollbehr <svollbehr@gmail.com>
+ * @author     Ryan Butterfield <buttza@gmail.com>
  * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Rev$
@@ -93,13 +94,13 @@ final class ID3_Frame_EQU2 extends ID3_Frame
     
     $this->_interpolation = Transform::fromInt8($this->_data[0]);
     list ($this->_device, $this->_data) =
-      preg_split("/\\x00/", substr($this->_data, 1), 2);
+      $this->explodeString8(substr($this->_data, 1), 2);
     
-    for ($i = 0; $i < strlen($this->_data); $i += 8)
+    for ($i = 0; $i < strlen($this->_data); $i += 4)
       $this->_adjustments
-        [Transform::fromInt16BE(substr($this->_data, $i, 2)) / 2] = 
-          Transform::fromInt16BE(substr($this->_data, $i + 2, 2)) / 512;
-    sort($this->_adjustments);
+        [(int)(Transform::fromUInt16BE(substr($this->_data, $i, 2)) / 2)] = 
+          Transform::fromInt16BE(substr($this->_data, $i + 2, 2)) / 512.0;
+    ksort($this->_adjustments);
   }
   
   /**
@@ -149,7 +150,7 @@ final class ID3_Frame_EQU2 extends ID3_Frame
   
   /**
    * Adds a volume adjustment setting for given frequency. The frequency can
-   * have a value from 0 to 32767 Hz, and the adjustment +/- 64 dB with a
+   * have a value from 0 to 32767 Hz, and the adjustment </> +/- 64 dB with a
    * precision of 0.001953125 dB.
    * 
    * @param integer $frequency The frequency, in hertz.
@@ -157,23 +158,22 @@ final class ID3_Frame_EQU2 extends ID3_Frame
    */
   public function addAdjustment($frequency, $adjustment)
   {
-    $this->_adjustments[$frequency * 2] = $adjustment * 512;
-    sort($this->_adjustments);
+    $this->_adjustments[$frequency] = $adjustment;
+    ksort($this->_adjustments);
   }
    
   /**
    * Sets the adjustments array. The array must have frequencies as keys and
    * their corresponding adjustments as values. The frequency can have a value
-   * from 0 to 32767 Hz, and the adjustment +/- 64 dB with a precision of
+   * from 0 to 32767 Hz, and the adjustment </> +/- 64 dB with a precision of
    * 0.001953125 dB. One frequency should only be described once in the frame.
    * 
    * @param Array $adjustments The adjustments array.
    */
   public function setAdjustments($adjustments)
   {
-    foreach ($adjustments as $frequency => $adjustment)
-      $this->_adjustments[$frequency * 2] = $adjustment * 512;
-    sort($this->_adjustments);
+    $this->_adjustments = $adjustments;
+    ksort($this->_adjustments);
   }
   
   /**
@@ -185,8 +185,8 @@ final class ID3_Frame_EQU2 extends ID3_Frame
   {
     $data = Transform::toInt8($this->_interpolation) . $this->_device . "\0";
     foreach ($this->_adjustments as $frequency => $adjustment)
-      $data .=
-        Transform::toInt16BE($frequency) . Transform::toInt16BE($adjustment);
+      $data .= Transform::toUInt16BE($frequency * 2) .
+        Transform::toInt16BE($adjustment * 512);
     $this->setData($data);
     return parent::__toString();
   }

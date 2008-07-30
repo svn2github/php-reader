@@ -41,6 +41,7 @@
  * @package    php-reader
  * @subpackage ID3
  * @author     Sven Vollbehr <svollbehr@gmail.com>
+ * @author     Ryan Butterfield <buttza@gmail.com>
  * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Rev$
@@ -151,12 +152,8 @@ abstract class ID3_Object
    */
   protected function encodeSynchsafe32($val)
   {
-    if (!isset($this->_options["version"]) || $this->_options["version"] >= 4) {
-      for ($i = 0, $mask = 0xffffff00; $i < 4; $i++, $mask <<= 8)
-        $val = ($val << 1 & $mask) | ($val << 1 & ~$mask) >> 1;
-      return $val & 0x7fffffff;
-    }
-    return $val;
+    return ($val & 0x7f) | ($val & 0x3f80) << 1 | 
+      ($val & 0x1fc000) << 2 | ($val & 0xfe00000) << 3;
   }
 
   /**
@@ -167,9 +164,46 @@ abstract class ID3_Object
    */
   protected function decodeSynchsafe32($val)
   {
-    if (!isset($this->_options["version"]) || $this->_options["version"] >= 4)
-      for ($i = 0, $mask = 0xff000000; $i < 3; $i++, $mask >>= 8)
-        $val = ($val & $mask) >> 1 | ($val & ~$mask);
-    return $val;
+    return ($val & 0x7f) | ($val & 0x7f00) >> 1 | 
+      ($val & 0x7f0000) >> 2 | ($val & 0x7f000000) >> 3;
+  }
+  
+  /**
+   * Splits UTF-16 formatted binary data up according to null terminators
+   * residing in the string, up to a given limit.
+   * 
+   * @param string $value The input string.
+   * @return Array
+   */
+  protected function explodeString16($value, $limit = null)
+  {
+    $i = 0;
+    $array = array();
+    while (count($array) < $limit - 1 || $limit === null) {
+      $start = $i;
+      do {
+        $i = strpos($value, "\x00\x00", $i);
+        if ($i === false) {
+          $array[] = substr($value, $start);
+          return $array;
+        }
+      } while ($i & 0x1 != 0 && $i++); // make sure its aligned
+      $array[] = substr($value, $start, $i - $start);
+      $i += 2;
+    }
+    $array[] = substr($value, $i);
+    return $array;
+  }
+  
+  /**
+   * Splits UTF-8 or ISO-8859-1 formatted binary data according to null
+   * terminators residing in the string, up to a given limit.
+   * 
+   * @param string $value The input string.
+   * @return Array
+   */
+  protected function explodeString8($value, $limit = null)
+  {
+    return preg_split("/\\x00/", $value, $limit);
   }
 }

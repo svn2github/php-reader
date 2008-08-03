@@ -46,6 +46,7 @@ require_once("Transform.php");
  * @package    php-reader
  * @subpackage Tests
  * @author     Sven Vollbehr <svollbehr@gmail.com>
+ * @author     Ryan Butterfield <buttza@gmail.com>
  * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Rev$
@@ -65,11 +66,13 @@ final class TestTransform extends PHPUnit_Framework_TestCase
       (0x7fffffffffffffff, Transform::fromInt64BE
        (Transform::toInt64BE(0x7fffffffffffffff)));
   }
-  
+
   function testInt32()
   {
     $this->assertEquals
       (0x7fffffff, Transform::fromInt32(Transform::toInt32(0x7fffffff)));
+    $this->assertEquals
+      (-0x7fffffff, Transform::fromInt32(Transform::toInt32(-0x7fffffff)));
     $this->assertEquals(-1, Transform::fromInt32(Transform::toInt32(-1)));
   }
 
@@ -78,6 +81,8 @@ final class TestTransform extends PHPUnit_Framework_TestCase
     $this->assertEquals(1, Transform::fromInt32LE("\x01\x00\x00\x00"));
     $this->assertEquals
       (0x7fffffff, Transform::fromInt32LE(Transform::toInt32LE(0x7fffffff)));
+    $this->assertEquals
+      (-0x7fffffff, Transform::fromInt32LE(Transform::toInt32LE(-0x7fffffff)));
     $this->assertEquals(-1, Transform::fromInt32LE(Transform::toInt32LE(-1)));
   }
 
@@ -86,7 +91,8 @@ final class TestTransform extends PHPUnit_Framework_TestCase
     $this->assertEquals(1, Transform::fromInt32BE("\x00\x00\x00\x01"));
     $this->assertEquals
       (0x7fffffff, Transform::fromInt32BE(Transform::toInt32BE(0x7fffffff)));
-    $this->assertEquals(-1, Transform::fromInt32BE(Transform::toInt32BE(-1)));
+    $this->assertEquals
+      (-0x7fffffff, Transform::fromInt32BE(Transform::toInt32BE(-0x7fffffff)));
   }
 
   function testUInt32LE()
@@ -104,7 +110,7 @@ final class TestTransform extends PHPUnit_Framework_TestCase
     $this->assertEquals
       (0xffffffff, Transform::fromUInt32BE(Transform::toUInt32BE(0xffffffff)));
   }
-  
+
   function testInt16()
   {
     $this->assertEquals
@@ -143,7 +149,7 @@ final class TestTransform extends PHPUnit_Framework_TestCase
     $this->assertEquals
       (0xffff, Transform::fromUInt16BE(Transform::toUInt16BE(0xffff)));
   }
-  
+
   function testInt8()
   {
     $this->assertEquals(0x7f, Transform::fromInt8(Transform::toInt8(0x7f)));
@@ -152,9 +158,25 @@ final class TestTransform extends PHPUnit_Framework_TestCase
   function testString16()
   {
     $this->assertEquals("00e4", Transform::fromHHex
-      (Transform::fromString16(Transform::toString16("\xff\xfe\x00\xe4"))));
-    $this->assertEquals("00e4", Transform::fromHHex
-      (Transform::fromString16(Transform::toString16("\xfe\xff\x00\xe4"))));
+      (Transform::fromString16(Transform::toString16("\x00\xe4"))));
+    $this->assertEquals
+      ("\0T\0h\0i\0s\0 \0i\0s\0 \0a\0 \0t\0e\0s\0t\0.",
+       Transform::fromString16(Transform::toString16LE
+        ("\xff\xfe\0T\0h\0i\0s\0 \0i\0s\0 \0a\0 \0t\0e\0s\0t\0.")));
+    $this->assertEquals
+      ("\0T\0h\0i\0s\0 \0i\0s\0 \0a\0 \0t\0e\0s\0t\0.",
+       Transform::fromString16(Transform::toString16BE
+        ("\xff\xfe\0T\0h\0i\0s\0 \0i\0s\0 \0a\0 \0t\0e\0s\0t\0.")));
+    $this->assertEquals
+      ("\0T\0h\0i\0s\0 \0i\0s\0 \0a\0 \0t\0e\0s\0t\0.",
+       Transform::fromString16(Transform::toString16
+        ("\0T\0h\0i\0s\0 \0i\0s\0 \0a\0 \0t\0e\0s\0t\0.",
+         Transform::LITTLE_ENDIAN_ORDER)));
+    $this->assertEquals
+      ("\0T\0h\0i\0s\0 \0i\0s\0 \0a\0 \0t\0e\0s\0t\0.",
+       Transform::fromString16(Transform::toString16
+        ("\0T\0h\0i\0s\0 \0i\0s\0 \0a\0 \0t\0e\0s\0t\0.",
+         Transform::BIG_ENDIAN_ORDER)));
   }
 
   function testString16LE()
@@ -176,7 +198,7 @@ final class TestTransform extends PHPUnit_Framework_TestCase
        Transform::fromString16BE(Transform::toString16BE
         ("\0T\0h\0i\0s\0 \0i\0s\0 \0a\0 \0t\0e\0s\0t\0.")));
   }
-  
+
   function testHHex()
   {
     $this->assertEquals("6c34", bin2hex(Transform::toHHex("6c34")));
@@ -188,13 +210,12 @@ final class TestTransform extends PHPUnit_Framework_TestCase
     $this->assertEquals("c643", bin2hex(Transform::toLHex("6c34")));
     $this->assertEquals("6c34", Transform::fromLHex(Transform::toLHex("6c34")));
   }
-  
+
   function testGUID()
   {
     $this->assertEquals
-      ("75b22630-668e-11cf-a6d9-00aa0062ce6c", 
+      ("75b22630-668e-11cf-a6d9-00aa0062ce6c",
        Transform::fromGUID(Transform::toGUID
          ("75b22630-668e-11cf-a6d9-00aa0062ce6c")));
   }
-  
 }

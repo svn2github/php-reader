@@ -108,22 +108,25 @@ final class ID3v1
   private $_reader;
 
   /** @var string */
-  private $_filename;
+  private $_filename = false;
 
   /**
    * Constructs the ID3v1 class with given file. The file is not mandatory
    * argument and may be omitted. A new tag can be written to a file also by
    * giving the filename to the {@link #write} method of this class.
    *
-   * @param string $filename The path to the file.
+   * @param string|Reader $filename The path to the file, file descriptor of an
+   *                                opened file, or {@link Reader} instance.
    */
   public function __construct($filename = false)
   {
-    if (($this->_filename = $filename) !== false &&
-        file_exists($filename) !== false)
-      $this->_reader = new Reader($filename);
-    else if ($filename instanceof Reader)
+    if ($filename instanceof Reader)
       $this->_reader = &$filename;
+    else if ((is_string($filename) && ($this->_filename = $filename) !== false &&
+              file_exists($filename) !== false) ||
+             (is_resource($filename) &&
+              in_array(get_resource_type($filename), array("file", "stream"))))
+      $this->_reader = new Reader($filename);
     else
       return;
 
@@ -288,9 +291,9 @@ final class ID3v1
     if ($filename === false && ($filename = $this->_filename) === false)
       throw new ID3_Exception("No file given to write the tag to");
 
-    if (($fd = fopen
-         ($filename, file_exists($filename) ? "r+b" : "wb")) === false)
-      throw new ID3_Exception("Unable to open file for writing: " . $filename);
+      if (($fd = fopen
+           ($filename, file_exists($filename) ? "r+b" : "wb")) === false)
+        throw new ID3_Exception("Unable to open file for writing: " . $filename);
 
     fseek($fd, $this->_reader !== false ? -128 : 0, SEEK_END);
     fwrite($fd, $this, 128);

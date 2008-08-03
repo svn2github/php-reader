@@ -89,7 +89,7 @@ final class ID3_Header extends ID3_Object
    */
   public function __construct($reader = null, &$options = array())
   {
-    parent::__construct($reader);
+    parent::__construct($reader, $options);
     
     if ($reader === null)
       return;
@@ -98,8 +98,6 @@ final class ID3_Header extends ID3_Object
       $this->_reader->readInt8() + $this->_reader->readInt8() / 10;
     $this->_flags = $this->_reader->readInt8();
     $this->_size = $this->decodeSynchsafe32($this->_reader->readUInt32BE());
-    
-    $this->setOptions($options);
   }
   
   /**

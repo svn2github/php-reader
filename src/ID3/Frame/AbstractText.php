@@ -153,7 +153,7 @@ abstract class ID3_Frame_AbstractText extends ID3_Frame
     case self::UTF16LE:
       $array = $this->_text;
       foreach ($array as &$text)
-        $text = Transform::toString16($str);
+        $text = Transform::toString16($text);
       $data .= Transform::toString16
         (implode("\0\0", $array), $this->_encoding == self::UTF16 ?
          Transform::MACHINE_ENDIAN_ORDER : Transform::LITTLE_ENDIAN_ORDER);

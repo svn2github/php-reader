@@ -43,7 +43,7 @@ require_once("ID3/Object.php");
  * A base class for all ID3v2 frames as described in the
  * {@link http://www.id3.org/id3v2.4.0-frames ID3v2 frames document}.
  *
- * 
+ *
  * @package    php-reader
  * @subpackage ID3
  * @author     Sven Vollbehr <svollbehr@gmail.com>
@@ -128,11 +128,11 @@ class ID3_Frame extends ID3_Object
   
   /**
    * Raw content of the frame.
-   * 
+   *
    * @var string
    */
   protected $_data = "";
-  
+
   /**
    * Constructs the class with given parameters and reads object related data
    * from the ID3v2 tag.
@@ -144,15 +144,15 @@ class ID3_Frame extends ID3_Object
   public function __construct($reader = null, &$options = array())
   {
     parent::__construct($reader, $options);
-    
+
     if ($reader === null) {
       $this->_identifier = substr(get_class($this), -4);
     } else {
       $this->_identifier = $this->_reader->readString8(4);
-      $this->_size = $this->decodeSynchsafe32($this->_reader->readUInt32BE());
 
-      /* ID3v2.3.0 Flags; convert to 2.4.0 format */
+      /* ID3v2.3.0 size and flags; convert flags to 2.4.0 format */
       if ($this->getOption("version", 4) < 4) {
+        $this->_size = $this->_reader->readUInt32BE();
         $flags = $this->_reader->readUInt16BE();
         if (($flags & 0x8000) == 0x8000)
           $this->_flags |= self::DISCARD_ON_TAGCHANGE;
@@ -168,14 +168,26 @@ class ID3_Frame extends ID3_Object
           $this->_flags |= self::GROUPING_IDENTITY;
       }
       
-      /* ID3v2.4.0 Flags */
-      else
+      /* ID3v2.4.0 size and flags */
+      else {
+        $this->_size = $this->decodeSynchsafe32($this->_reader->readUInt32BE());
         $this->_flags = $this->_reader->readUInt16BE();
+      }
       
+      $dataLength = $this->_size;
+      if ($this->hasFlag(self::DATA_LENGTH_INDICATOR)) {
+        $dataLength = $this->decodeSynchsafe32($this->_reader->readUInt32BE());
+        $this->_size -= 4;
+      }
       $this->_data = $this->_reader->read($this->_size);
+      $this->_size = $dataLength;
+      
+      if ($this->hasFlag(self::UNSYNCHRONISATION) ||
+          $this->getOption("unsyncronisation", false) === true)
+        $this->_data = $this->decodeUnsynchronisation($this->_data);
     }
   }
-  
+
   /**
    * Returns the frame identifier string.
    * 
@@ -227,14 +239,14 @@ class ID3_Frame extends ID3_Object
   /**
    * Sets the frame raw data.
    *
-   * @return string
+   * @param string $data
    */
   protected function setData($data)
   {
     $this->_data = $data;
     $this->_size = strlen($data);
   }
-  
+
   /**
    * Returns the frame raw data.
    *
@@ -263,8 +275,21 @@ class ID3_Frame extends ID3_Object
     else
       $flags = $this->_flags;
     
+    $size = $this->_size;
+    if ($this->getOption("version", 4) < 4)
+      $data = $this->_data;
+    else {
+      $data = $this->encodeUnsynchronisation($this->_data);
+      if (($dataLength = strlen($data)) != $size) {
+        $size = 4 + $dataLength;
+        $data = Transform::toUInt32BE($this->encodeSynchsafe32($this->_size)) .
+          $data;
+        $flags |= self::DATA_LENGTH_INDICATOR | self::UNSYNCHRONISATION;
+        $this->setOption("unsyncronisation", true);
+      }
+    }
     return Transform::toString8(substr($this->_identifier, 0, 4), 4) .
-      Transform::toUInt32BE($this->encodeSynchsafe32($this->_size)) .
-      Transform::toUInt16BE($flags) . $this->_data;
+      Transform::toUInt32BE($this->encodeSynchsafe32($size)) .
+      Transform::toUInt16BE($flags) . $data;
   }
 }

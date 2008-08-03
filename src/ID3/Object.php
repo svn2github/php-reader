@@ -72,7 +72,7 @@ abstract class ID3_Object
   public function __construct($reader = null, &$options = array())
   {
     $this->_reader = $reader;
-    $this->_options = $options;
+    $this->_options = &$options;
   }
   
   /**
@@ -101,7 +101,7 @@ abstract class ID3_Object
    *
    * @param Array $options The options array.
    */
-  public function setOptions(&$options) { $this->_options = $options; }
+  public function setOptions(&$options) { $this->_options = &$options; }
   
   /**
    * Sets the given option the given value.
@@ -166,6 +166,49 @@ abstract class ID3_Object
   {
     return ($val & 0x7f) | ($val & 0x7f00) >> 1 | 
       ($val & 0x7f0000) >> 2 | ($val & 0x7f000000) >> 3;
+  }
+  
+  /**
+   * Applies the unsynchronisation scheme to the given data string.
+   * 
+   * Whenever a false synchronisation is found within the data, one zeroed byte
+   * is inserted after the first false synchronisation byte. This has the side
+   * effect that all 0xff00 combinations have to be altered, so they will not
+   * be affected by the decoding process. Therefore all the 0xff00 combinations
+   * have to be replaced with the 0xff0000 combination during the
+   * unsynchronisation.
+   * 
+   * @param string $data The input data.
+   * @return string
+   */
+  protected function encodeUnsynchronisation(&$data)
+  {
+    $result = "";
+    for ($i = 0, $j = 0; $i < strlen($data) - 1; $i++)
+      if (ord($data[$i]) == 0xff &&
+          ((($tmp = ord($data[$i + 1])) & 0xe0) == 0xe0 || $tmp == 0x0)) {
+        $result .= substr($data, $j, $i + 1 - $j) . "\0";
+        $j = $i + 1;
+      }
+    return $result . substr($data, $j);
+  }
+  
+  /**
+   * Reverses the unsynchronisation scheme from the given data string.
+   * 
+   * @see encodeUnsyncronisation
+   * @param string $data The input data.
+   * @return string
+   */
+  protected function decodeUnsynchronisation(&$data)
+  {
+    $result = "";
+    for ($i = 0, $j = 0; $i < strlen($data) - 1; $i++)
+      if (ord($data[$i]) == 0xff && ord($data[$i + 1]) == 0x0) {
+        $result .= substr($data, $j, $i + 1 - $j);
+        $j = $i + 2;
+      }
+    return $result . substr($data, $j);
   }
   
   /**

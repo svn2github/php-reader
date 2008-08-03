@@ -121,4 +121,19 @@ final class TestID3v2 extends PHPUnit_Framework_TestCase
     $this->assertEquals("13/13",     $id3->trck->text);
     $this->assertEquals("Trance",    $id3->tcon->text);
   }
+  
+  function testUnsynchronisation()
+  {
+    $id3 = new ID3v2("id3v2.tag");
+    $id3->tit2->text = "\xff\xf0";
+    $id3->tcon->text = "\xff\xe0\xf0";
+    $id3->write();
+    
+    $this->assertEquals
+      ("TIT2\0\0\0\x08\0\x03\0\0\0\x03\x03\xff\x00\xf0", "" . $id3->tit2);
+    
+    $id3 = new ID3v2("id3v2.tag");
+    $this->assertEquals("\xff\xf0",     $id3->tit2->text);
+    $this->assertEquals("\xff\xe0\xf0", $id3->tcon->text);
+  }
 }

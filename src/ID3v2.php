@@ -3,7 +3,7 @@
  * PHP Reader Library
  *
  * Copyright (c) 2008 The PHP Reader Project Workgroup. All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
@@ -59,10 +59,11 @@ require_once("ID3/Frame.php");
  * need not be known to the software that encounters them. Each frame has an
  * unique and predefined identifier which allows software to skip unknown
  * frames.
- * 
+ *
  * @package    php-reader
  * @subpackage ID3
  * @author     Sven Vollbehr <svollbehr@gmail.com>
+ * @author     Ryan Butterfield <buttza@gmail.com>
  * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Rev$
@@ -77,26 +78,26 @@ final class ID3v2
 
   /** @var ID3_ExtendedHeader */
   private $_extendedHeader;
-  
+
   /** @var ID3_Header */
   private $_footer;
-  
+
   /** @var Array */
   private $_frames = array();
-  
+
   /** @var string */
   private $_filename = false;
-  
+
   /** @var Array */
   private $_options;
-  
+
   /**
    * Constructs the ID3v2 class with given file and options. The options array
    * may also be given as the only parameter.
    *
    * The following options are currently recognized:
    *   o version -- The ID3v2 tag version to use in write operation. This option
-   *     is automatically set when a tag is read from a file and defaults to 
+   *     is automatically set when a tag is read from a file and defaults to
    *     version 4.0 for tag write.
    *   o readonly -- Indicates that the tag is read from a temporary file or
    *     another source it cannot be written back to. The tag can, however,
@@ -105,9 +106,9 @@ final class ID3v2
    * @todo  Only limited subset of flags are processed.
    * @todo  Utilize the SEEK frame and search for a footer to find the tag
    * @todo  Utilize the LINK frame to fetch frames from other sources
-   * @param string $filename The path to the file, file descriptor of an opened
-   *                         file, or {@link Reader} instance.
-   * @param Array  $options  The options array.
+   * @param string|Reader $filename The path to the file, file descriptor of an
+   *                                opened file, or {@link Reader} instance.
+   * @param Array         $options  The options array.
    */
   public function __construct($filename = false, $options = array())
   {
@@ -115,43 +116,50 @@ final class ID3v2
       $options = $filename;
       $filename = false;
     }
-    
+
     $this->_options = &$options;
     if ($filename === false ||
         (is_string($filename) && file_exists($filename) === false) ||
-        (is_resource($filename) && get_resource_type($filename) != "file")) {
+        (is_resource($filename) && 
+         in_array(get_resource_type($filename), array("file", "stream")))) {
       $this->_header = new ID3_Header(null, $options);
     } else {
       if (is_string($filename) && !isset($options["readonly"]))
         $this->_filename = $filename;
       if ($filename instanceof Reader)
-        $this->_reader = $filename;
+        $this->_reader = &$filename;
       else
         $this->_reader = new Reader($filename);
       if ($this->_reader->readString8(3) != "ID3")
-        throw new ID3_Exception
-          ("File does not contain ID3v2 tag: " . $filename);
+        throw new ID3_Exception("File does not contain ID3v2 tag");
       
       $startOffset = $this->_reader->getOffset();
       
       $this->_header = new ID3_Header($this->_reader, $options);
       if ($this->_header->getVersion() < 3 || $this->_header->getVersion() > 4)
         throw new ID3_Exception
-          ("File does not contain ID3v2 tag of supported version: " . $filename);
+          ("File does not contain ID3v2 tag of supported version");
+      if ($this->_header->getVersion() < 4 &&
+          $this->_header->hasFlag(ID3_Header::UNSYNCHRONISATION))
+        throw new ID3_Exception
+          ("Unsynchronisation not supported for this version of ID3v2 tag");
+      unset($this->_options["unsyncronisation"]);
+      if ($this->_header->hasFlag(ID3_Header::UNSYNCHRONISATION))
+        $this->_options["unsyncronisation"] = true;
       if ($this->_header->hasFlag(ID3_Header::EXTENDEDHEADER))
         $this->_extendedHeader =
           new ID3_ExtendedHeader($this->_reader, $options);
       if ($this->_header->hasFlag(ID3_Header::FOOTER))
         $this->_footer = &$this->_header; // skip footer, and rather copy header
-      
+
       while (true) {
         $offset = $this->_reader->getOffset();
-        
+
         // Jump off the loop if we reached the end of the tag
         if ($offset - $startOffset - 10 >= $this->_header->getSize() -
             ($this->hasFooter() ? 10 : 0))
           break;
-        
+
         // Jump off the loop if we reached the last frame
         if ($this->_reader->available() < 4 || Transform::fromUInt32BE
             ($identifier = $this->_reader->read(4)) == 0)
@@ -165,7 +173,7 @@ final class ID3v2
           $frame = new $classname($this->_reader, $options);
         else
           $frame = new ID3_Frame($this->_reader, $options);
-        
+
         if (!isset($this->_frames[$frame->getIdentifier()]))
           $this->_frames[$frame->getIdentifier()] = array();
         $this->_frames[$frame->getIdentifier()][] = $frame;
@@ -175,15 +183,15 @@ final class ID3v2
 
   /**
    * Returns the header object.
-   * 
+   *
    * @return ID3_Header
    */
   public function getHeader() { return $this->_header; }
-  
+
   /**
    * Checks whether there is an extended header present in the tag. Returns
    * <var>true</var> if the header is present, <var>false</var> otherwise.
-   * 
+   *
    * @return boolean
    */
   public function hasExtendedHeader()
@@ -191,11 +199,11 @@ final class ID3v2
     if ($this->_header)
       return $this->_header->hasFlag(ID3_Header::EXTENDEDHEADER);
   }
-  
+
   /**
    * Returns the extended header object if present, or <var>false</var>
    * otherwise.
-   * 
+   *
    * @return ID3_ExtendedHeader|false
    */
   public function getExtendedHeader()
@@ -219,27 +227,27 @@ final class ID3v2
       $this->_extendedHeader = $extendedHeader;
     } else throw new ID3_Exception("Invalid argument");
   }
-  
+
   /**
    * Checks whether there is a frame given as an argument defined in the tag.
    * Returns <var>true</var> if one ore more frames are present,
    * <var>false</var> otherwise.
-   * 
+   *
    * @return boolean
    */
   public function hasFrame($identifier)
   {
     return isset($this->_frames[$identifier]);
   }
-  
+
   /**
    * Returns all the frames the tag contains as an associate array. The frame
    * identifiers work as keys having an array of frames as associated value.
-   * 
+   *
    * @return Array
    */
   public function getFrames() { return $this->_frames; }
-  
+
   /**
    * Returns an array of frames matching the given identifier or an empty array
    * if no frames matched the identifier.
@@ -251,7 +259,7 @@ final class ID3v2
    * Please note that one may also use the shorthand $obj->identifier to access
    * the first frame with the identifier given. Wildcards cannot be used with
    * the shorthand.
-   * 
+   *
    * @return Array
    */
   public function getFramesByIdentifier($identifier)
@@ -265,7 +273,7 @@ final class ID3v2
           $matches[] = $frame;
     return $matches;
   }
-  
+
   /**
    * Adds a new frame to the tag and returns it.
    *
@@ -279,18 +287,18 @@ final class ID3v2
       $this->_frames[$frame->getIdentifier()] = array();
     return $this->_frames[$frame->getIdentifier()][] = $frame;
   }
-  
+
   /**
    * Checks whether there is a footer present in the tag. Returns
    * <var>true</var> if the footer is present, <var>false</var> otherwise.
-   * 
+   *
    * @return boolean
    */
   public function hasFooter()
   {
     return $this->_header->hasFlag(ID3_Header::FOOTER);
   }
-  
+
   /**
    * Returns the footer object if present, or <var>false</var> otherwise.
    *
@@ -302,7 +310,7 @@ final class ID3v2
       return $this->_footer;
     return false;
   }
-  
+
   /**
    * Sets whether the tag should have a footer defined.
    *
@@ -319,13 +327,13 @@ final class ID3v2
          overridden upon re-write */
       if ($this->hasFooter())
         $this->_header->setSize($this->_header->getSize() + 10);
-      
+
       $this->_header->setFlags
         ($this->_header->getFlags() & ~ID3_Header::FOOTER);
       $this->_footer = null;
     }
   }
-  
+
   /**
    * Writes the possibly altered ID3v2 tag back to the file where it was read.
    * If the class was constructed without a file name, one can be provided here
@@ -341,11 +349,16 @@ final class ID3v2
   {
     if ($filename === false && ($filename = $this->_filename) === false)
       throw new ID3_Exception("No file given to write the tag to");
-    
+    else if ($filename !== false && $this->_filename !== false &&
+             realpath($filename) != realpath($this->_filename) &&
+             !copy($this->_filename, $filename))
+      throw new ID3_Exception("Unable to copy source to destination: " .
+        realpath($this->_filename) . "->" . realpath($filename));
+
     if (($fd = fopen
          ($filename, file_exists($filename) ? "r+b" : "wb")) === false)
       throw new ID3_Exception("Unable to open file for writing: " . $filename);
-    
+
     $oldTagSize = $this->_header->getSize();
     $tag = "" . $this;
     $tagSize = empty($this->_frames) ? 0 : strlen($tag);
@@ -368,7 +381,7 @@ final class ID3v2
 
     $this->_filename = $filename;
   }
-  
+
   /**
    * Magic function so that $obj->value will work. The method will attempt to
    * return the first frame that matches the identifier.
@@ -393,7 +406,7 @@ final class ID3v2
       return $this->addFrame(new $classname());
     throw new ID3_Exception("Unknown frame/field: " . $name);
   }
-  
+
   /**
    * Magic function so that isset($obj->value) will work. This method checks
    * whether the frame matching the identifier exists.
@@ -401,16 +414,19 @@ final class ID3v2
    * @param string $name The frame identifier.
    * @return boolean
    */
-  public function __isset($name) { return isset($this->_boxes[$name]); }
-  
+  public function __isset($name)
+  {
+    return isset($this->_frames[strtoupper($name)]);
+  }
+
   /**
    * Magic function so that unset($obj->value) will work. This method removes
    * all the frames matching the identifier.
    *
    * @param string $name The frame identifier.
    */
-  public function __unset($name) { unset($this->_boxes[$name]); }
-  
+  public function __unset($name) { unset($this->_frames[strtoupper($name)]); }
+
   /**
    * Returns the tag raw data.
    *
@@ -418,6 +434,8 @@ final class ID3v2
    */
   public function __toString()
   {
+    unset($this->_options["unsyncronisation"]);
+    
     $data = "";
     foreach ($this->_frames as $frames)
       foreach ($frames as $frame)
@@ -426,6 +444,11 @@ final class ID3v2
     $datalen = strlen($data);
     $padlen = 0;
     
+    if (isset($this->_options["unsyncronisation"]) &&
+        $this->_options["unsyncronisation"] === true)
+      $this->_header->setFlags
+        ($this->_header->getFlags() | ID3_Header::UNSYNCHRONISATION);
+
     /* The tag padding is calculated as follows. If the tag can be written in
        the space of the previous tag, the remaining space is used for padding.
        If there is no previous tag or the new tag is bigger than the space taken
@@ -438,11 +461,11 @@ final class ID3v2
       else
         $padlen = ceil(log(0.2 * ($datalen / 1024 + 10), 10) * 1024);
     }
-    
+
     /* ID3v2.4.0 CRC calculated w/ padding */
     if (!isset($this->_options["version"]) || $this->_options["version"] >= 4)
       $data = str_pad($data, $datalen + $padlen, "\0");
-    
+
     if ($this->hasExtendedHeader()) {
       $this->_extendedHeader->setPadding($padlen);
       if ($this->_extendedHeader->hasFlag(ID3_ExtendedHeader::CRC32)) {
@@ -453,13 +476,13 @@ final class ID3v2
       }
       $data = $this->getExtendedHeader() . $data;
     }
-    
+
     /* ID3v2.3.0 CRC calculated w/o padding */
     if (isset($this->_options["version"]) && $this->_options["version"] < 4)
       $data = str_pad($data, $datalen + $padlen, "\0");
-    
+
     $this->_header->setSize(strlen($data));
-    
+
     return "ID3" . $this->_header . $data .
       ($this->hasFooter() ? "3DI" . $this->getFooter() : "");
   }

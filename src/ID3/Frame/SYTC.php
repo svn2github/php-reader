@@ -58,7 +58,6 @@ require_once("ID3/Timing.php");
  * a time-period is at the same time as the beat description occurs. There may
  * only be one SYTC frame in each tag.
  *
- * @todo       The data could be parsed further; data samples needed
  * @package    php-reader
  * @subpackage ID3
  * @author     Sven Vollbehr <svollbehr@gmail.com>
@@ -99,7 +98,7 @@ final class ID3_Frame_SYTC extends ID3_Frame
     $this->_format = Transform::fromUInt8($this->_data[$offset++]);
     while ($offset < strlen($this->_data)) {
       $tempo = Transform::fromUInt8($this->_data[$offset++]);
-      if ($tempo == 0xFF)
+      if ($tempo == 0xff)
         $tempo += Transform::fromUInt8($this->_data[$offset++]);
       $this->_events
         [Transform::fromUInt32BE(substr($this->_data, $offset, 4))] = $tempo;

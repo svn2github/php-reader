@@ -40,6 +40,7 @@ require_once("PHPUnit/Framework.php");
 require_once("PHPUnit/TextUI/TestRunner.php");
 
 ini_set("include_path", ini_get("include_path") . PATH_SEPARATOR . "../src/");
+ini_set("memory_limit", "16M");
 
 $suite = new PHPUnit_Framework_TestSuite("PHP Reader");
 

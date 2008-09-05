@@ -40,9 +40,14 @@ require_once("ASF/Object.php");
 /**#@-*/
 
 /**
- * The <i>Digital Signature Object</i> lets authors sign the portion of their
- * header that lies between the end of the <i>File Properties Object</i> and the
- * beginning of the <i>Digital Signature Object</i>.
+ * The <i>Advanced Mutual Exclusion Object</i> identifies streams that have a
+ * mutual exclusion relationship to each other (in other words, only one of the
+ * streams within such a relationship can be streamed—the rest are ignored).
+ * There should be one instance of this object for each set of objects that
+ * contain a mutual exclusion relationship. The exclusion type is used so that
+ * implementations can allow user selection of common choices, such as language.
+ * This object must be used if any of the streams in the mutual exclusion
+ * relationship are hidden.
  *
  * @package    php-reader
  * @subpackage ASF
@@ -51,13 +56,17 @@ require_once("ASF/Object.php");
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Rev$
  */
-final class ASF_Object_DigitalSignature extends ASF_Object
+final class ASF_Object_AdvancedMutualExclusion extends ASF_Object
 {
-  /** @var integer */
-  private $_signatureType;
+  const MUTEX_LANGUAGE = "d6e22a00-35da-11d1-9034-00a0c90349be";
+  const MUTEX_BITRATE = "d6e22a01-35da-11d1-9034-00a0c90349be";
+  const MUTEX_UNKNOWN = "d6e22a02-35da-11d1-9034-00a0c90349be";
   
   /** @var string */
-  private $_signatureData;
+  private $_exclusionType;
+  
+  /** @var Array */
+  private $_streamNumbers = array();
   
   /**
    * Constructs the class with given parameters and reads object related data
@@ -69,23 +78,23 @@ final class ASF_Object_DigitalSignature extends ASF_Object
   public function __construct($reader, &$options = array())
   {
     parent::__construct($reader, $options);
-    
-    $this->_signatureType = $this->_reader->readUInt32LE();
-    $signatureDataLength = $this->_reader->readUInt32LE();
-    $this->_signatureData = $this->_reader->read($signatureDataLength);
+    $this->_exclusionType = $this->_reader->readGUID();
+    $streamNumbersCount = $this->_reader->readUInt16LE();
+    for ($i = 0; $i < $streamNumbersCount; $i++)
+      $this->_streamNumbers[] = $this->_reader->readUInt16LE();
   }
   
   /**
-   * Returns the type of digital signature used. This field is set to 2.
-   *
-   * @return integer
-   */
-  public function getSignatureType() { return $this->_signatureType; }
-  
-  /**
-   * Returns the digital signature data.
+   * Returns the nature of the mutual exclusion relationship.
    *
    * @return string
    */
-  public function getSignatureData() { return $this->_signatureData; }
+  public function getExclusionType() { return $this->_exclusionType; }
+  
+  /**
+   * Returns an array of stream numbers.
+   *
+   * @return Array
+   */
+  public function getStreamNumbers() { return $this->_streamNumbers; }
 }

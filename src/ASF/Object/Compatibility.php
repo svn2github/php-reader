@@ -40,9 +40,7 @@ require_once("ASF/Object.php");
 /**#@-*/
 
 /**
- * The <i>Digital Signature Object</i> lets authors sign the portion of their
- * header that lies between the end of the <i>File Properties Object</i> and the
- * beginning of the <i>Digital Signature Object</i>.
+ * The <i>Compatibility Object</i> is reserved for future use.
  *
  * @package    php-reader
  * @subpackage ASF
@@ -51,13 +49,13 @@ require_once("ASF/Object.php");
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Rev$
  */
-final class ASF_Object_DigitalSignature extends ASF_Object
+final class ASF_Object_Compatibility extends ASF_Object
 {
   /** @var integer */
-  private $_signatureType;
-  
-  /** @var string */
-  private $_signatureData;
+  private $_profile;
+
+  /** @var integer */
+  private $_mode;
   
   /**
    * Constructs the class with given parameters and reads object related data
@@ -69,23 +67,22 @@ final class ASF_Object_DigitalSignature extends ASF_Object
   public function __construct($reader, &$options = array())
   {
     parent::__construct($reader, $options);
-    
-    $this->_signatureType = $this->_reader->readUInt32LE();
-    $signatureDataLength = $this->_reader->readUInt32LE();
-    $this->_signatureData = $this->_reader->read($signatureDataLength);
+
+    $this->_profile = $this->_reader->readUInt8();
+    $this->_mode = $this->_reader->readUInt8();
   }
-  
+
   /**
-   * Returns the type of digital signature used. This field is set to 2.
+   * Returns the profile field. This field is reserved and is set to 2.
    *
    * @return integer
    */
-  public function getSignatureType() { return $this->_signatureType; }
-  
+  public function getProfile() { return $this->_profile; }
+
   /**
-   * Returns the digital signature data.
+   * Returns the mode field. This field is reserved and is set to 1.
    *
-   * @return string
+   * @return integer
    */
-  public function getSignatureData() { return $this->_signatureData; }
+  public function getMode() { return $this->_mode; }
 }

@@ -40,14 +40,11 @@ require_once("ASF/Object.php");
 /**#@-*/
 
 /**
- * The <i>Bitrate Mutual Exclusion Object</i> identifies video streams that have
- * a mutual exclusion relationship to each other (in other words, only one of
- * the streams within such a relationship can be streamed at any given time and
- * the rest are ignored). One instance of this object must be present for each
- * set of objects that contains a mutual exclusion relationship. All video
- * streams in this relationship must have the same frame size. The exclusion
- * type is used so that implementations can allow user selection of common
- * choices, such as bit rate.
+ * The <i>Bandwidth Sharing Object</i> indicates streams that share bandwidth in
+ * such a way that the maximum bandwidth of the set of streams is less than the
+ * sum of the maximum bandwidths of the individual streams. There should be one
+ * instance of this object for each set of objects that share bandwidth. Whether
+ * or not this object can be used meaningfully is content-dependent.
  *
  * @package    php-reader
  * @subpackage ASF
@@ -56,14 +53,19 @@ require_once("ASF/Object.php");
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Rev$
  */
-final class ASF_Object_BitrateMutualExclusion extends ASF_Object
+final class ASF_Object_BandwidthSharing extends ASF_Object
 {
-  const MUTEX_LANGUAGE = "d6e22a00-35da-11d1-9034-00a0c90349be";
-  const MUTEX_BITRATE = "d6e22a01-35da-11d1-9034-00a0c90349be";
-  const MUTEX_UNKNOWN = "d6e22a02-35da-11d1-9034-00a0c90349be";
+  const SHARING_EXCLUSIVE = "af6060aa-5197-11d2-b6af-00c04fd908e9";
+  const SHARING_PARTIAL = "af6060ab-5197-11d2-b6af-00c04fd908e9";
   
   /** @var string */
-  private $_exclusionType;
+  private $_sharingType;
+  
+  /** @var integer */
+  private $_dataBitrate;
+  
+  /** @var integer */
+  private $_bufferSize;
   
   /** @var Array */
   private $_streamNumbers = array();
@@ -78,18 +80,49 @@ final class ASF_Object_BitrateMutualExclusion extends ASF_Object
   public function __construct($reader, &$options = array())
   {
     parent::__construct($reader, $options);
-    $this->_exclusionType = $this->_reader->readGUID();
+    
+    $this->_sharingType = $this->_reader->readGUID();
+    $this->_dataBitrate = $this->_reader->readUInt32LE();
+    $this->_bufferSize  = $this->_reader->readUInt32LE();
     $streamNumbersCount = $this->_reader->readUInt16LE();
     for ($i = 0; $i < $streamNumbersCount; $i++)
       $this->_streamNumbers[] = $this->_reader->readUInt16LE();
   }
   
   /**
-   * Returns the nature of the mutual exclusion relationship.
+   * Returns the type of sharing relationship for this object. Two types are
+   * predefined: SHARING_PARTIAL, in which any number of the streams in the
+   * relationship may be streaming data at any given time; and
+   * SHARING_EXCLUSIVE, in which only one of the streams in the relationship
+   * may be streaming data at any given time.
    *
    * @return string
    */
-  public function getExclusionType() { return $this->_exclusionType; }
+  public function getSharingType() { return $this->_sharingType; }
+  
+  /**
+   * Returns the leak rate R, in bits per second, of a leaky bucket that
+   * contains the data portion of all of the streams, excluding all ASF Data
+   * Packet overhead, without overflowing. The size of the leaky bucket is
+   * specified by the value of the Buffer Size field. This value can be less
+   * than the sum of all of the data bit rates in the
+   * {@link ASF_Object_ExtendedStreamProperties Extended Stream Properties}
+   * Objects for the streams contained in this bandwidth-sharing relationship.
+   *
+   * @return integer
+   */
+  public function getDataBitrate() { return $this->_dataBitrate; }
+  
+  /**
+   * Specifies the size B, in bits, of the leaky bucket used in the Data Bitrate
+   * definition. This value can be less than the sum of all of the buffer sizes
+   * in the {@link ASF_Object_ExtendedStreamProperties Extended Stream
+   * Properties} Objects for the streams contained in this bandwidth-sharing
+   * relationship.
+   *
+   * @return integer
+   */
+  public function getBufferSize() { return $this->_bufferSize; }
   
   /**
    * Returns an array of stream numbers.

@@ -39,8 +39,6 @@
 /**#@+ @ignore */
 require_once("Reader.php");
 require_once("ASF/Object/Container.php");
-//require_once("ASF/Object/Header.php");
-//require_once("ASF/Object/Data.php");
 /**#@-*/
 
 /**

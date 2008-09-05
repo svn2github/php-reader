@@ -40,10 +40,22 @@ require_once("ASF/Object.php");
 /**#@-*/
 
 /**
- * The <i>Digital Signature Object</i> lets authors sign the portion of their
- * header that lies between the end of the <i>File Properties Object</i> and the
- * beginning of the <i>Digital Signature Object</i>.
- *
+ * The <i>Stream Prioritization Object</i> indicates the author's intentions as
+ * to which streams should or should not be dropped in response to varying
+ * network congestion situations. There may be special cases where this
+ * preferential order may be ignored (for example, the user hits the "mute"
+ * button). Generally it is expected that implementations will try to honor the
+ * author's preference.
+ * 
+ * The priority of each stream is indicated by how early in the list that
+ * stream's stream number is listed (in other words, the list is ordered in
+ * terms of decreasing priority).
+ * 
+ * The Mandatory flag field shall be set if the author wants that stream kept
+ * "regardless". If this flag is not set, then that indicates that the stream
+ * should be dropped in response to network congestion situations. Non-mandatory
+ * streams must never be assigned a higher priority than mandatory streams.
+ * 
  * @package    php-reader
  * @subpackage ASF
  * @author     Sven Vollbehr <svollbehr@gmail.com>
@@ -51,13 +63,10 @@ require_once("ASF/Object.php");
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Rev$
  */
-final class ASF_Object_DigitalSignature extends ASF_Object
+final class ASF_Object_StreamPrioritization extends ASF_Object
 {
-  /** @var integer */
-  private $_signatureType;
-  
-  /** @var string */
-  private $_signatureData;
+  /** @var Array */
+  private $_priorityRecords = array();
   
   /**
    * Constructs the class with given parameters and reads object related data
@@ -69,23 +78,22 @@ final class ASF_Object_DigitalSignature extends ASF_Object
   public function __construct($reader, &$options = array())
   {
     parent::__construct($reader, $options);
-    
-    $this->_signatureType = $this->_reader->readUInt32LE();
-    $signatureDataLength = $this->_reader->readUInt32LE();
-    $this->_signatureData = $this->_reader->read($signatureDataLength);
+    $priorityRecordCount = $this->_reader->readUInt16LE();
+    for ($i = 0; $i < $priorityRecordCount; $i++)
+      $this->_priorityRecords[] = array
+        ("streamNumber" => $this->_reader->readUInt16LE(),
+         "flags"        => $this->_reader->readUInt16LE());
   }
   
   /**
-   * Returns the type of digital signature used. This field is set to 2.
+   * Returns an array of records. Each record consists of the following keys.
+   * 
+   *   o streamNumber -- Specifies the stream number. Valid values are between
+   *     1 and 127.
    *
-   * @return integer
+   *   o flags -- Specifies the flags. The mandatory flag is the bit 1 (LSB).
+   * 
+   * @return Array
    */
-  public function getSignatureType() { return $this->_signatureType; }
-  
-  /**
-   * Returns the digital signature data.
-   *
-   * @return string
-   */
-  public function getSignatureData() { return $this->_signatureData; }
+  public function getPriorityRecords() { return $this->_priorityRecords; }
 }

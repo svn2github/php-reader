@@ -40,10 +40,10 @@ require_once("ASF/Object/Container.php");
 /**#@-*/
 
 /**
- * The <i>Header Extension Object<i> allows additional functionality to be added
- * to an ASF file while maintaining backward compatibility. The Header Extension
- * Object is a container containing 0 or more additional extended header
- * objects.
+ * The <i>Header Extension Object</i> allows additional functionality to be
+ * added to an ASF file while maintaining backward compatibility. The Header
+ * Extension Object is a container containing zero or more additional extended
+ * header objects.
  *
  * @package    php-reader
  * @subpackage ASF

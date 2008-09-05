@@ -174,4 +174,22 @@ abstract class ASF_Object_Container extends ASF_Object
     }
     throw new ASF_Exception("Unknown field/object: " . $name);
   }
+  
+  /**
+   * Magic function so that isset($obj->value) will work. This method checks
+   * whether the object by given identifier is contained by this container.
+   *
+   * @param string $name The object name.
+   * @return boolean
+   */
+  public function __isset($name)
+  {
+    if (defined($constname = get_class($this) . "::" . strtoupper
+                (preg_replace("/[A-Z]/", "_$0", $name)))) {
+      $objects = $this->getObjectsByIdentifier(constant($constname));
+      return isset($objects[0]);
+    }
+    else
+      return isset($this->_objects[$name]);
+  }
 }

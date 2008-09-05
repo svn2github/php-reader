@@ -40,16 +40,15 @@ require_once("ASF/Object.php");
 /**#@-*/
 
 /**
- * For each video stream in an ASF file, there should be one instance of the
- * <i>Simple Index Object</i>. Additionally, the instances of the <i>Simple
- * Index Object</i> shall be ordered by stream number.
+ * The <i>Index Parameters Object</i> supplies information about those streams
+ * that are actually indexed (there must be at least one stream in an index) by
+ * the {@link ASF_Object_Index Index Object} and how they are being indexed.
+ * This object shall be present in the {@link ASF_Object_Header Header Object}
+ * if there is an {@link ASF_Object_Index Index Object} present in the file.
  * 
- * Index entries in the <i>Simple Index Object</i> are in terms of
- * <i>Presentation Times</i>. The corresponding <i>Packet Number</i> field
- * values (of the <i>Index Entry</i>, see below) indicate the packet number of
- * the ASF <i>Data Packet</i> with the closest past key frame. Note that for
- * video streams that contain both key frames and non-key frames, the <i>Packet
- * Number</i> field will always point to the closest past key frame.
+ * An Index Specifier is required for each stream that will be indexed by the
+ * {@link ASF_Object_Index Index Object}. These specifiers must exactly match
+ * those in the {@link ASF_Object_Index Index Object}.
  *
  * @package    php-reader
  * @subpackage ASF
@@ -58,19 +57,13 @@ require_once("ASF/Object.php");
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Rev$
  */
-final class ASF_Object_SimpleIndex extends ASF_Object
+final class ASF_Object_IndexParameters extends ASF_Object
 {
   /** @var string */
-  private $_fileId;
-
-  /** @var integer */
   private $_indexEntryTimeInterval;
-
-  /** @var integer */
-  private $_maximumPacketCount;
-
+  
   /** @var Array */
-  private $_indexEntries = array();
+  private $_indexSpecifiers = array();
   
   /**
    * Constructs the class with given parameters and reads object related data
@@ -83,32 +76,18 @@ final class ASF_Object_SimpleIndex extends ASF_Object
   {
     parent::__construct($reader, $options);
     
-    $this->_fileId = $this->_reader->readGUID();
-    $this->_indexEntryTimeInterval = $this->_reader->readInt64LE();
-    $this->_maximumPacketCount = $this->_reader->readUInt32LE();
-    $indexEntriesCount = $this->_reader->readUInt32LE();
-    for ($i = 0; $i < $indexEntriesCount; $i++) {
-      $this->_indexEntries[] = array
-        ("packetNumber" => $this->_reader->readUInt32LE(),
-         "packetCount" => $this->_reader->readUInt16LE());
+    $this->_indexEntryTimeInterval = $this->_reader->readUInt32LE();
+    $indexSpecifiersCount = $this->_reader->readUInt16LE();
+    for ($i = 0; $i < $indexSpecifiersCount; $i++) {
+      $this->_indexSpecifiers[] = array
+        ("streamNumber" => $this->_reader->readUInt16LE(),
+         "indexType" => $this->_reader->readUInt16LE());
     }
   }
-
+  
   /**
-   * Returns the unique identifier for this ASF file. The value of this field
-   * should be changed every time the file is modified in any way. The value of
-   * this field may be set to 0 or set to be identical to the value of the
-   * <i>File ID</i> field of the <i>Data Object</i> and the <i>Header
-   * Object</i>.
-   *
-   * @return string
-   */
-  public function getFileId() { return $this->_fileId; }
-
-  /**
-   * Returns the time interval between each index entry in 100-nanosecond units.
-   * The most common value is 10000000, to indicate that the index entries are
-   * in 1-second intervals, though other values can be used as well.
+   * Returns the time interval between index entries in milliseconds. This value
+   * cannot be 0.
    *
    * @return integer
    */
@@ -116,28 +95,27 @@ final class ASF_Object_SimpleIndex extends ASF_Object
   {
     return $this->_indexEntryTimeInterval;
   }
-
-  /**
-   * Returns the maximum <i>Packet Count</i> value of all <i>Index Entries</i>.
-   *
-   * @return integer
-   */
-  public function getMaximumPacketCount() { return $this->_maximumPacketCount; }
-
+  
   /**
    * Returns an array of index entries. Each entry consists of the following
    * keys.
    * 
-   *   o packetNumber -- Specifies the number of the Data Packet associated
-   *     with this index entry. Note that for video streams that contain both
-   *     key frames and non-key frames, this field will always point to the
-   *     closest key frame prior to the time interval.
+   *   o streamNumber -- Specifies the stream number that the Index Specifiers
+   *     refer to. Valid values are between 1 and 127.
    * 
-   *   o packetCount -- Specifies the number of <i>Data Packets</i> to send at
-   *     this index entry. If a video key frame has been fragmented into two
-   *     Data Packets, the value of this field will be equal to 2.
+   *   o indexType -- Specifies the type of index. Values are as follows:
+   *       1 = Nearest Past Data Packet,
+   *       2 = Nearest Past Media Object, and
+   *       3 = Nearest Past Cleanpoint.
+   *     The Nearest Past Data Packet indexes point to the data packet whose
+   *     presentation time is closest to the index entry time. The Nearest Past
+   *     Object indexes point to the closest data packet containing an entire
+   *     object or first fragment of an object. The Nearest Past Cleanpoint
+   *     indexes point to the closest data packet containing an entire object
+   *     (or first fragment of an object) that has the Cleanpoint Flag set.
+   *     Nearest Past Cleanpoint is the most common type of index.
    *
    * @return Array
    */
-  public function getIndexEntries() { return $this->_indexEntries; }
+  public function getIndexSpecifiers() { return $this->_indexSpecifiers; }
 }

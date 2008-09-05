@@ -111,4 +111,12 @@ final class ASF_Object_ExtendedContentDescription extends ASF_Object
       return $this->_contentDescriptors[$name];
     return false;
   }
+  
+  /**
+   * Returns an associate array of all the descriptors defined having the names
+   * of the descriptors as the keys.
+   *
+   * @return Array
+   */
+  public function getDescriptors() { return $this->_contentDescriptors; }
 }

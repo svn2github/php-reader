@@ -112,7 +112,20 @@ final class ASF_Object_ExtendedStreamProperties extends ASF_Object
 
   const NO_ERROR_CORRECTION = "20fb5700-5b55-11cf-a8fd-00805f5c442b";
   const AUDIO_SPREAD = "bfc3cd50-618f-11cf-8bb2-00aa00b4e220";
-
+  
+  const PAYLOAD_EXTENSION_SYSTEM_TIMECODE =
+    "399595ec-8667-4e2d-8fdb-98814ce76c1e";
+  const PAYLOAD_EXTENSION_SYSTEM_FILE_NAME =
+    "e165ec0e-19ed-45d7-b4a7-25cbd1e28e9b";
+  const PAYLOAD_EXTENSION_SYSTEM_CONTENT_TYPE =
+    "d590dc20-07bc-436c-9cf7-f3bbfbf1a4dc";
+  const PAYLOAD_EXTENSION_SYSTEM_PIXEL_ASPECT_RATIO =
+    "1b1ee554-f9ea-4bc8-821a-376b74e4c4b8";
+  const PAYLOAD_EXTENSION_SYSTEM_SAMPLE_DURATION =
+    "c6bd9450-867f-4907-83a3-c77921b733ad";
+  const PAYLOAD_EXTENSION_SYSTEM_ENCRYPTION_SAMPLE_ID =
+    "6698b84e-0afa-4330-aeb2-1c0a98d7a44d";
+  
   /** @var integer */
   private $_startTime;
 

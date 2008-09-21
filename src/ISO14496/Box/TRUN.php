@@ -47,6 +47,7 @@ require_once("ISO14496/Box/Full.php");
  * @package    php-reader
  * @subpackage ISO 14496
  * @author     Sven Vollbehr <svollbehr@gmail.com>
+ * @author     Anders Ödlund <odlund@gmail.com>
  * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Rev$
@@ -120,7 +121,7 @@ final class ISO14496_Box_TRUN extends ISO14496_Box_Full
         $sample["size"] = $this->_reader->readUInt32BE();
       if ($this->hasFlag(self::SAMPLE_FLAGS))
         $sample["flags"] = $this->_reader->readUInt32BE();
-      if ($this->hasFlag(self::SAMPLE_COMPOSITION_TIME_OFFSET))
+      if ($this->hasFlag(self::SAMPLE_COMPOSITION_TIME_OFFSETS))
         $sample["compositionTimeOffset"] = $this->_reader->readUInt32BE();
       $this->_samples[] = $sample;
       $this->_flags = $flags;
@@ -134,7 +135,7 @@ final class ISO14496_Box_TRUN extends ISO14496_Box_Full
    */
   public function getDataOffset()
   {
-    return $this->_trackId;
+    return $this->_dataOffset;
   }
   
   /**

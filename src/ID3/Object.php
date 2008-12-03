@@ -63,8 +63,7 @@ abstract class ID3_Object
   private $_options;
   
   /**
-   * Constructs the class with given parameters and reads object related data
-   * from the ID3v2 tag.
+   * Constructs the class with given parameters.
    *
    * @param Reader $reader The reader object.
    * @param Array $options The options array.

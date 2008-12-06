@@ -196,6 +196,27 @@ abstract class MPEG_Object
   }
   
   /**
+   * Formats given time in seconds into the form of
+   * [hours]:minutes:seconds.milliseconds.
+   * 
+   * @param integer $seconds The time to format, in seconds
+   * @return string
+   */
+  protected function formatTime($seconds)
+  {
+    $milliseconds = round(($seconds - floor($seconds)) * 1000);
+    $seconds = floor($seconds);
+    $minutes = floor($seconds / 60);
+    $hours = floor($minutes / 60);
+    return
+      ($minutes > 0 ?
+       ($hours > 0 ? $hours . ":" .
+        str_pad($minutes % 60, 2, "0", STR_PAD_LEFT) : $minutes % 60) . ":" .
+        str_pad($seconds % 60, 2, "0", STR_PAD_LEFT) : $seconds % 60) . "." .
+        str_pad($milliseconds, 3, "0", STR_PAD_LEFT);
+  }
+  
+  /**
    * Magic function so that $obj->value will work.
    *
    * @param string $name The field name.

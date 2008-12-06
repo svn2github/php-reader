@@ -271,7 +271,7 @@ final class MPEG_Audio extends MPEG_Audio_Object
    */
   public function getFormattedLengthEstimate()
   {
-    return $this->_formatTime($this->getLengthEstimate());
+    return $this->formatTime($this->getLengthEstimate());
   }
   
   /**
@@ -285,28 +285,7 @@ final class MPEG_Audio extends MPEG_Audio_Object
    */
   public function getFormattedLength()
   {
-    return $this->_formatTime($this->getLength());
-  }
-  
-  /**
-   * Formats given time in seconds into the form of
-   * [hours]:minutes:seconds.milliseconds.
-   * 
-   * @param integer $seconds The time to format, in seconds
-   * @return string
-   */
-  private function _formatTime($seconds)
-  {
-    $milliseconds = round(($seconds - floor($seconds)) * 1000);
-    $seconds = floor($seconds);
-    $minutes = floor($seconds / 60);
-    $hours = floor($minutes / 60);
-    return
-      ($minutes > 0 ?
-       ($hours > 0 ? $hours . ":" .
-        str_pad($minutes % 60, 2, "0", STR_PAD_LEFT) : $minutes % 60) . ":" .
-        str_pad($seconds % 60, 2, "0", STR_PAD_LEFT) : $seconds % 60) . "." .
-        str_pad($milliseconds, 3, "0", STR_PAD_LEFT);
+    return $this->formatTime($this->getLength());
   }
   
   /**

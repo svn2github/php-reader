@@ -59,7 +59,7 @@ require_once("MPEG/Object.php");
  * @version    $Rev: 1 $
  * @todo       Full implementation
  */
-final class MPEG_ProgramStream extends MPEG_Object
+final class MPEG_PS extends MPEG_Object
 {
   /** @var integer */
   private $_length;

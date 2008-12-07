@@ -42,7 +42,8 @@ require_once("MPEG/Object.php");
 
 /**
  * This class represents a MPEG Program Stream encoded file as described in
- * ISO/IEC 13818-1 Systems standard.
+ * MPEG-1 Systems (ISO/IEC 11172-1) and MPEG-2 Systems (ISO/IEC 13818-1)
+ * standards.
  * 
  * The Program Stream is a stream definition which is tailored for communicating
  * or storing one program of coded data and other data in environments where
@@ -65,7 +66,7 @@ final class MPEG_PS extends MPEG_Object
   private $_length;
   
   /**
-   * Constructs the MPEG_ProgramStream class with given file and options.
+   * Constructs the class with given file and options.
    *
    * @param string|Reader $filename The path to the file, file descriptor of an
    *                                opened file, or {@link Reader} instance.
@@ -133,7 +134,7 @@ final class MPEG_PS extends MPEG_Object
   
   /**
    * Returns the exact playtime given in seconds as a string in the form of
-   * [hours]:minutes:seconds.milliseconds.
+   * [hours:]minutes:seconds.milliseconds.
    *
    * @param integer $seconds The playtime in seconds.
    * @return string

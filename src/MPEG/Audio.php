@@ -151,11 +151,13 @@ final class MPEG_Audio extends MPEG_Audio_Object
     else
       $this->_reader->setOffset($offset);
     
-
+    /* Check for VBR headers */
     $offset = $this->_reader->getOffset();
     
-    /* Check for VBR headers */
-    $firstFrame = new MPEG_Audio_Frame($this->_reader, $options);
+    $this->_frames[] =
+      $firstFrame = new MPEG_Audio_Frame($this->_reader, $options);
+
+    $postoffset = $this->_reader->getOffset();
     
     $this->_reader->setOffset
       ($offset + 4 + self::$sidesizes
@@ -168,15 +170,25 @@ final class MPEG_Audio extends MPEG_Audio_Object
         $this->_lameHeader =
           new MPEG_Audio_LAMEHeader($this->_reader, $options);
       }
+      
+      // A header frame is not counted as an audio frame
+      array_pop($this->_frames);
     }
     
     $this->_reader->setOffset($offset + 4 + 32);
     if ($this->_reader->readString8(4) == "VBRI") {
       require_once("MPEG/Audio/VBRIHeader.php");
       $this->_vbriHeader = new MPEG_Audio_VBRIHeader($this->_reader, $options);
+      
+      // A header frame is not counted as an audio frame
+      array_pop($this->_frames);
     }
     
-    $this->_reader->setOffset($offset);
+    $this->_reader->setOffset($postoffset);
+    
+    // Ensure we always have read at least one frame
+    if (empty($this->_frames))
+      $this->_readFrames(1);
     
     /* Read necessary frames */
     if ($this->getOption("readmode", "lazy") == "lazy") {
@@ -213,6 +225,54 @@ final class MPEG_Audio extends MPEG_Audio_Object
       $this->_estimatedPlayDuration = $this->_cumulativePlayDuration;
     }
   }
+  
+  /**
+   * Returns <var>true</var> if the audio bitstream contains the Xing VBR
+   * header, or <var>false</var> otherwise.
+   * 
+   * @return boolean
+   */
+  public function hasXingHeader() { return $this->_xingHeader === null; }
+  
+  /**
+   * Returns the Xing VBR header, or <var>null</var> if not found in the audio
+   * bitstream.
+   * 
+   * @return MPEG_Audio_XINGHeader
+   */
+  public function getXingHeader() { return $this->_xingHeader; }
+  
+  /**
+   * Returns <var>true</var> if the audio bitstream contains the LAME VBR
+   * header, or <var>false</var> otherwise.
+   * 
+   * @return boolean
+   */
+  public function hasLameHeader() { return $this->_lameHeader === null; }
+  
+  /**
+   * Returns the LAME VBR header, or <var>null</var> if not found in the audio
+   * bitstream.
+   * 
+   * @return MPEG_Audio_LAMEHeader
+   */
+  public function getLameHeader() { return $this->_lameHeader; }
+  
+  /**
+   * Returns <var>true</var> if the audio bitstream contains the Fraunhofer IIS
+   * VBR header, or <var>false</var> otherwise.
+   * 
+   * @return boolean
+   */
+  public function hasVbriHeader() { return $this->_vbriHeader === null; }
+  
+  /**
+   * Returns the Fraunhofer IIS VBR header, or <var>null</var> if not found in
+   * the audio bitstream.
+   * 
+   * @return MPEG_Audio_VBRIHeader
+   */
+  public function getVbriHeader() { return $this->_vbriHeader; }
   
   /**
    * Returns the bitrate estimate. This value is either fetched from one of the
@@ -264,7 +324,7 @@ final class MPEG_Audio extends MPEG_Audio_Object
 
   /**
    * Returns the playtime estimate as a string in the form of
-   * [hours]:minutes:seconds.milliseconds.
+   * [hours:]minutes:seconds.milliseconds.
    *
    * @param integer $seconds The playtime in seconds.
    * @return string
@@ -276,7 +336,7 @@ final class MPEG_Audio extends MPEG_Audio_Object
   
   /**
    * Returns the exact playtime given in seconds as a string in the form of
-   * [hours]:minutes:seconds.milliseconds. In lazy reading mode the frames are
+   * [hours:]minutes:seconds.milliseconds. In lazy reading mode the frames are
    * read from the file the first time you call this method to get the exact
    * playtime of the file.
    *
@@ -323,7 +383,7 @@ final class MPEG_Audio extends MPEG_Audio_Object
       $this->_cumulativeBitrate += $frame->getBitrate();
       $this->_frames[] = $frame;
       
-      if ($limit !== false && $i == $limit) {
+      if ($limit !== false && ($i + 1) == $limit) {
         $this->_lastFrameOffset = $this->_reader->getOffset();
         break;
       }

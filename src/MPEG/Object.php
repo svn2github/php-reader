@@ -197,7 +197,7 @@ abstract class MPEG_Object
   
   /**
    * Formats given time in seconds into the form of
-   * [hours]:minutes:seconds.milliseconds.
+   * [hours:]minutes:seconds.milliseconds.
    * 
    * @param integer $seconds The time to format, in seconds
    * @return string

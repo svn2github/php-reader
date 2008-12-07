@@ -38,12 +38,12 @@
 /**#@+ @ignore */
 require_once("Reader.php");
 require_once("Twiddling.php");
-require_once("MPEG/Object.php");
+require_once("MPEG/ABS/Object.php");
 /**#@-*/
 
 /**
  * This class represents the Fraunhofer IIS VBR header which is often found in
- * the first frame of an MPEG stream.
+ * the first frame of an MPEG Audio Bit Stream.
  *
  * @package    php-reader
  * @subpackage MPEG
@@ -53,7 +53,7 @@ require_once("MPEG/Object.php");
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Rev: 1 $
  */
-class MPEG_Audio_VBRIHeader extends MPEG_Object
+class MPEG_ABS_VBRIHeader extends MPEG_ABS_Object
 {
   /** @var integer */
   private $_version;

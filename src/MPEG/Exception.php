@@ -36,8 +36,8 @@
  */
 
 /**
- * The MPEG_Exception is thrown whenever an error occurs within the family of
- * {@link MPEG} classes.
+ * The MPEG_Exception is thrown whenever an error occurs within the MPEG family
+ * of classes.
  * 
  * @package    php-reader
  * @subpackage MPEG

@@ -38,16 +38,16 @@
 /**#@+ @ignore */
 require_once("Reader.php");
 require_once("Twiddling.php");
-require_once("MPEG/Audio/Object.php");
+require_once("MPEG/ABS/Object.php");
 /**#@-*/
 
 /**
- * This class represents an MPEG Audio frame as described in ISO/IEC 11172-3 and
- * ISO/IEC 13818-3 standards.
+ * This class represents an MPEG Audio Bit Stream frame as described in
+ * ISO/IEC 11172-3 and ISO/IEC 13818-3 standards.
  * 
  * To accommodate fast header processing the error checking data and the audio
  * data are lazy fetch by default. You can change this behaviour by giving a
- * proper option to the {@link MPEG_Audio} class.
+ * proper option to the {@link MPEG_ABS} class.
  * 
  * @package    php-reader
  * @subpackage MPEG
@@ -57,7 +57,7 @@ require_once("MPEG/Audio/Object.php");
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Rev: 1 $
  */
-class MPEG_Audio_Frame extends MPEG_Audio_Object
+class MPEG_ABS_Frame extends MPEG_ABS_Object
 {
   /**
    * The bitrate lookup table. The table has the following format.
@@ -229,7 +229,7 @@ class MPEG_Audio_Frame extends MPEG_Audio_Object
 
   /**
    * Constructs the class with given parameters and reads object related data
-   * from the MPEG frame.
+   * from the frame.
    *
    * @param Reader $reader The reader object.
    * @param Array $options Array of options.

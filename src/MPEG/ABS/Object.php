@@ -40,7 +40,7 @@ require_once("MPEG/Object.php");
 /**#@-*/
 
 /**
- * The base class for all MPEG Audio objects.
+ * The base class for all MPEG Audio Bit Stream objects.
  *
  * @package    php-reader
  * @subpackage MPEG
@@ -50,7 +50,7 @@ require_once("MPEG/Object.php");
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Rev: 107 $
  */
-abstract class MPEG_Audio_Object extends MPEG_Object
+abstract class MPEG_ABS_Object extends MPEG_Object
 {
   /** @var integer */
   const VERSION_ONE = 3;

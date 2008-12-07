@@ -36,13 +36,13 @@
  */
 
 /**#@+ @ignore */
-require_once("MPEG/Audio/Object.php");
-require_once("MPEG/Audio/Frame.php");
+require_once("MPEG/ABS/Object.php");
+require_once("MPEG/ABS/Frame.php");
 /**#@-*/
 
 /**
- * This class represents an MPEG Audio file as described in ISO/IEC 11172-3 and
- * ISO/IEC 13818-3 standards.
+ * This class represents an MPEG Audio Bit Stream as described in
+ * ISO/IEC 11172-3 and ISO/IEC 13818-3 standards.
  * 
  * Non-standard VBR header extensions or namely XING, VBRI and LAME headers are
  * supported.
@@ -60,7 +60,7 @@ require_once("MPEG/Audio/Frame.php");
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Rev: 1 $
  */
-final class MPEG_Audio extends MPEG_Audio_Object
+final class MPEG_ABS extends MPEG_ABS_Object
 {
   /** @var integer */
   private $_bytes;
@@ -68,13 +68,13 @@ final class MPEG_Audio extends MPEG_Audio_Object
   /** @var Array */
   private $_frames = array();
   
-  /** @var MPEG_Audio_XINGHeader */
+  /** @var MPEG_ABS_XINGHeader */
   private $_xingHeader = null;
 
-  /** @var MPEG_Audio_LAMEHeader */
+  /** @var MPEG_ABS_LAMEHeader */
   private $_lameHeader = null;
 
-  /** @var MPEG_Audio_VBRIHeader */
+  /** @var MPEG_ABS_VBRIHeader */
   private $_vbriHeader = null;
   
   /** @var integer */
@@ -94,7 +94,7 @@ final class MPEG_Audio extends MPEG_Audio_Object
   
   
   /**
-   * Constructs the MPEG_Audio class with given file and options.
+   * Constructs the MPEG_ABS class with given file and options.
    *
    * The following options are currently recognized:
    *   o readmode -- Can be one of full or lazy and determines when the read of
@@ -155,7 +155,7 @@ final class MPEG_Audio extends MPEG_Audio_Object
     $offset = $this->_reader->getOffset();
     
     $this->_frames[] =
-      $firstFrame = new MPEG_Audio_Frame($this->_reader, $options);
+      $firstFrame = new MPEG_ABS_Frame($this->_reader, $options);
 
     $postoffset = $this->_reader->getOffset();
     
@@ -163,12 +163,12 @@ final class MPEG_Audio extends MPEG_Audio_Object
       ($offset + 4 + self::$sidesizes
        [$firstFrame->getFrequencyType()][$firstFrame->getMode()]);
     if (($xing = $this->_reader->readString8(4)) == "Xing" || $xing == "Info") {
-      require_once("MPEG/Audio/XINGHeader.php");
-      $this->_xingHeader = new MPEG_Audio_XINGHeader($this->_reader, $options);
+      require_once("MPEG/ABS/XINGHeader.php");
+      $this->_xingHeader = new MPEG_ABS_XINGHeader($this->_reader, $options);
       if ($this->_reader->readString8(4) == "LAME") {
-        require_once("MPEG/Audio/LAMEHeader.php");
+        require_once("MPEG/ABS/LAMEHeader.php");
         $this->_lameHeader =
-          new MPEG_Audio_LAMEHeader($this->_reader, $options);
+          new MPEG_ABS_LAMEHeader($this->_reader, $options);
       }
       
       // A header frame is not counted as an audio frame
@@ -177,8 +177,8 @@ final class MPEG_Audio extends MPEG_Audio_Object
     
     $this->_reader->setOffset($offset + 4 + 32);
     if ($this->_reader->readString8(4) == "VBRI") {
-      require_once("MPEG/Audio/VBRIHeader.php");
-      $this->_vbriHeader = new MPEG_Audio_VBRIHeader($this->_reader, $options);
+      require_once("MPEG/ABS/VBRIHeader.php");
+      $this->_vbriHeader = new MPEG_ABS_VBRIHeader($this->_reader, $options);
       
       // A header frame is not counted as an audio frame
       array_pop($this->_frames);
@@ -238,7 +238,7 @@ final class MPEG_Audio extends MPEG_Audio_Object
    * Returns the Xing VBR header, or <var>null</var> if not found in the audio
    * bitstream.
    * 
-   * @return MPEG_Audio_XINGHeader
+   * @return MPEG_ABS_XINGHeader
    */
   public function getXingHeader() { return $this->_xingHeader; }
   
@@ -254,7 +254,7 @@ final class MPEG_Audio extends MPEG_Audio_Object
    * Returns the LAME VBR header, or <var>null</var> if not found in the audio
    * bitstream.
    * 
-   * @return MPEG_Audio_LAMEHeader
+   * @return MPEG_ABS_LAMEHeader
    */
   public function getLameHeader() { return $this->_lameHeader; }
   
@@ -270,7 +270,7 @@ final class MPEG_Audio extends MPEG_Audio_Object
    * Returns the Fraunhofer IIS VBR header, or <var>null</var> if not found in
    * the audio bitstream.
    * 
-   * @return MPEG_Audio_VBRIHeader
+   * @return MPEG_ABS_VBRIHeader
    */
   public function getVbriHeader() { return $this->_vbriHeader; }
   
@@ -376,7 +376,7 @@ final class MPEG_Audio extends MPEG_Audio_Object
       $this->_reader->setOffset($this->_lastFrameOffset);
     
     for ($i = 0; $this->_reader->getOffset() < $this->_bytes; $i++) {
-      $frame = new MPEG_Audio_Frame($this->_reader, $options);
+      $frame = new MPEG_ABS_Frame($this->_reader, $options);
       
       $this->_cumulativePlayDuration += 
         (double)($frame->getLength() / ($frame->getBitrate() * 1000 / 8));

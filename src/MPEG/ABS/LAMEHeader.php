@@ -38,12 +38,12 @@
 /**#@+ @ignore */
 require_once("Reader.php");
 require_once("Twiddling.php");
-require_once("MPEG/Object.php");
+require_once("MPEG/ABS/Object.php");
 /**#@-*/
 
 /**
  * This class represents a LAME extension to the Xing VBR header. The purpose of
- * this header is to provide extra information about the MP3 bistream, encoder
+ * this header is to provide extra information about the audio bistream, encoder
  * and parameters used. This header should, as much as possible, be meaningfull
  * for as many encoders as possible, even if it is unlikely that other encoders
  * than LAME will implement it.
@@ -60,7 +60,7 @@ require_once("MPEG/Object.php");
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Rev: 1 $
  */
-class MPEG_Audio_LAMEHeader extends MPEG_Object
+class MPEG_ABS_LAMEHeader extends MPEG_ABS_Object
 {
   
   /** @var integer */

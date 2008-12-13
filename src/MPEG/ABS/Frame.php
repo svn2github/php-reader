@@ -259,19 +259,18 @@ class MPEG_ABS_Frame extends MPEG_ABS_Object
     $this->_copyright = Twiddling::testBit($header, 3);
     $this->_original = Twiddling::testBit($header, 2);
     $this->_emphasis = Twiddling::getValue($header, 0, 1);
-    
+
     $this->_length = (int)
       ((self::$coefficients[$this->_frequencyType][$this->_layer] *
         ($this->_bitrate * 1000) / $this->_samplingFrequency) +
        ($this->_padding ? 1 : 0)) * self::$slotsizes[$this->_layer];
     $this->_samples = self::$samples[$this->_frequencyType][$this->_layer];
     
-    if ($this->getOption("readmode", "lazy") == "lazy")
-      $this->_reader->skip($this->_length - 4);
-    else { // full
+    if ($this->getOption("readmode", "lazy") == "full") {
       $this->_readCrc();
       $this->_readData();
     }
+    $this->_reader->skip($this->_length - 4);
   }
   
   /**
@@ -473,7 +472,7 @@ class MPEG_ABS_Frame extends MPEG_ABS_Object
     if ($this->hasRedundancy()) {
       $offset = $this->_reader->getOffset();
       $this->_reader->setOffset($this->_offset + 4);
-      $this->_crc = $reader->readUInt16BE();
+      $this->_crc = $this->_reader->readUInt16BE();
       $this->_reader->setOffset($offset);
     }
   }

@@ -183,7 +183,7 @@ class ID3_Frame extends ID3_Object
       $this->_size = $dataLength;
       
       if ($this->hasFlag(self::UNSYNCHRONISATION) ||
-          $this->getOption("unsyncronisation", false) === true)
+          $this->getOption("unsynchronisation", false) === true)
         $this->_data = $this->decodeUnsynchronisation($this->_data);
     }
   }
@@ -246,7 +246,7 @@ class ID3_Frame extends ID3_Object
     $this->_data = $data;
     $this->_size = strlen($data);
   }
-
+  
   /**
    * Returns the frame raw data.
    *
@@ -285,8 +285,9 @@ class ID3_Frame extends ID3_Object
         $data = Transform::toUInt32BE($this->encodeSynchsafe32($this->_size)) .
           $data;
         $flags |= self::DATA_LENGTH_INDICATOR | self::UNSYNCHRONISATION;
-        $this->setOption("unsyncronisation", true);
-      }
+        $this->setOption("unsynchronisation", true);
+      } else
+        $flags &= ~(self::DATA_LENGTH_INDICATOR | self::UNSYNCHRONISATION);
     }
     return Transform::toString8(substr($this->_identifier, 0, 4), 4) .
       Transform::toUInt32BE($this->encodeSynchsafe32($size)) .

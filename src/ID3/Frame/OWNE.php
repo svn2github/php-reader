@@ -59,7 +59,7 @@ final class ID3_Frame_OWNE extends ID3_Frame
   implements ID3_Encoding
 {
   /** @var integer */
-  private $_encoding = ID3_Encoding::UTF8;
+  private $_encoding;
   
   /** @var string */
   private $_currency = "EUR";
@@ -83,10 +83,12 @@ final class ID3_Frame_OWNE extends ID3_Frame
   {
     parent::__construct($reader, $options);
     
+    $this->_encoding = $this->getOption("encoding", ID3_Encoding::UTF8);
+    
     if ($reader === null)
       return;
 
-    $this->_encoding = Transform::fromUInt8($this->_data[0]);
+    $encoding = Transform::fromUInt8($this->_data[0]);
     list($tmp, $this->_data) =
       $this->explodeString8(substr($this->_data, 1), 2);
     $this->_currency = substr($tmp, 0, 3);
@@ -94,20 +96,32 @@ final class ID3_Frame_OWNE extends ID3_Frame
     $this->_date = substr($this->_data, 0, 8);
     $this->_data = substr($this->_data, 8);
     
-    switch ($this->_encoding) {
+    switch ($encoding) {
     case self::UTF16:
-      $this->_seller = Transform::fromString16($this->_data);
+      $this->_seller = $this->convertString
+        (Transform::fromString16($this->_data), "utf-16");
       break;
     case self::UTF16BE:
-      $this->_seller = Transform::fromString16BE($this->_data);
+      $this->_seller = $this->convertString
+        (Transform::fromString16BE($this->_data), "utf-16be");
+      break;
+    case self::UTF8:
+      $this->_seller = $this->convertString
+        (Transform::fromString8($this->_data), "utf-8");
       break;
     default:
-      $this->_seller = Transform::fromString8($this->_data);
+      $this->_seller = $this->convertString
+        (Transform::fromString8($this->_data), "iso-8859-1");
     }
   }
 
   /**
    * Returns the text encoding.
+   * 
+   * All the strings read from a file are automatically converted to the
+   * character encoding specified with the <var>encoding</var> option. See
+   * {@link ID3v2} for details. This method returns the original text encoding
+   * used to write the frame.
    * 
    * @return integer
    */
@@ -115,6 +129,12 @@ final class ID3_Frame_OWNE extends ID3_Frame
   
   /**
    * Sets the text encoding.
+   * 
+   * All the string written to the frame are done so using given character
+   * encoding. No conversions of existing data take place upon the call to this
+   * method thus all texts must be given in given character encoding.
+   * 
+   * The default character encoding used to write the frame is UTF-8.
    * 
    * @see ID3_Encoding
    * @param integer $encoding The text encoding.

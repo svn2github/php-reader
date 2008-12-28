@@ -46,13 +46,18 @@ require_once("Reader.php");
  * @package    php-reader
  * @subpackage Tests
  * @author     Ryan Butterfield <buttza@gmail.com>
+ * @author     Sven Vollbehr <svollbehr@gmail.com>
  * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Rev$
  */
 final class TestID3Frame extends PHPUnit_Framework_TestCase
 {
-  private $testText = "abcdefghijklmnopqrstuvwxyz1234567890!@#\$%^&*()-";
+  const INITIALIZE = 1;
+  const DRYRUN = 2;
+  const RUN = 3;
+  
+  private $testText = "abcdefghijklmnopqrstuvwxyzåäö1234567890!@#\$%^&*()-";
   private $testLink = "http://www.abcdefghijklmnopqrstuvwxyz.com.xyz/qwerty.php?asdf=1234&zxcv=%20";
   private $testDate = "20070707";
   private $testCurrency = "AUD";
@@ -138,9 +143,9 @@ final class TestID3Frame extends PHPUnit_Framework_TestCase
       /* Setup and verify the frame */
       $frame = new $class();
       call_user_func(array($this, $method),
-        $frame, true, $encoding, $language, $timing);
+        $frame, self::INITIALIZE, $encoding, $language, $timing);
       call_user_func(array($this, $method),
-        $frame, false, $encoding, $language, $timing);
+        $frame, self::DRYRUN, $encoding, $language, $timing);
 
       if (isset($encoding)) {
         $this->assertTrue(method_exists($frame, "setEncoding"));
@@ -166,8 +171,6 @@ final class TestID3Frame extends PHPUnit_Framework_TestCase
         if ($i > 0)
           $existing = $data;
         $length = strlen($data = "" . $frame);
-        if ($i > 0)
-          $this->assertEquals($existing, $data);
         $this->assertTrue(($fd = fopen("php://temp", "r+b")) !== false);
         $this->assertEquals($length, fwrite($fd, $data, $length));
         $this->assertTrue(rewind($fd));
@@ -175,9 +178,7 @@ final class TestID3Frame extends PHPUnit_Framework_TestCase
         /* Construct a frame using the reader and verify */
         $frame = new $class($reader = new Reader($fd));
         call_user_func(array($this, $method),
-          $frame, false, $encoding, $language, $timing);
-        if (isset($encoding))
-          $this->assertEquals($encoding, $frame->getEncoding());
+          $frame, self::RUN, $encoding, $language, $timing);
         if (isset($language))
           $this->assertEquals($language, $frame->getLanguage());
         if (isset($timing))
@@ -187,64 +188,24 @@ final class TestID3Frame extends PHPUnit_Framework_TestCase
   }
 
   /**
-   * The first AbstractLink frame test.
-   *
-   * @param ID3_Frame_AbstractLink $frame The frame to test.
-   * @param boolean $construct Whether construction or testing should occur.
-   * @param integer $encoding The {@link ID3_Encoding text encoding} for strings
-   *        in this frame.
-   * @param string $language The language code.
-   * @param integer $timing The timing format.
-   */
-  /*private function frameAbstractLink0(&$frame, $construct, $encoding, $language, $timing) {
-    $link = $this->testLink;
-
-    if ($construct)
-      $frame->setLink($link);
-    else
-      $this->assertEquals($link, $frame->getLink());
-  }*/
-
-  /**
-   * The first AbstractText frame test.
-   *
-   * @param ID3_Frame_AbstractText $frame The frame to test.
-   * @param boolean $construct Whether construction or testing should occur.
-   * @param integer $encoding The {@link ID3_Encoding text encoding} for strings
-   *        in this frame.
-   * @param string $language The language code.
-   * @param integer $timing The timing format.
-   */
-  /*private function frameAbstractText0
-      (&$frame, $construct, $encoding, $language, $timing)
-  {
-    $text = $this->convert($this->testText, $encoding);
-
-    if ($construct)
-      $frame->setText($text);
-    else
-      $this->assertEquals($text, $frame->getText());
-  }*/
-
-  /**
    * The first AENC frame test.
    *
    * @param ID3_Frame_AENC $frame The frame to test.
-   * @param boolean $construct Whether construction or testing should occur.
+   * @param boolean $action The requested action.
    * @param integer $encoding The {@link ID3_Encoding text encoding} for strings
    *        in this frame.
    * @param string $language The language code.
    * @param integer $timing The timing format.
    */
   private function frameAENC0
-      (&$frame, $construct, $encoding, $language, $timing)
+      (&$frame, $action, $encoding, $language, $timing)
   {
     $owner = $this->testText;
     $previewStart = $this->testUInt16;
     $previewLength = $this->testUInt16 - 1;
     $encryptionInfo = $this->testText;
 
-    if ($construct) {
+    if ($action == self::INITIALIZE) {
       $frame->setOwner($owner);
       $frame->setPreviewStart($previewStart);
       $frame->setPreviewLength($previewLength);
@@ -261,14 +222,14 @@ final class TestID3Frame extends PHPUnit_Framework_TestCase
    * The first APIC frame test.
    *
    * @param ID3_Frame_APIC $frame The frame to test.
-   * @param boolean $construct Whether construction or testing should occur.
+   * @param boolean $action The requested action.
    * @param integer $encoding The {@link ID3_Encoding text encoding} for strings
    *        in this frame.
    * @param string $language The language code.
    * @param integer $timing The timing format.
    */
   private function frameAPIC0
-      (&$frame, $construct, $encoding, $language, $timing)
+      (&$frame, $action, $encoding, $language, $timing)
   {
     $mimeType = $this->testText;
     $imageType = $this->testUInt8;
@@ -276,7 +237,7 @@ final class TestID3Frame extends PHPUnit_Framework_TestCase
     $imageData = $this->testText;
     $imageSize = strlen($imageData);
 
-    if ($construct) {
+    if ($action == self::INITIALIZE) {
       $frame->setMimeType($mimeType);
       $frame->setImageType($imageType);
       $frame->setDescription($description);
@@ -284,7 +245,10 @@ final class TestID3Frame extends PHPUnit_Framework_TestCase
     } else {
       $this->assertEquals($mimeType, $frame->getMimeType());
       $this->assertEquals($imageType, $frame->getImageType());
-      $this->assertEquals($description, $frame->getDescription());
+      if ($action == self::DRYRUN)
+        $this->assertEquals($description, $frame->getDescription());
+      else
+        $this->assertEquals($this->testText, $frame->getDescription());
       $this->assertEquals($imageData, $frame->getImageData());
       $this->assertEquals($imageSize, $frame->getImageSize());
     }
@@ -294,24 +258,29 @@ final class TestID3Frame extends PHPUnit_Framework_TestCase
    * The first COMM frame test.
    *
    * @param ID3_Frame_COMM $frame The frame to test.
-   * @param boolean $construct Whether construction or testing should occur.
+   * @param boolean $action The requested action.
    * @param integer $encoding The {@link ID3_Encoding text encoding} for strings
    *        in this frame.
    * @param string $language The language code.
    * @param integer $timing The timing format.
    */
   private function frameCOMM0
-      (&$frame, $construct, $encoding, $language, $timing)
+      (&$frame, $action, $encoding, $language, $timing)
   {
     $description = $this->convert($this->testText, $encoding);
     $text = $this->convert($this->testText, $encoding);
 
-    if ($construct) {
+    if ($action == self::INITIALIZE) {
       $frame->setDescription($description);
       $frame->setText($text);
     } else {
-      $this->assertEquals($description, $frame->getDescription());
-      $this->assertEquals($text, $frame->getText());
+      if ($action == self::DRYRUN) {
+        $this->assertEquals($description, $frame->getDescription());
+        $this->assertEquals($text, $frame->getText());
+      } else {
+        $this->assertEquals($this->testText, $frame->getDescription());
+        $this->assertEquals($this->testText, $frame->getText());
+      }
     }
   }
 
@@ -319,14 +288,14 @@ final class TestID3Frame extends PHPUnit_Framework_TestCase
    * The first COMR frame test.
    *
    * @param ID3_Frame_COMR $frame The frame to test.
-   * @param boolean $construct Whether construction or testing should occur.
+   * @param boolean $action The requested action.
    * @param integer $encoding The {@link ID3_Encoding text encoding} for strings
    *        in this frame.
    * @param string $language The language code.
    * @param integer $timing The timing format.
    */
   private function frameCOMR0
-      (&$frame, $construct, $encoding, $language, $timing)
+      (&$frame, $action, $encoding, $language, $timing)
   {
     $currency = $this->testCurrency;
     $price = $this->testText;
@@ -339,7 +308,7 @@ final class TestID3Frame extends PHPUnit_Framework_TestCase
     $imageData = $this->testText;
     $imageSize = strlen($imageData);
 
-    if ($construct) {
+    if ($action == self::INITIALIZE) {
       $frame->setCurrency($currency);
       $frame->setPrice($price);
       $frame->setDate($date);
@@ -355,8 +324,13 @@ final class TestID3Frame extends PHPUnit_Framework_TestCase
       $this->assertEquals($date, $frame->getDate());
       $this->assertEquals($contact, $frame->getContact());
       $this->assertEquals($delivery, $frame->getDelivery());
-      $this->assertEquals($seller, $frame->getSeller());
-      $this->assertEquals($description, $frame->getDescription());
+      if ($action == self::DRYRUN) {
+        $this->assertEquals($seller, $frame->getSeller());
+        $this->assertEquals($description, $frame->getDescription());
+      } else {
+        $this->assertEquals($this->testText, $frame->getSeller());
+        $this->assertEquals($this->testText, $frame->getDescription());
+      }
       $this->assertEquals($mimeType, $frame->getMimeType());
       $this->assertEquals($imageData, $frame->getImageData());
       $this->assertEquals($imageSize, $frame->getImageSize());
@@ -367,20 +341,20 @@ final class TestID3Frame extends PHPUnit_Framework_TestCase
    * The first ENCR frame test.
    *
    * @param ID3_Frame_ENCR $frame The frame to test.
-   * @param boolean $construct Whether construction or testing should occur.
+   * @param boolean $action The requested action.
    * @param integer $encoding The {@link ID3_Encoding text encoding} for strings
    *        in this frame.
    * @param string $language The language code.
    * @param integer $timing The timing format.
    */
   private function frameENCR0
-      (&$frame, $construct, $encoding, $language, $timing)
+      (&$frame, $action, $encoding, $language, $timing)
   {
     $owner = $this->testLink;
     $method = $this->testInt8;
     $encryptionData = $this->testText;
 
-    if ($construct) {
+    if ($action == self::INITIALIZE) {
       $frame->setOwner($owner);
       $frame->setMethod($method);
       $frame->setEncryptionData($encryptionData);
@@ -395,14 +369,14 @@ final class TestID3Frame extends PHPUnit_Framework_TestCase
    * The first EQU2 frame test.
    *
    * @param ID3_Frame_EQU2 $frame The frame to test.
-   * @param boolean $construct Whether construction or testing should occur.
+   * @param boolean $action The requested action.
    * @param integer $encoding The {@link ID3_Encoding text encoding} for strings
    *        in this frame.
    * @param string $language The language code.
    * @param integer $timing The timing format.
    */
   private function frameEQU20
-      (&$frame, $construct, $encoding, $language, $timing)
+      (&$frame, $action, $encoding, $language, $timing)
   {
     $interpolation = $this->testInt8;
     $device = $this->testText;
@@ -412,7 +386,7 @@ final class TestID3Frame extends PHPUnit_Framework_TestCase
     $adjustments[16383] = 1.0;
     $adjustments[32767] = 32767.0 / 512.0;
 
-    if ($construct) {
+    if ($action == self::INITIALIZE) {
       foreach ($adjustments as $frequency => $adjustment)
         $frame->addAdjustment($frequency, $adjustment);
       $this->assertEquals($adjustments, $frame->getAdjustments());
@@ -431,14 +405,14 @@ final class TestID3Frame extends PHPUnit_Framework_TestCase
    * The first EQUA frame test.
    *
    * @param ID3_Frame_EQUA $frame The frame to test.
-   * @param boolean $construct Whether construction or testing should occur.
+   * @param boolean $action The requested action.
    * @param integer $encoding The {@link ID3_Encoding text encoding} for strings
    *        in this frame.
    * @param string $language The language code.
    * @param integer $timing The timing format.
    */
   private function frameEQUA0
-      (&$frame, $construct, $encoding, $language, $timing)
+      (&$frame, $action, $encoding, $language, $timing)
   {
     $adjustments[0] = -65535;
     $adjustments[2047] = -4096;
@@ -446,7 +420,7 @@ final class TestID3Frame extends PHPUnit_Framework_TestCase
     $adjustments[16383] = 4096;
     $adjustments[32767] = 65535;
 
-    if ($construct) {
+    if ($action == self::INITIALIZE) {
       foreach ($adjustments as $frequency => $adjustment)
         $frame->addAdjustment($frequency, $adjustment);
       $this->assertEquals($adjustments, $frame->getAdjustments());
@@ -461,14 +435,14 @@ final class TestID3Frame extends PHPUnit_Framework_TestCase
    * The first ETCO frame test.
    *
    * @param ID3_Frame_ETCO $frame The frame to test.
-   * @param boolean $construct Whether construction or testing should occur.
+   * @param boolean $action The requested action.
    * @param integer $encoding The {@link ID3_Encoding text encoding} for strings
    *        in this frame.
    * @param string $language The language code.
    * @param integer $timing The timing format.
    */
   private function frameETCO0
-      (&$frame, $construct, $encoding, $language, $timing)
+      (&$frame, $action, $encoding, $language, $timing)
   {
     $events[0] = array_search("Intro end", ID3_Frame_ETCO::$types);
     $events[0xFFFF] = array_search("Verse start", ID3_Frame_ETCO::$types);
@@ -478,7 +452,7 @@ final class TestID3Frame extends PHPUnit_Framework_TestCase
     $events[0xFFFFFFFF] = array_search
       ("Audio file ends", ID3_Frame_ETCO::$types);
 
-    if ($construct)
+    if ($action == self::INITIALIZE)
       $frame->setEvents($events);
     else
       $this->assertEquals($events, $frame->getEvents());
@@ -488,29 +462,34 @@ final class TestID3Frame extends PHPUnit_Framework_TestCase
    * The first GEOB frame test.
    *
    * @param ID3_Frame_GEOB $frame The frame to test.
-   * @param boolean $construct Whether construction or testing should occur.
+   * @param boolean $action The requested action.
    * @param integer $encoding The {@link ID3_Encoding text encoding} for strings
    *        in this frame.
    * @param string $language The language code.
    * @param integer $timing The timing format.
    */
   private function frameGEOB0
-      (&$frame, $construct, $encoding, $language, $timing)
+      (&$frame, $action, $encoding, $language, $timing)
   {
     $mimeType = $this->testText;
     $filename = $this->convert($this->testText, $encoding);
     $description = $this->convert($this->testText, $encoding);
     $objectData = $this->testText;
 
-    if ($construct) {
+    if ($action == self::INITIALIZE) {
       $frame->setMimeType($mimeType);
       $frame->setFilename($filename);
       $frame->setDescription($description);
       $frame->setObjectData($objectData);
     } else {
       $this->assertEquals($mimeType, $frame->getMimeType());
-      $this->assertEquals($filename, $frame->getFilename());
-      $this->assertEquals($description, $frame->getDescription());
+      if ($action == self::DRYRUN) {
+        $this->assertEquals($filename, $frame->getFilename());
+        $this->assertEquals($description, $frame->getDescription());
+      } else {
+        $this->assertEquals($this->testText, $frame->getFilename());
+        $this->assertEquals($this->testText, $frame->getDescription());
+      }
       $this->assertEquals($objectData, $frame->getObjectData());
     }
   }
@@ -519,20 +498,20 @@ final class TestID3Frame extends PHPUnit_Framework_TestCase
    * The first GRID frame test.
    *
    * @param ID3_Frame_GRID $frame The frame to test.
-   * @param boolean $construct Whether construction or testing should occur.
+   * @param boolean $action The requested action.
    * @param integer $encoding The {@link ID3_Encoding text encoding} for strings
    *        in this frame.
    * @param string $language The language code.
    * @param integer $timing The timing format.
    */
   private function frameGRID0
-      (&$frame, $construct, $encoding, $language, $timing)
+      (&$frame, $action, $encoding, $language, $timing)
   {
     $owner = $this->testLink;
     $group = $this->testUInt8;
     $groupData = $this->testText;
 
-    if ($construct) {
+    if ($action == self::INITIALIZE) {
       $frame->setOwner($owner);
       $frame->setGroup($group);
       $frame->setGroupData($groupData);
@@ -547,28 +526,33 @@ final class TestID3Frame extends PHPUnit_Framework_TestCase
    * The first IPLS frame test.
    *
    * @param ID3_Frame_IPLS $frame The frame to test.
-   * @param boolean $construct Whether construction or testing should occur.
+   * @param boolean $action The requested action.
    * @param integer $encoding The {@link ID3_Encoding text encoding} for strings
    *        in this frame.
    * @param string $language The language code.
    * @param integer $timing The timing format.
    */
   private function frameIPLS0
-      (&$frame, $construct, $encoding, $language, $timing)
+      (&$frame, $action, $encoding, $language, $timing)
   {
     $testText = $this->convert($this->testText, $encoding);
-    for ($i = 0; $i < 3; $i++)
-      $people[] = array($testText => $testText);
+    for ($i = 0; $i < 3; $i++) {
+      $convertedPeople[] = array($testText => $testText);
+      $originalPeople[] = array($this->testText => $this->testText);
+    }
 
-    if ($construct) {
-      foreach ($people as $entry)
+    if ($action == self::INITIALIZE) {
+      foreach ($convertedPeople as $entry)
         foreach ($entry as $involvement => $person)
           $frame->addPerson($involvement, $person);
-      $this->assertEquals($people, $frame->getPeople());
+      $this->assertEquals($convertedPeople, $frame->getPeople());
 
-      $frame->setPeople($people);
+      $frame->setPeople($convertedPeople);
     } else {
-      $this->assertEquals($people, $frame->getPeople());
+      if ($action == self::DRYRUN)
+        $this->assertEquals($convertedPeople, $frame->getPeople());
+      else
+        $this->assertEquals($originalPeople, $frame->getPeople());
     }
   }
 
@@ -576,20 +560,20 @@ final class TestID3Frame extends PHPUnit_Framework_TestCase
    * The first LINK frame test.
    *
    * @param ID3_Frame_LINK $frame The frame to test.
-   * @param boolean $construct Whether construction or testing should occur.
+   * @param boolean $action The requested action.
    * @param integer $encoding The {@link ID3_Encoding text encoding} for strings
    *        in this frame.
    * @param string $language The language code.
    * @param integer $timing The timing format.
    */
   private function frameLINK0
-      (&$frame, $construct, $encoding, $language, $timing)
+      (&$frame, $action, $encoding, $language, $timing)
   {
     $target = $this->testIdentifier;
     $url = $this->testLink;
     $qualifier = $this->testText;
 
-    if ($construct) {
+    if ($action == self::INITIALIZE) {
       $frame->setTarget($target);
       $frame->setUrl($url);
       $frame->setQualifier($qualifier);
@@ -604,18 +588,18 @@ final class TestID3Frame extends PHPUnit_Framework_TestCase
    * The first MCDI frame test.
    *
    * @param ID3_Frame_MCDI $frame The frame to test.
-   * @param boolean $construct Whether construction or testing should occur.
+   * @param boolean $action The requested action.
    * @param integer $encoding The {@link ID3_Encoding text encoding} for strings
    *        in this frame.
    * @param string $language The language code.
    * @param integer $timing The timing format.
    */
   private function frameMCDI0
-      (&$frame, $construct, $encoding, $language, $timing)
+      (&$frame, $action, $encoding, $language, $timing)
   {
     $data = $this->testText;
 
-    if ($construct)
+    if ($action == self::INITIALIZE)
       $frame->setData($data);
     else
       $this->assertEquals($data, $frame->getData());
@@ -625,21 +609,21 @@ final class TestID3Frame extends PHPUnit_Framework_TestCase
    * The first OWNE frame test.
    *
    * @param ID3_Frame_OWNE $frame The frame to test.
-   * @param boolean $construct Whether construction or testing should occur.
+   * @param boolean $action The requested action.
    * @param integer $encoding The {@link ID3_Encoding text encoding} for strings
    *        in this frame.
    * @param string $language The language code.
    * @param integer $timing The timing format.
    */
   private function frameOWNE0
-      (&$frame, $construct, $encoding, $language, $timing)
+      (&$frame, $action, $encoding, $language, $timing)
   {
     $currency = $this->testCurrency;
     $price = $this->testPrice;
     $date = $this->testDate;
     $seller = $this->convert($this->testText, $encoding);
 
-    if ($construct) {
+    if ($action == self::INITIALIZE) {
       $frame->setCurrency($currency);
       $frame->setPrice(0.0 + $price);
       $frame->setDate($date);
@@ -648,7 +632,10 @@ final class TestID3Frame extends PHPUnit_Framework_TestCase
       $this->assertEquals($currency, $frame->getCurrency());
       $this->assertEquals($price, $frame->getPrice());
       $this->assertEquals($date, $frame->getDate());
-      $this->assertEquals($seller, $frame->getSeller());
+      if ($action == self::DRYRUN)
+        $this->assertEquals($seller, $frame->getSeller());
+      else
+        $this->assertEquals($this->testText, $frame->getSeller());
     }
   }
 
@@ -656,18 +643,18 @@ final class TestID3Frame extends PHPUnit_Framework_TestCase
    * The first PCNT frame test.
    *
    * @param ID3_Frame_PCNT $frame The frame to test.
-   * @param boolean $construct Whether construction or testing should occur.
+   * @param boolean $action The requested action.
    * @param integer $encoding The {@link ID3_Encoding text encoding} for strings
    *        in this frame.
    * @param string $language The language code.
    * @param integer $timing The timing format.
    */
   private function framePCNT0
-      (&$frame, $construct, $encoding, $language, $timing)
+      (&$frame, $action, $encoding, $language, $timing)
   {
     $counter = $this->testUInt32;
 
-    if ($construct) {
+    if ($action == self::INITIALIZE) {
       for ($i = 0; $i < 123; $i++)
         $frame->addCounter();
       $this->assertEquals(123, $frame->getCounter());
@@ -682,20 +669,20 @@ final class TestID3Frame extends PHPUnit_Framework_TestCase
    * The first POPM frame test.
    *
    * @param ID3_Frame_POPM $frame The frame to test.
-   * @param boolean $construct Whether construction or testing should occur.
+   * @param boolean $action The requested action.
    * @param integer $encoding The {@link ID3_Encoding text encoding} for strings
    *        in this frame.
    * @param string $language The language code.
    * @param integer $timing The timing format.
    */
   private function framePOPM0
-      (&$frame, $construct, $encoding, $language, $timing)
+      (&$frame, $action, $encoding, $language, $timing)
   {
     $owner = $this->testLink;
     $rating = $this->testUInt8;
     $counter = $this->testUInt32;
 
-    if ($construct) {
+    if ($action == self::INITIALIZE) {
       $frame->setOwner($owner);
       $frame->setRating($rating);
       $frame->setCounter($counter);
@@ -710,18 +697,18 @@ final class TestID3Frame extends PHPUnit_Framework_TestCase
    * The first POSS frame test.
    *
    * @param ID3_Frame_POSS $frame The frame to test.
-   * @param boolean $construct Whether construction or testing should occur.
+   * @param boolean $action The requested action.
    * @param integer $encoding The {@link ID3_Encoding text encoding} for strings
    *        in this frame.
    * @param string $language The language code.
    * @param integer $timing The timing format.
    */
   private function framePOSS0
-      (&$frame, $construct, $encoding, $language, $timing)
+      (&$frame, $action, $encoding, $language, $timing)
   {
     $position = $this->testUInt32;
 
-    if ($construct)
+    if ($action == self::INITIALIZE)
       $frame->setPosition($position);
     else
       $this->assertEquals($position, $frame->getPosition());
@@ -731,19 +718,19 @@ final class TestID3Frame extends PHPUnit_Framework_TestCase
    * The first PRIV frame test.
    *
    * @param ID3_Frame_PRIV $frame The frame to test.
-   * @param boolean $construct Whether construction or testing should occur.
+   * @param boolean $action The requested action.
    * @param integer $encoding The {@link ID3_Encoding text encoding} for strings
    *        in this frame.
    * @param string $language The language code.
    * @param integer $timing The timing format.
    */
   private function framePRIV0
-      (&$frame, $construct, $encoding, $language, $timing)
+      (&$frame, $action, $encoding, $language, $timing)
   {
     $owner = $this->testText;
     $privateData = $this->testText;
 
-    if ($construct) {
+    if ($action == self::INITIALIZE) {
       $frame->setOwner($owner);
       $frame->setPrivateData($privateData);
     } else {
@@ -756,20 +743,20 @@ final class TestID3Frame extends PHPUnit_Framework_TestCase
    * The first RBUF frame test.
    *
    * @param ID3_Frame_RBUF $frame The frame to test.
-   * @param boolean $construct Whether construction or testing should occur.
+   * @param boolean $action The requested action.
    * @param integer $encoding The {@link ID3_Encoding text encoding} for strings
    *        in this frame.
    * @param string $language The language code.
    * @param integer $timing The timing format.
    */
   private function frameRBUF0
-      (&$frame, $construct, $encoding, $language, $timing)
+      (&$frame, $action, $encoding, $language, $timing)
   {
     $bufferSize = $this->testInt24;
     $flags = $this->testInt8;
     $offset = $this->testInt32;
 
-    if ($construct) {
+    if ($action == self::INITIALIZE) {
       $frame->setBufferSize($bufferSize);
       $frame->setInfoFlags($flags);
       $frame->setOffset($offset);
@@ -784,14 +771,14 @@ final class TestID3Frame extends PHPUnit_Framework_TestCase
    * The first RVA2 frame test.
    *
    * @param ID3_Frame_RVA2 $frame The frame to test.
-   * @param boolean $construct Whether construction or testing should occur.
+   * @param boolean $action The requested action.
    * @param integer $encoding The {@link ID3_Encoding text encoding} for strings
    *        in this frame.
    * @param string $language The language code.
    * @param integer $timing The timing format.
    */
   private function frameRVA20
-      (&$frame, $construct, $encoding, $language, $timing)
+      (&$frame, $action, $encoding, $language, $timing)
   {
     $device = $this->testText;
     $adjustments[0] = array(ID3_Frame_RVA2::channelType => 0,
@@ -822,7 +809,7 @@ final class TestID3Frame extends PHPUnit_Framework_TestCase
       ID3_Frame_RVA2::volumeAdjustment => 32767.0 / 512.0,
       ID3_Frame_RVA2::peakVolume => 0xffffffff);
 
-    if ($construct) {
+    if ($action == self::INITIALIZE) {
       $frame->setDevice($device);
       $frame->setAdjustments($adjustments);
     } else {
@@ -835,21 +822,21 @@ final class TestID3Frame extends PHPUnit_Framework_TestCase
    * The first RVAD frame test.
    *
    * @param ID3_Frame_RVAD $frame The frame to test.
-   * @param boolean $construct Whether construction or testing should occur.
+   * @param boolean $action The requested action.
    * @param integer $encoding The {@link ID3_Encoding text encoding} for strings
    *        in this frame.
    * @param string $language The language code.
    * @param integer $timing The timing format.
    */
   private function frameRVAD0
-      (&$frame, $construct, $encoding, $language, $timing)
+      (&$frame, $action, $encoding, $language, $timing)
   {
     $adjustments[ID3_Frame_RVAD::right] = -0xffff;
     $adjustments[ID3_Frame_RVAD::left] = 0xffff;
     $adjustments[ID3_Frame_RVAD::peakRight] = 0xffff;
     $adjustments[ID3_Frame_RVAD::peakLeft] = 0xfff;
 
-    if ($construct)
+    if ($action == self::INITIALIZE)
       $frame->setAdjustments($adjustments);
     else
       $this->assertEquals($adjustments, $frame->getAdjustments());
@@ -859,14 +846,14 @@ final class TestID3Frame extends PHPUnit_Framework_TestCase
    * The second RVAD frame test.
    *
    * @param ID3_Frame_RVAD $frame The frame to test.
-   * @param boolean $construct Whether construction or testing should occur.
+   * @param boolean $action The requested action.
    * @param integer $encoding The {@link ID3_Encoding text encoding} for strings
    *        in this frame.
    * @param string $language The language code.
    * @param integer $timing The timing format.
    */
   private function frameRVAD1
-      (&$frame, $construct, $encoding, $language, $timing)
+      (&$frame, $action, $encoding, $language, $timing)
   {
     $adjustments[ID3_Frame_RVAD::right] = -0xffff;
     $adjustments[ID3_Frame_RVAD::left] = 0xffff;
@@ -877,7 +864,7 @@ final class TestID3Frame extends PHPUnit_Framework_TestCase
     $adjustments[ID3_Frame_RVAD::peakRightBack] = 0xff;
     $adjustments[ID3_Frame_RVAD::peakLeftBack] = 0xf;
 
-    if ($construct)
+    if ($action == self::INITIALIZE)
       $frame->setAdjustments($adjustments);
     else
       $this->assertEquals($adjustments, $frame->getAdjustments());
@@ -887,14 +874,14 @@ final class TestID3Frame extends PHPUnit_Framework_TestCase
    * The third RVAD frame test.
    *
    * @param ID3_Frame_RVAD $frame The frame to test.
-   * @param boolean $construct Whether construction or testing should occur.
+   * @param boolean $action The requested action.
    * @param integer $encoding The {@link ID3_Encoding text encoding} for strings
    *        in this frame.
    * @param string $language The language code.
    * @param integer $timing The timing format.
    */
   private function frameRVAD2
-      (&$frame, $construct, $encoding, $language, $timing)
+      (&$frame, $action, $encoding, $language, $timing)
   {
     $adjustments[ID3_Frame_RVAD::right] = -0xffff;
     $adjustments[ID3_Frame_RVAD::left] = 0xffff;
@@ -907,7 +894,7 @@ final class TestID3Frame extends PHPUnit_Framework_TestCase
     $adjustments[ID3_Frame_RVAD::center] = 0xf;
     $adjustments[ID3_Frame_RVAD::peakCenter] = 0x7;
 
-    if ($construct)
+    if ($action == self::INITIALIZE)
       $frame->setAdjustments($adjustments);
     else
       $this->assertEquals($adjustments, $frame->getAdjustments());
@@ -917,14 +904,14 @@ final class TestID3Frame extends PHPUnit_Framework_TestCase
    * The fourth RVAD frame test.
    *
    * @param ID3_Frame_RVAD $frame The frame to test.
-   * @param boolean $construct Whether construction or testing should occur.
+   * @param boolean $action The requested action.
    * @param integer $encoding The {@link ID3_Encoding text encoding} for strings
    *        in this frame.
    * @param string $language The language code.
    * @param integer $timing The timing format.
    */
   private function frameRVAD3
-      (&$frame, $construct, $encoding, $language, $timing)
+      (&$frame, $action, $encoding, $language, $timing)
   {
     $adjustments[ID3_Frame_RVAD::right] = -0xffff;
     $adjustments[ID3_Frame_RVAD::left] = 0xffff;
@@ -939,7 +926,7 @@ final class TestID3Frame extends PHPUnit_Framework_TestCase
     $adjustments[ID3_Frame_RVAD::bass] = 0x0;
     $adjustments[ID3_Frame_RVAD::peakBass] = 0x0;
 
-    if ($construct)
+    if ($action == self::INITIALIZE)
       $frame->setAdjustments($adjustments);
     else
       $this->assertEquals($adjustments, $frame->getAdjustments());
@@ -949,14 +936,14 @@ final class TestID3Frame extends PHPUnit_Framework_TestCase
    * The first RVRB frame test.
    *
    * @param ID3_Frame_RVRB $frame The frame to test.
-   * @param boolean $construct Whether construction or testing should occur.
+   * @param boolean $action The requested action.
    * @param integer $encoding The {@link ID3_Encoding text encoding} for strings
    *        in this frame.
    * @param string $language The language code.
    * @param integer $timing The timing format.
    */
   private function frameRVRB0
-      (&$frame, $construct, $encoding, $language, $timing)
+      (&$frame, $action, $encoding, $language, $timing)
   {
     $reverbLeft = $this->testUInt16;
     $reverbRight = $this->testUInt16 - 1;
@@ -969,7 +956,7 @@ final class TestID3Frame extends PHPUnit_Framework_TestCase
     $premixLtoR = $this->testUInt8 - 6;
     $premixRtoL = $this->testUInt8 - 7;
 
-    if ($construct) {
+    if ($action == self::INITIALIZE) {
       $frame->setReverbLeft($reverbLeft);
       $frame->setReverbRight($reverbRight);
       $frame->setReverbBouncesLeft($reverbBouncesLeft);
@@ -998,18 +985,18 @@ final class TestID3Frame extends PHPUnit_Framework_TestCase
    * The first SEEK frame test.
    *
    * @param ID3_Frame_SEEK $frame The frame to test.
-   * @param boolean $construct Whether construction or testing should occur.
+   * @param boolean $action The requested action.
    * @param integer $encoding The {@link ID3_Encoding text encoding} for strings
    *        in this frame.
    * @param string $language The language code.
    * @param integer $timing The timing format.
    */
   private function frameSEEK0
-      (&$frame, $construct, $encoding, $language, $timing)
+      (&$frame, $action, $encoding, $language, $timing)
   {
     $minOffset = $this->testInt32;
 
-    if ($construct)
+    if ($action == self::INITIALIZE)
       $frame->setMinimumOffset($minOffset);
     else
       $this->assertEquals($minOffset, $frame->getMinimumOffset());
@@ -1019,19 +1006,19 @@ final class TestID3Frame extends PHPUnit_Framework_TestCase
    * The first SIGN frame test.
    *
    * @param ID3_Frame_SIGN $frame The frame to test.
-   * @param boolean $construct Whether construction or testing should occur.
+   * @param boolean $action The requested action.
    * @param integer $encoding The {@link ID3_Encoding text encoding} for strings
    *        in this frame.
    * @param string $language The language code.
    * @param integer $timing The timing format.
    */
   private function frameSIGN0
-      (&$frame, $construct, $encoding, $language, $timing)
+      (&$frame, $action, $encoding, $language, $timing)
   {
     $group = $this->testUInt8;
     $signature = $this->testText;
 
-    if ($construct) {
+    if ($action == self::INITIALIZE) {
       $frame->setGroup($group);
       $frame->setSignature($signature);
     } else {
@@ -1044,14 +1031,14 @@ final class TestID3Frame extends PHPUnit_Framework_TestCase
    * The first SYLT frame test.
    *
    * @param ID3_Frame_SYLT $frame The frame to test.
-   * @param boolean $construct Whether construction or testing should occur.
+   * @param boolean $action The requested action.
    * @param integer $encoding The {@link ID3_Encoding text encoding} for strings
    *        in this frame.
    * @param string $language The language code.
    * @param integer $timing The timing format.
    */
   private function frameSYLT0
-      (&$frame, $construct, $encoding, $language, $timing)
+      (&$frame, $action, $encoding, $language, $timing)
   {
     $type = $this->testUInt8;
     $description = $this->convert($this->testText, $encoding);
@@ -1061,14 +1048,18 @@ final class TestID3Frame extends PHPUnit_Framework_TestCase
     $events[0xFFFFFF] = $description;
     $events[0xFFFFFFFF] = $description;
 
-    if ($construct) {
+    if ($action == self::INITIALIZE) {
       $frame->setType($type);
       $frame->setDescription($description);
       $frame->setEvents($events);
     } else {
       $this->assertEquals($type, $frame->getType());
-      $this->assertEquals($description, $frame->getDescription());
-      $this->assertEquals($events, $frame->getEvents());
+      if ($action == self::DRYRUN)
+        $this->assertEquals($description, $frame->getDescription());
+      else
+        $this->assertEquals($this->testText, $frame->getDescription());
+      foreach ($frame->getEvents() as $value)
+        $this->assertEquals($action == self::DRYRUN ? $description : $this->testText, $value);
     }
   }
 
@@ -1076,14 +1067,14 @@ final class TestID3Frame extends PHPUnit_Framework_TestCase
    * The first SYTC frame test.
    *
    * @param ID3_Frame_SYTC $frame The frame to test.
-   * @param boolean $construct Whether construction or testing should occur.
+   * @param boolean $action The requested action.
    * @param integer $encoding The {@link ID3_Encoding text encoding} for strings
    *        in this frame.
    * @param string $language The language code.
    * @param integer $timing The timing format.
    */
   private function frameSYTC0
-      (&$frame, $construct, $encoding, $language, $timing)
+      (&$frame, $action, $encoding, $language, $timing)
   {
     $events[0] = ID3_Frame_SYTC::BEAT_FREE;
     $events[0xFFFF] = ID3_Frame_SYTC::SINGLE_BEAT;
@@ -1091,7 +1082,7 @@ final class TestID3Frame extends PHPUnit_Framework_TestCase
     $events[0xFFFFFF] = 0xFF + 1;
     $events[0xFFFFFFFF] = 0xFF + 0xFF;
 
-    if ($construct)
+    if ($action == self::INITIALIZE)
       $frame->setEvents($events);
     else
       $this->assertEquals($events, $frame->getEvents());
@@ -1101,24 +1092,29 @@ final class TestID3Frame extends PHPUnit_Framework_TestCase
    * The first TXXX frame test.
    *
    * @param ID3_Frame_TXXX $frame The frame to test.
-   * @param boolean $construct Whether construction or testing should occur.
+   * @param boolean $action The requested action.
    * @param integer $encoding The {@link ID3_Encoding text encoding} for strings
    *        in this frame.
    * @param string $language The language code.
    * @param integer $timing The timing format.
    */
   private function frameTXXX0
-      (&$frame, $construct, $encoding, $language, $timing)
+      (&$frame, $action, $encoding, $language, $timing)
   {
     $description = $this->convert($this->testText, $encoding);
     $text = $this->convert($this->testText, $encoding);
 
-    if ($construct) {
+    if ($action == self::INITIALIZE) {
       $frame->setDescription($description);
       $frame->setText($text);
     } else {
-      $this->assertEquals($description, $frame->getDescription());
-      $this->assertEquals($text, $frame->getText());
+      if ($action == self::DRYRUN) {
+        $this->assertEquals($description, $frame->getDescription());
+        $this->assertEquals($text, $frame->getText());
+      } else {
+        $this->assertEquals($this->testText, $frame->getDescription());
+        $this->assertEquals($this->testText, $frame->getText());
+      }
     }
   }
 
@@ -1126,45 +1122,54 @@ final class TestID3Frame extends PHPUnit_Framework_TestCase
    * The first USER frame test.
    *
    * @param ID3_Frame_USER $frame The frame to test.
-   * @param boolean $construct Whether construction or testing should occur.
+   * @param boolean $action The requested action.
    * @param integer $encoding The {@link ID3_Encoding text encoding} for strings
    *        in this frame.
    * @param string $language The language code.
    * @param integer $timing The timing format.
    */
   private function frameUSER0
-      (&$frame, $construct, $encoding, $language, $timing)
+      (&$frame, $action, $encoding, $language, $timing)
   {
     $text = $this->convert($this->testText, $encoding);
 
-    if ($construct)
+    if ($action == self::INITIALIZE)
       $frame->setText($text);
-    else
-      $this->assertEquals($text, $frame->getText());
+    else {
+      if ($action == self::DRYRUN)
+        $this->assertEquals($text, $frame->getText());
+      else
+        $this->assertEquals($this->testText, $frame->getText());
+    }
   }
 
   /**
    * The first USLT frame test.
    *
    * @param ID3_Frame_USLT $frame The frame to test.
-   * @param boolean $construct Whether construction or testing should occur.
+   * @param boolean $action The requested action.
    * @param integer $encoding The {@link ID3_Encoding text encoding} for strings
    *        in this frame.
    * @param string $language The language code.
    * @param integer $timing The timing format.
    */
   private function frameUSLT0
-      (&$frame, $construct, $encoding, $language, $timing)
+      (&$frame, $action, $encoding, $language, $timing)
   {
     $description = $this->convert($this->testText, $encoding);
     $text = $this->convert($this->testText, $encoding);
 
-    if ($construct) {
+    if ($action == self::INITIALIZE) {
       $frame->setDescription($description);
       $frame->setText($text);
     } else {
-      $this->assertEquals($description, $frame->getDescription());
-      $this->assertEquals($text, $frame->getText());
+      if ($action == self::DRYRUN) {
+        $this->assertEquals($description, $frame->getDescription());
+        $this->assertEquals($text, $frame->getText());
+      } else {
+        $this->assertEquals($this->testText, $frame->getDescription());
+        $this->assertEquals($this->testText, $frame->getText());
+      }
     }
   }
 
@@ -1172,23 +1177,26 @@ final class TestID3Frame extends PHPUnit_Framework_TestCase
    * The first WXXX frame test.
    *
    * @param ID3_Frame_WXXX $frame The frame to test.
-   * @param boolean $construct Whether construction or testing should occur.
+   * @param boolean $action The requested action.
    * @param integer $encoding The {@link ID3_Encoding text encoding} for strings
    *        in this frame.
    * @param string $language The language code.
    * @param integer $timing The timing format.
    */
   private function frameWXXX0
-      (&$frame, $construct, $encoding, $language, $timing)
+      (&$frame, $action, $encoding, $language, $timing)
   {
     $description = $this->convert($this->testText, $encoding);
     $link = $this->testLink;
 
-    if ($construct) {
+    if ($action == self::INITIALIZE) {
       $frame->setDescription($description);
       $frame->setLink($link);
     } else {
-      $this->assertEquals($description, $frame->getDescription());
+      if ($action == self::DRYRUN)
+        $this->assertEquals($description, $frame->getDescription());
+      else
+        $this->assertEquals($this->testText, $frame->getDescription());
       $this->assertEquals($link, $frame->getLink());
     }
   }
@@ -1202,17 +1210,20 @@ final class TestID3Frame extends PHPUnit_Framework_TestCase
    */
   private static function convert($text, $encoding)
   {
+    if ($encoding === null)
+      $encoding = ID3_Encoding::UTF8;
+    
     switch ($encoding) {
     case ID3_Encoding::ISO88591:
-      return iconv("ascii", "ISO-8859-1", $text);
+      return iconv("utf-8", "iso-8859-1", $text);
     case ID3_Encoding::UTF16:
-      return iconv("ascii", "UTF-16", $text);
+      return iconv("utf-8", "utf-16", $text);
     case ID3_Encoding::UTF16LE:
-      return substr(iconv("ascii", "UTF-16LE", $text), 2);
+      return iconv("utf-8", "utf-16le", $text);
     case ID3_Encoding::UTF16BE:
-      return iconv("ascii", "UTF-16BE", $text);
+      return iconv("utf-8", "utf-16be", $text);
     default: // ID3_Encoding::UTF8
-      return iconv("ascii", "UTF-8", $text);
+      return $text;
     }
   }
 }

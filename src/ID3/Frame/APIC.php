@@ -80,7 +80,7 @@ final class ID3_Frame_APIC extends ID3_Frame
      "Publisher/Studio logotype");
   
   /** @var integer */
-  private $_encoding = ID3_Encoding::UTF8;
+  private $_encoding;
   
   /** @var string */
   private $_mimeType = "image/unknown";
@@ -107,29 +107,41 @@ final class ID3_Frame_APIC extends ID3_Frame
   {
     parent::__construct($reader, $options);
     
+    $this->_encoding = $this->getOption("encoding", ID3_Encoding::UTF8);
+    
     if ($reader === null)
       return;
 
-    $this->_encoding = Transform::fromUInt8($this->_data[0]);
+    $encoding = Transform::fromUInt8($this->_data[0]);
     $this->_mimeType = substr
       ($this->_data, 1, ($pos = strpos($this->_data, "\0", 1)) - 1);
     $this->_imageType = Transform::fromUInt8($this->_data[++$pos]);
     $this->_data = substr($this->_data, $pos + 1);
     
-    switch ($this->_encoding) {
+    switch ($encoding) {
     case self::UTF16:
       list ($this->_description, $this->_imageData) =
         $this->explodeString16($this->_data, 2);
-      $this->_description = Transform::fromString16($this->_description);
+      $this->_description = $this->convertString
+        (Transform::fromString16($this->_description), "utf-16");
       break;
     case self::UTF16BE:
       list ($this->_description, $this->_imageData) =
         $this->explodeString16($this->_data, 2);
-      $this->_description = Transform::fromString16BE($this->_description);
+      $this->_description = $this->convertString
+        (Transform::fromString16BE($this->_description), "utf-16be");
+      break;
+    case self::UTF8:
+      list ($this->_description, $this->_imageData) =
+        $this->explodeString8($this->_data, 2);
+      $this->_description = $this->convertString
+        ($this->_description, "utf-8");
       break;
     default:
       list ($this->_description, $this->_imageData) =
         $this->explodeString8($this->_data, 2);
+      $this->_description = $this->convertString
+        ($this->_description, "iso-8859-1");
     }
     
     $this->_imageSize = strlen($this->_imageData);
@@ -138,12 +150,23 @@ final class ID3_Frame_APIC extends ID3_Frame
   /**
    * Returns the text encoding.
    * 
+   * All the strings read from a file are automatically converted to the
+   * character encoding specified with the <var>encoding</var> option. See
+   * {@link ID3v2} for details. This method returns the original text encoding
+   * used to write the frame.
+   * 
    * @return integer
    */
   public function getEncoding() { return $this->_encoding; }
   
   /**
    * Sets the text encoding.
+   * 
+   * All the string written to the frame are done so using given character
+   * encoding. No conversions of existing data take place upon the call to this
+   * method thus all texts must be given in given character encoding.
+   * 
+   * The default character encoding used to write the frame is UTF-8.
    * 
    * @see ID3_Encoding
    * @param integer $encoding The text encoding.

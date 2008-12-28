@@ -96,6 +96,10 @@ final class ID3v2
    * may also be given as the only parameter.
    *
    * The following options are currently recognized:
+   *   o encoding -- Indicates the encoding that all the texts are presented
+   *     with. By default this is set to ID3_Encoding::UTF8. See the
+   *     documentation of the {@link ID3_Encoding} interface for accepted
+   *     values. Conversions are carried out using iconv.
    *   o version -- The ID3v2 tag version to use in write operation. This option
    *     is automatically set when a tag is read from a file and defaults to
    *     version 4.0 for tag write.

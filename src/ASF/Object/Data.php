@@ -37,7 +37,6 @@
 
 /**#@+ @ignore */
 require_once("ASF/Object.php");
-require_once("ASF/Object/Data/Packet.php");
 /**#@-*/
 
 /**
@@ -54,7 +53,7 @@ require_once("ASF/Object/Data/Packet.php");
  *   o Clock information (optional)
  *   o Redundant sample information, such as presentation time stamp (optional)
  *
- * @todo       Implement optional support for ASF Data Packet parsing
+ * @todo       Implement support for ASF Data Packets
  * @package    php-reader
  * @subpackage ASF
  * @author     Sven Vollbehr <svollbehr@gmail.com>
@@ -112,7 +111,7 @@ final class ASF_Object_Data extends ASF_Object
    *
    * @return integer
    */
-  public function getTotalDataPackets() { return $this->_endTime; }
+  public function getTotalDataPackets() { return $this->_totalDataPackets; }
   
   /**
    * Returns an array of Data Packets.
@@ -121,6 +120,6 @@ final class ASF_Object_Data extends ASF_Object
    */
   public function getDataPackets()
   {
-    throw new ASF_Exception("Data packets are not parsed due to optimization.");
+    throw new ASF_Exception("Data packets are not supported.");
   }
 }

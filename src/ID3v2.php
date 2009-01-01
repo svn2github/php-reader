@@ -134,10 +134,11 @@ final class ID3v2
         $this->_reader = &$filename;
       else
         $this->_reader = new Reader($filename);
-      if ($this->_reader->readString8(3) != "ID3")
-        throw new ID3_Exception("File does not contain ID3v2 tag");
       
       $startOffset = $this->_reader->getOffset();
+      
+      if ($this->_reader->readString8(3) != "ID3")
+        throw new ID3_Exception("File does not contain ID3v2 tag");
       
       $this->_header = new ID3_Header($this->_reader, $options);
       if ($this->_header->getVersion() < 3 || $this->_header->getVersion() > 4)
@@ -155,21 +156,28 @@ final class ID3v2
           new ID3_ExtendedHeader($this->_reader, $options);
       if ($this->_header->hasFlag(ID3_Header::FOOTER))
         $this->_footer = &$this->_header; // skip footer, and rather copy header
-
+      
       while (true) {
         $offset = $this->_reader->getOffset();
-
+        
         // Jump off the loop if we reached the end of the tag
         if ($offset - $startOffset - 10 >= $this->_header->getSize() -
-            ($this->hasFooter() ? 10 : 0))
+            ($this->hasFooter() ? 10 : 0) - /* Min bytes for a header */ 10)
           break;
-
-        // Jump off the loop if we reached the last frame
-        if ($this->_reader->available() < 4 || Transform::fromUInt32BE
-            ($identifier = $this->_reader->read(4)) == 0)
-          break;
-        $this->_reader->setOffset($offset);
         
+        // Jump off the loop if we reached padding
+        if (Transform::fromUInt8($identifier = $this->_reader->read(1)) == 0)
+          break;
+        
+        $identifier .= $this->_reader->read(3);
+        
+        // Jump off the loop if we reached invalid entities. This fix is just to
+        // make things work. Utility called MP3ext does not seem to know what it
+        // is doing as it uses padding to write its version information there.
+        if ($identifier == "MP3e")
+          break;
+        
+        $this->_reader->setOffset($offset);
         if (@fopen($filename = "ID3/Frame/" .
                    strtoupper($identifier) . ".php", "r", true) !== false)
           require_once($filename);
@@ -177,7 +185,7 @@ final class ID3v2
           $frame = new $classname($this->_reader, $options);
         else
           $frame = new ID3_Frame($this->_reader, $options);
-
+        
         if (!isset($this->_frames[$frame->getIdentifier()]))
           $this->_frames[$frame->getIdentifier()] = array();
         $this->_frames[$frame->getIdentifier()][] = $frame;

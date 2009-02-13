@@ -2,7 +2,7 @@
 /**
  * PHP Reader Library
  *
- * Copyright (c) 2006-2008 The PHP Reader Project Workgroup. All rights
+ * Copyright (c) 2006-2009 The PHP Reader Project Workgroup. All rights
  * reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -30,7 +30,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  *
  * @package   php-reader
- * @copyright Copyright (c) 2006-2008 The PHP Reader Project Workgroup
+ * @copyright Copyright (c) 2006-2009 The PHP Reader Project Workgroup
  * @license   http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version   $Id$
  */
@@ -48,7 +48,7 @@ require_once("Transform.php");
  * @package   php-reader
  * @author    Sven Vollbehr <svollbehr@gmail.com>
  * @author    Ryan Butterfield <buttza@gmail.com>
- * @copyright Copyright (c) 2006-2008 The PHP Reader Project Workgroup
+ * @copyright Copyright (c) 2006-2009 The PHP Reader Project Workgroup
  * @license   http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version   $Rev$
  */
@@ -168,7 +168,8 @@ class Reader
    * @param string $name The field name.
    * @return mixed
    */
-  public function __get($name) {
+  public function __get($name)
+  {
     if (method_exists($this, "get" . ucfirst(strtolower($name))))
       return call_user_func(array($this, "get" . ucfirst(strtolower($name))));
     else throw new Reader_Exception("Unknown field: " . $name);
@@ -181,7 +182,8 @@ class Reader
    * @param string $value The field value.
    * @return mixed
    */
-  public function __set($name, $value) {
+  public function __set($name, $value)
+  {
     if (method_exists($this, "set" . ucfirst(strtolower($name))))
       call_user_func
         (array($this, "set" . ucfirst(strtolower($name))), $value);
@@ -201,16 +203,32 @@ class Reader
    * @return mixed
    * @throws Reader_Exception if no such transformer is implemented
    */
-  public function __call($method, $params) {
+  public function __call($method, $params)
+  {
     $chunks = array();
+    
+    // To keep compatibility with PHP 5.0.0 we use a static array instead of
+    // method_exists to check if a method of the Transform class can be called.
+    static $methods = array(
+      "isLittleEndian", "isBigEndian", "toInt64LE", "fromInt64LE", "toInt64BE",
+      "fromInt64BE", "toInt32", "fromInt32", "toInt32LE", "fromInt32LE",
+      "toInt32BE", "fromInt32BE", "toUInt32LE", "fromUInt32LE", "toUInt32BE",
+      "fromUInt32BE", "toInt16", "fromInt16", "toInt16LE", "fromInt16LE",
+      "toInt16BE", "fromInt16BE", "toUInt16LE", "fromUInt16LE", "toUInt16BE",
+      "fromUInt16BE", "toInt8", "fromInt8", "toUInt8", "fromUInt8", "toFloat",
+      "fromFloat", "toFloatLE", "fromFloatLE", "toFloatBE", "fromFloatBE",
+      "toString8", "fromString8", "toString16", "fromString16", "toString16LE",
+      "fromString16LE", "toString16BE", "fromString16BE", "toHHex", "fromHHex",
+      "toLHex", "fromLHex", "toGUID", "fromGUID"
+    );
     if (preg_match
           ("/read([a-z]{3,6})?(\d{1,2})?(?:LE|BE)?/i", $method, $chunks) &&
-        method_exists("Transform", preg_replace("/^read/", "from", $method))) {
+        in_array(preg_replace("/^read/", "from", $method), $methods))
       return call_user_func
         (array("Transform", preg_replace("/^read/", "from", $method)),
          $this->read(preg_match("/String|(?:H|L)Hex/", $chunks[1]) ?
                      (isset($params[0]) ? $params[0] : 1) :
                      ($chunks[1] == "GUID" ? 16 : $chunks[2] / 8)));
-    } else throw new Reader_Exception("Unknown method: " . $method);
+    else throw new Reader_Exception("Unknown method: " . $method);
   }
 }

@@ -2,7 +2,8 @@
 /**
  * PHP Reader Library
  *
- * Copyright (c) 2008 The PHP Reader Project Workgroup. All rights reserved.
+ * Copyright (c) 2008-2009 The PHP Reader Project Workgroup. All rights
+ * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -30,7 +31,7 @@
  *
  * @package    php-reader
  * @subpackage ID3
- * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
+ * @copyright  Copyright (c) 2008-2009 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Id$
  */
@@ -64,7 +65,7 @@ require_once("ID3/Frame.php");
  * @subpackage ID3
  * @author     Sven Vollbehr <svollbehr@gmail.com>
  * @author     Ryan Butterfield <buttza@gmail.com>
- * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
+ * @copyright  Copyright (c) 2008-2009 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Rev$
  */
@@ -372,7 +373,7 @@ final class ID3v2
       throw new ID3_Exception("Unable to open file for writing: " . $filename);
 
     $oldTagSize = $this->_header->getSize();
-    $tag = "" . $this;
+    $tag = $this->__toString();
     $tagSize = empty($this->_frames) ? 0 : strlen($tag);
 
     if ($this->_reader === null ||
@@ -451,7 +452,7 @@ final class ID3v2
     $data = "";
     foreach ($this->_frames as $frames)
       foreach ($frames as $frame)
-        $data .= $frame;
+        $data .= $frame->__toString();
 
     $datalen = strlen($data);
     $padlen = 0;
@@ -464,14 +465,12 @@ final class ID3v2
     /* The tag padding is calculated as follows. If the tag can be written in
        the space of the previous tag, the remaining space is used for padding.
        If there is no previous tag or the new tag is bigger than the space taken
-       by the previous tag, the padding is calculated using the following
-       logaritmic equation: log(0.2(x + 10)), ranging from some 300 bytes to
-       almost 5000 bytes given the tag length of 0..256M. */
+       by the previous tag, the padding is a constant 4096 bytes. */
     if ($this->hasFooter() === false) {
       if ($this->_reader !== null &&  $datalen < $this->_header->getSize())
         $padlen = $this->_header->getSize() - $datalen;
       else
-        $padlen = ceil(log(0.2 * ($datalen / 1024 + 10), 10) * 1024);
+        $padlen = 4096;
     }
 
     /* ID3v2.4.0 CRC calculated w/ padding */
@@ -486,7 +485,7 @@ final class ID3v2
           $crc = -(($crc ^ 0xffffffff) + 1);
         $this->_extendedHeader->setCrc($crc);
       }
-      $data = $this->getExtendedHeader() . $data;
+      $data = $this->getExtendedHeader()->__toString() . $data;
     }
 
     /* ID3v2.3.0 CRC calculated w/o padding */
@@ -495,7 +494,7 @@ final class ID3v2
 
     $this->_header->setSize(strlen($data));
 
-    return "ID3" . $this->_header . $data .
-      ($this->hasFooter() ? "3DI" . $this->getFooter() : "");
+    return "ID3" . $this->_header->__toString() . $data .
+      ($this->hasFooter() ? "3DI" . $this->getFooter()->__toString() : "");
   }
 }

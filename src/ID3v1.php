@@ -2,7 +2,8 @@
 /**
  * PHP Reader Library
  *
- * Copyright (c) 2008 The PHP Reader Project Workgroup. All rights reserved.
+ * Copyright (c) 2008-2009 The PHP Reader Project Workgroup. All rights
+ * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -30,7 +31,7 @@
  *
  * @package    php-reader
  * @subpackage ID3
- * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
+ * @copyright  Copyright (c) 2008-2009 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Id$
  */
@@ -48,7 +49,7 @@ require_once("ID3/Exception.php");
  * @subpackage ID3
  * @author     Sven Vollbehr <svollbehr@gmail.com>
  * @author     Ryan Butterfield <buttza@gmail.com>
- * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
+ * @copyright  Copyright (c) 2008-2009 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Rev$
  */
@@ -296,7 +297,7 @@ final class ID3v1
         throw new ID3_Exception("Unable to open file for writing: " . $filename);
 
     fseek($fd, $this->_reader !== false ? -128 : 0, SEEK_END);
-    fwrite($fd, $this, 128);
+    fwrite($fd, $this->__toString(), 128);
 
     $this->_filename = $filename;
   }
@@ -309,7 +310,12 @@ final class ID3v1
    */
   public function __get($name)
   {
-    if (method_exists($this, "get" . ucfirst(strtolower($name))))
+    // To keep compatibility with PHP 5.0.0 we use a static array instead of
+    // method_exists to check if a method can be called.
+    static $names = array(
+      "title", "artist", "album", "year", "comment", "track", "genre"
+    );
+    if (in_array($name, $names))
       return call_user_func(array($this, "get" . ucfirst(strtolower($name))));
     else throw new ID3_Exception("Unknown field: " . $name);
   }
@@ -323,7 +329,12 @@ final class ID3v1
    */
   public function __set($name, $value)
   {
-    if (method_exists($this, "set" . ucfirst(strtolower($name))))
+    // To keep compatibility with PHP 5.0.0 we use a static array instead of
+    // method_exists to check if a method can be called.
+    static $names = array(
+      "title", "artist", "album", "year", "comment", "track", "genre"
+    );
+    if (in_array($name, $names))
       call_user_func
         (array($this, "set" . ucfirst(strtolower($name))), $value);
     else throw new ID3_Exception("Unknown field: " . $name);

@@ -32,7 +32,7 @@
  * @subpackage MPEG
  * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
- * @version    $Id: Exception.php 85 2008-04-23 20:21:36Z svollbehr $
+ * @version    $Id$
  */
 
 /**
@@ -44,7 +44,7 @@
  * @author     Sven Vollbehr <svollbehr@gmail.com>
  * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
- * @version    $Rev: 85 $
+ * @version    $Rev$
  */
 class MPEG_Exception extends Exception
 {

@@ -32,7 +32,7 @@
  * @subpackage MPEG
  * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
- * @version    $Id: VBRIHeader.php 1 2008-07-19 10:43:41Z rbutterfield $
+ * @version    $Id$
  */
 
 /**#@+ @ignore */
@@ -51,7 +51,7 @@ require_once("MPEG/ABS/Object.php");
  * @author     Sven Vollbehr <svollbehr@gmail.com>
  * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
- * @version    $Rev: 1 $
+ * @version    $Rev$
  */
 class MPEG_ABS_VBRIHeader extends MPEG_ABS_Object
 {

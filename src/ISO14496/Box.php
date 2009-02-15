@@ -2,7 +2,8 @@
 /**
  * PHP Reader Library
  *
- * Copyright (c) 2008 The PHP Reader Project Workgroup. All rights reserved.
+ * Copyright (c) 2008-2009 The PHP Reader Project Workgroup. All rights
+ * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -30,7 +31,7 @@
  *
  * @package    php-reader
  * @subpackage ISO 14496
- * @copyright  Copyright (c) 2008 PHP Reader Project Workgroup
+ * @copyright  Copyright (c) 2008-2009 PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Id$
  */
@@ -45,7 +46,7 @@ require_once("ISO14496/Exception.php");
  * @package    php-reader
  * @subpackage ISO 14496
  * @author     Sven Vollbehr <svollbehr@gmail.com>
- * @copyright  Copyright (c) 2008 PHP Reader Project Workgroup
+ * @copyright  Copyright (c) 2008-2009 PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Rev$
  */
@@ -107,7 +108,7 @@ class ISO14496_Box
       if ($this->_type == "uuid")
         $this->_type = $this->_reader->readGUID();
     }
-    $this->_options = $options;
+    $this->_options = &$options;
   }
   
   /**
@@ -115,7 +116,7 @@ class ISO14496_Box
    *
    * @return Array
    */
-  public function getOptions() { return $this->_options; }
+  public final function getOptions() { return $this->_options; }
 
   /**
    * Returns the given option value, or the default value if the option is not
@@ -124,7 +125,7 @@ class ISO14496_Box
    * @param string $option The name of the option.
    * @param mixed $defaultValue The default value to be returned.
    */
-  public function getOption($option, $defaultValue = false)
+  public final function getOption($option, $defaultValue = false)
   {
     if (isset($this->_options[$option]))
       return $this->_options[$option];
@@ -136,7 +137,7 @@ class ISO14496_Box
    *
    * @param Array $options The options array.
    */
-  public function setOptions(&$options) { $this->_options = $options; }
+  public final function setOptions(&$options) { $this->_options = &$options; }
   
   /**
    * Sets the given option the given value.
@@ -144,7 +145,7 @@ class ISO14496_Box
    * @param string $option The name of the option.
    * @param mixed $value The value to set for the option.
    */
-  public function setOption($option, $value)
+  public final function setOption($option, $value)
   {
     $this->_options[$option] = $value;
   }
@@ -154,14 +155,14 @@ class ISO14496_Box
    * 
    * @return integer
    */
-  public function getOffset() { return $this->_offset; }
+  public final function getOffset() { return $this->_offset; }
   
   /**
    * Sets the file offset where the box starts.
    * 
    * @param integer $offset The file offset to box start.
    */
-  public function setOffset($offset) { $this->_offset = $offset; }
+  public final function setOffset($offset) { $this->_offset = $offset; }
   
   /**
    * Returns the box size in bytes, including the size and type header,
@@ -169,7 +170,7 @@ class ISO14496_Box
    * 
    * @return integer
    */
-  public function getSize() { return $this->_size; }
+  public final function getSize() { return $this->_size; }
   
   /**
    * Sets the box size. The size must include the size and type header,
@@ -179,7 +180,7 @@ class ISO14496_Box
    * 
    * @param integer $size The box size.
    */
-  public function setSize($size)
+  public final function setSize($size)
   {
     if ($this->_parent !== null)
       $this->_parent->setSize
@@ -193,21 +194,21 @@ class ISO14496_Box
    * 
    * @return string
    */
-  public function getType() { return $this->_type; }
+  public final function getType() { return $this->_type; }
   
   /**
    * Sets the box type.
    * 
    * @param string $type The box type.
    */
-  public function setType($type) { $this->_type = $type; }
+  public final function setType($type) { $this->_type = $type; }
   
   /**
    * Returns the parent box containing this box.
    * 
    * @return ISO14496_Box
    */
-  public function getParent() { return $this->_parent; }
+  public final function getParent() { return $this->_parent; }
   
   /**
    * Sets the parent containing box.
@@ -221,21 +222,21 @@ class ISO14496_Box
    * 
    * @return boolean
    */
-  public function isContainer() { return $this->_container; }
+  public final function isContainer() { return $this->_container; }
   
   /**
    * Returns a boolean value corresponding to whether the box is a container.
    * 
    * @return boolean
    */
-  public function getContainer() { return $this->_container; }
+  public final function getContainer() { return $this->_container; }
   
   /**
    * Sets whether the box is a container.
    * 
    * @param boolean $container Whether the box is a container.
    */
-  protected function setContainer($container)
+  protected final function setContainer($container)
   {
     $this->_container = $container;
   }
@@ -245,7 +246,7 @@ class ISO14496_Box
    *
    * @todo Does not parse iTunes internal ---- boxes.
    */
-  protected function constructBoxes($defaultclassname = "ISO14496_Box")
+  protected final function constructBoxes($defaultclassname = "ISO14496_Box")
   {
     $base = $this->getOption("base", "");
     if ($this->getType() != "file")
@@ -295,7 +296,7 @@ class ISO14496_Box
    * @return boolean
    * @throws ISO14496_Exception if called on a non-container box
    */
-  public function hasBox($identifier)
+  public final function hasBox($identifier)
   {
     if (!$this->isContainer())
       throw new ISO14496_Exception("Box not a container");
@@ -309,7 +310,7 @@ class ISO14496_Box
    * @return Array
    * @throws ISO14496_Exception if called on a non-container box
    */
-  public function getBoxes()
+  public final function getBoxes()
   {
     if (!$this->isContainer())
       throw new ISO14496_Exception("Box not a container");
@@ -331,7 +332,7 @@ class ISO14496_Box
    * @return Array
    * @throws ISO14496_Exception if called on a non-container box
    */
-  public function getBoxesByIdentifier($identifier)
+  public final function getBoxesByIdentifier($identifier)
   {
     if (!$this->isContainer())
       throw new ISO14496_Exception("Box not a container");
@@ -351,7 +352,7 @@ class ISO14496_Box
    * @param ISO14496_Box The box to add
    * @return ISO14496_Box
    */
-  public function addBox($box)
+  public final function addBox($box)
   {
     $box->setParent($this);
     $box->setOptions($this->_options);

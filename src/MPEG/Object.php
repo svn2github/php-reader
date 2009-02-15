@@ -2,7 +2,8 @@
 /**
  * PHP Reader Library
  *
- * Copyright (c) 2008 The PHP Reader Project Workgroup. All rights reserved.
+ * Copyright (c) 2008-2009 The PHP Reader Project Workgroup. All rights
+ * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -30,9 +31,9 @@
  *
  * @package    php-reader
  * @subpackage MPEG
- * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
+ * @copyright  Copyright (c) 2008-2009 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
- * @version    $Id: Object.php 107 2008-08-03 19:09:16Z svollbehr $
+ * @version    $Id$
  */
 
 /**#@+ @ignore */
@@ -46,9 +47,9 @@ require_once("MPEG/Exception.php");
  * @package    php-reader
  * @subpackage MPEG
  * @author     Sven Vollbehr <svollbehr@gmail.com>
- * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
+ * @copyright  Copyright (c) 2008-2009 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
- * @version    $Rev: 107 $
+ * @version    $Rev$
  */
 abstract class MPEG_Object
 {
@@ -83,7 +84,7 @@ abstract class MPEG_Object
    *
    * @return Array
    */
-  public function getOptions() { return $this->_options; }
+  public final function getOptions() { return $this->_options; }
   
   /**
    * Returns the given option value, or the default value if the option is not
@@ -92,7 +93,7 @@ abstract class MPEG_Object
    * @param string $option The name of the option.
    * @param mixed $defaultValue The default value to be returned.
    */
-  public function getOption($option, $defaultValue = false)
+  public final function getOption($option, $defaultValue = false)
   {
     if (isset($this->_options[$option]))
       return $this->_options[$option];
@@ -104,7 +105,7 @@ abstract class MPEG_Object
    *
    * @param Array $options The options array.
    */
-  public function setOptions(&$options) { $this->_options = &$options; }
+  public final function setOptions(&$options) { $this->_options = &$options; }
   
   /**
    * Sets the given option the given value.
@@ -112,7 +113,7 @@ abstract class MPEG_Object
    * @param string $option The name of the option.
    * @param mixed $value The value to set for the option.
    */
-  public function setOption($option, $value)
+  public final function setOption($option, $value)
   {
     $this->_options[$option] = $value;
   }
@@ -126,7 +127,7 @@ abstract class MPEG_Object
    * 
    * @return integer
    */
-  protected function nextStartCode()
+  protected final function nextStartCode()
   {
     $buffer = "    ";
     for ($i = 0; $i < 4; $i++) {
@@ -162,7 +163,7 @@ abstract class MPEG_Object
    * 
    * @return integer
    */
-  protected function prevStartCode()
+  protected final function prevStartCode()
   {
     $buffer = "    ";
     $start;
@@ -202,7 +203,7 @@ abstract class MPEG_Object
    * @param integer $seconds The time to format, in seconds
    * @return string
    */
-  protected function formatTime($seconds)
+  protected final function formatTime($seconds)
   {
     $milliseconds = round(($seconds - floor($seconds)) * 1000);
     $seconds = floor($seconds);

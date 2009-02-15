@@ -58,7 +58,7 @@ require_once("MPEG/ABS/Object.php");
  * @author     Sven Vollbehr <svollbehr@gmail.com>
  * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
- * @version    $Rev: 1 $
+ * @version    $Rev$
  */
 class MPEG_ABS_LAMEHeader extends MPEG_ABS_Object
 {

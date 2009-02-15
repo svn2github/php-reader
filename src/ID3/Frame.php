@@ -2,7 +2,8 @@
 /**
  * PHP Reader Library
  *
- * Copyright (c) 2008 The PHP Reader Project Workgroup. All rights reserved.
+ * Copyright (c) 2008-2009 The PHP Reader Project Workgroup. All rights
+ * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -30,7 +31,7 @@
  *
  * @package    php-reader
  * @subpackage ID3
- * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
+ * @copyright  Copyright (c) 2008-2009 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Id$
  */
@@ -47,7 +48,7 @@ require_once("ID3/Object.php");
  * @package    php-reader
  * @subpackage ID3
  * @author     Sven Vollbehr <svollbehr@gmail.com>
- * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
+ * @copyright  Copyright (c) 2008-2009 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Rev$
  */
@@ -193,14 +194,14 @@ class ID3_Frame extends ID3_Object
    * 
    * @return string
    */
-  public function getIdentifier() { return $this->_identifier; }
+  public final function getIdentifier() { return $this->_identifier; }
   
   /**
    * Sets the frame identifier.
    * 
    * @param string $identifier The identifier.
    */
-  public function setIdentifier($identifier)
+  public final function setIdentifier($identifier)
   {
     $this->_identifier = $identifier;
   }
@@ -211,7 +212,7 @@ class ID3_Frame extends ID3_Object
    * 
    * @return integer
    */
-  public function getSize() { return $this->_size; }
+  public final function getSize() { return $this->_size; }
   
   /**
    * Checks whether or not the flag is set. Returns <var>true</var> if the flag
@@ -220,21 +221,21 @@ class ID3_Frame extends ID3_Object
    * @param integer $flag The flag to query.
    * @return boolean
    */
-  public function hasFlag($flag) { return ($this->_flags & $flag) == $flag; }
+  public final function hasFlag($flag) { return ($this->_flags & $flag) == $flag; }
   
   /**
    * Returns the frame flags byte.
    * 
    * @return integer
    */
-  public function getFlags($flags) { return $this->_flags; }
+  public final function getFlags($flags) { return $this->_flags; }
   
   /**
    * Sets the frame flags byte.
    * 
    * @param string $flags The flags byte.
    */
-  public function setFlags($flags) { $this->_flags = $flags; }
+  public final function setFlags($flags) { $this->_flags = $flags; }
   
   /**
    * Sets the frame raw data.

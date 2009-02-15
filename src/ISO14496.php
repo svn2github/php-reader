@@ -245,7 +245,7 @@ require_once("ISO14496/Box.php");
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Rev$
  */
-class ISO14496 extends ISO14496_Box
+final class ISO14496 extends ISO14496_Box
 {
   /** @var string */
   private $_filename;

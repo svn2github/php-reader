@@ -32,7 +32,7 @@
  * @subpackage MPEG
  * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
- * @version    $Id: MPEG.php 1 2008-07-06 10:43:41Z rbutterfield $
+ * @version    $Id$
  */
 
 /**#@+ @ignore */
@@ -58,7 +58,7 @@ require_once("MPEG/ABS/Frame.php");
  * @author     Sven Vollbehr <svollbehr@gmail.com>
  * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
- * @version    $Rev: 1 $
+ * @version    $Rev$
  * @todo       Implement validation routines
  */
 final class MPEG_ABS extends MPEG_ABS_Object

@@ -2,7 +2,7 @@
 /**
  * PHP Reader Library
  *
- * Copyright (c) 2008 The PHP Reader Project Workgroup. All rights reserved.
+ * Copyright (c) 2008-2009 The PHP Reader Project Workgroup. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -30,7 +30,7 @@
  *
  * @package    php-reader
  * @subpackage ID3
- * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
+ * @copyright  Copyright (c) 2008-2009 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Id$
  */
@@ -42,7 +42,7 @@
  * @subpackage ID3
  * @author     Sven Vollbehr <svollbehr@gmail.com>
  * @author     Ryan Butterfield <buttza@gmail.com>
- * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
+ * @copyright  Copyright (c) 2008-2009 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Rev$
  */
@@ -79,7 +79,7 @@ abstract class ID3_Object
    *
    * @return Array
    */
-  public function getOptions() { return $this->_options; }
+  public final function getOptions() { return $this->_options; }
   
   /**
    * Returns the given option value, or the default value if the option is not
@@ -88,7 +88,7 @@ abstract class ID3_Object
    * @param string $option The name of the option.
    * @param mixed $defaultValue The default value to be returned.
    */
-  public function getOption($option, $defaultValue = false)
+  public final function getOption($option, $defaultValue = false)
   {
     if (isset($this->_options[$option]))
       return $this->_options[$option];
@@ -100,7 +100,7 @@ abstract class ID3_Object
    *
    * @param Array $options The options array.
    */
-  public function setOptions(&$options) { $this->_options = &$options; }
+  public final function setOptions(&$options) { $this->_options = &$options; }
   
   /**
    * Sets the given option the given value.
@@ -108,7 +108,7 @@ abstract class ID3_Object
    * @param string $option The name of the option.
    * @param mixed $value The value to set for the option.
    */
-  public function setOption($option, $value)
+  public final function setOption($option, $value)
   {
     $this->_options[$option] = $value;
   }
@@ -149,7 +149,7 @@ abstract class ID3_Object
    * @param integer $val The integer to encode.
    * @return integer
    */
-  protected function encodeSynchsafe32($val)
+  protected final function encodeSynchsafe32($val)
   {
     return ($val & 0x7f) | ($val & 0x3f80) << 1 | 
       ($val & 0x1fc000) << 2 | ($val & 0xfe00000) << 3;
@@ -161,7 +161,7 @@ abstract class ID3_Object
    * @param integer $val The integer to decode
    * @return integer
    */
-  protected function decodeSynchsafe32($val)
+  protected final function decodeSynchsafe32($val)
   {
     return ($val & 0x7f) | ($val & 0x7f00) >> 1 | 
       ($val & 0x7f0000) >> 2 | ($val & 0x7f000000) >> 3;
@@ -180,7 +180,7 @@ abstract class ID3_Object
    * @param string $data The input data.
    * @return string
    */
-  protected function encodeUnsynchronisation(&$data)
+  protected final function encodeUnsynchronisation(&$data)
   {
     $result = "";
     for ($i = 0, $j = 0; $i < strlen($data) - 1; $i++)
@@ -199,7 +199,7 @@ abstract class ID3_Object
    * @param string $data The input data.
    * @return string
    */
-  protected function decodeUnsynchronisation(&$data)
+  protected final function decodeUnsynchronisation(&$data)
   {
     $result = "";
     for ($i = 0, $j = 0; $i < strlen($data) - 1; $i++)
@@ -217,7 +217,7 @@ abstract class ID3_Object
    * @param string $value The input string.
    * @return Array
    */
-  protected function explodeString16($value, $limit = null)
+  protected final function explodeString16($value, $limit = null)
   {
     $i = 0;
     $array = array();
@@ -244,7 +244,7 @@ abstract class ID3_Object
    * @param string $value The input string.
    * @return Array
    */
-  protected function explodeString8($value, $limit = null)
+  protected final function explodeString8($value, $limit = null)
   {
     return preg_split("/\\x00/", $value, $limit);
   }
@@ -256,7 +256,7 @@ abstract class ID3_Object
    * @param string|Array $string
    * @param string $encoding
    */
-  protected function convertString($string, $encoding)
+  protected final function convertString($string, $encoding)
   {
     $target = $this->getOption("encoding", ID3_Encoding::UTF8);
     switch ($target) {

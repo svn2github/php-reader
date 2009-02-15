@@ -2,7 +2,8 @@
 /**
  * PHP Reader Library
  *
- * Copyright (c) 2008 The PHP Reader Project Workgroup. All rights reserved.
+ * Copyright (c) 2008-2009 The PHP Reader Project Workgroup. All rights
+ * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -30,9 +31,9 @@
  *
  * @package    php-reader
  * @subpackage MPEG
- * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
+ * @copyright  Copyright (c) 2008-2009 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
- * @version    $Id: Frame.php 1 2008-07-06 10:43:41Z rbutterfield $
+ * @version    $Id$
  */
 
 /**#@+ @ignore */
@@ -53,11 +54,11 @@ require_once("MPEG/ABS/Object.php");
  * @subpackage MPEG
  * @author     Ryan Butterfield <buttza@gmail.com>
  * @author     Sven Vollbehr <svollbehr@gmail.com>
- * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
+ * @copyright  Copyright (c) 2008-2009 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
- * @version    $Rev: 1 $
+ * @version    $Rev$
  */
-class MPEG_ABS_Frame extends MPEG_ABS_Object
+final class MPEG_ABS_Frame extends MPEG_ABS_Object
 {
   /**
    * The bitrate lookup table. The table has the following format.

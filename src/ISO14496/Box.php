@@ -293,6 +293,7 @@ class ISO14496_Box
    * <var>true</var> if one or more boxes are present, <var>false</var>
    * otherwise.
    * 
+   * @param string $identifier The box identifier.
    * @return boolean
    * @throws ISO14496_Exception if called on a non-container box
    */
@@ -329,6 +330,7 @@ class ISO14496_Box
    * the first box with the identifier given. Wildcards cannot be used with
    * the shorthand and they will not work with user defined uuid types.
    * 
+   * @param string $identifier The box identifier.
    * @return Array
    * @throws ISO14496_Exception if called on a non-container box
    */
@@ -347,18 +349,61 @@ class ISO14496_Box
   }
   
   /**
+   * Removes any boxes matching the given box identifier.
+   *
+   * The identifier may contain wildcard characters "*" and "?". The asterisk
+   * matches against zero or more characters, and the question mark matches any
+   * single character.
+   *
+   * One may also use the shorthand unset($obj->identifier) to achieve the same
+   * result. Wildcards cannot be used with the shorthand method.
+   * 
+   * @param string $identifier The box identifier.
+   * @throws ISO14496_Exception if called on a non-container box
+   */
+  public final function removeBoxesByIdentifier($identifier)
+  {
+    if (!$this->isContainer())
+      throw new ISO14496_Exception("Box not a container");
+    $searchPattern = "/^" .
+      str_replace(array("*", "?"), array(".*", "."), $identifier) . "$/i";
+    foreach ($this->_objects as $identifier => $objects)
+      if (preg_match($searchPattern, $identifier))
+        unset($this->_objects[$identifier]);
+  }
+  
+  /**
    * Adds a new box into the current box and returns it.
    *
-   * @param ISO14496_Box The box to add
+   * @param ISO14496_Box $box The box to add
    * @return ISO14496_Box
+   * @throws ISO14496_Exception if called on a non-container box
    */
   public final function addBox($box)
   {
+    if (!$this->isContainer())
+      throw new ISO14496_Exception("Box not a container");
     $box->setParent($this);
     $box->setOptions($this->_options);
     if (!$this->hasBox($box->getType()))
       $this->_boxes[$box->getType()] = array();
     return $this->_boxes[$box->getType()][] = $box;
+  }
+  
+  /**
+   * Removes the given box.
+   *
+   * @param ISO14496_Box $box The box to remove
+   * @throws ISO14496_Exception if called on a non-container box
+   */
+  public final function removeBox($box)
+  {
+    if (!$this->isContainer())
+      throw new ISO14496_Exception("Box not a container");
+    if ($this->hasBox($box->getType()))
+      foreach ($this->_boxes[$box->getType()] as $key => $value)
+        if ($box === $value)
+          unset($this->_boxes[$box->getType()][$key]);
   }
   
   /**

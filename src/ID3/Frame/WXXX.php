@@ -2,7 +2,8 @@
 /**
  * PHP Reader Library
  *
- * Copyright (c) 2008 The PHP Reader Project Workgroup. All rights reserved.
+ * Copyright (c) 2008-2009 The PHP Reader Project Workgroup. All rights
+ * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -30,7 +31,7 @@
  *
  * @package    php-reader
  * @subpackage ID3
- * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
+ * @copyright  Copyright (c) 2008-2009 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Id$
  */
@@ -51,7 +52,7 @@ require_once("ID3/Encoding.php");
  * @subpackage ID3
  * @author     Sven Vollbehr <svollbehr@gmail.com>
  * @author     Ryan Butterfield <buttza@gmail.com>
- * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
+ * @copyright  Copyright (c) 2008-2009 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Rev$
  */
@@ -85,28 +86,28 @@ final class ID3_Frame_WXXX extends ID3_Frame_AbstractLink
     switch ($encoding) {
     case self::UTF16:
       list($this->_description, $this->_link) = 
-        $this->explodeString16($this->_data, 2);
-      $this->_description = $this->convertString
+        $this->_explodeString16($this->_data, 2);
+      $this->_description = $this->_convertString
         (Transform::fromString16($this->_description), "utf-16");
       break;
     case self::UTF16BE:
       list($this->_description, $this->_link) = 
-        $this->explodeString16($this->_data, 2);
-      $this->_description = $this->convertString
+        $this->_explodeString16($this->_data, 2);
+      $this->_description = $this->_convertString
         (Transform::fromString16BE($this->_description), "utf-16be");
       break;
     case self::UTF8:
       list($this->_description, $this->_link) =
-        $this->explodeString8($this->_data, 2);
-      $this->_description = $this->convertString($this->_description, "utf-8");
+        $this->_explodeString8($this->_data, 2);
+      $this->_description = $this->_convertString($this->_description, "utf-8");
       break;
     default:
       list($this->_description, $this->_link) =
-        $this->explodeString8($this->_data, 2);
-      $this->_description = $this->convertString
+        $this->_explodeString8($this->_data, 2);
+      $this->_description = $this->_convertString
         ($this->_description, "iso-8859-1");
     }
-    $this->_link = implode($this->explodeString8($this->_link, 1), "");
+    $this->_link = implode($this->_explodeString8($this->_link, 1), "");
   }
   
   /**
@@ -156,11 +157,11 @@ final class ID3_Frame_WXXX extends ID3_Frame_AbstractLink
   }
   
   /**
-   * Returns the frame raw data.
+   * Returns the frame raw data without the header.
    *
    * @return string
    */
-  public function __toString()
+  protected function _getData()
   {
     $data = Transform::toUInt8($this->_encoding);
     switch ($this->_encoding) {
@@ -177,7 +178,6 @@ final class ID3_Frame_WXXX extends ID3_Frame_AbstractLink
     default:
       $data .= $this->_description . "\0";
     }
-    $this->setData($data . $this->_link);
-    return ID3_Frame::__toString();
+    return $data . $this->_link;
   }
 }

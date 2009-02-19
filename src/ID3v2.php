@@ -184,8 +184,10 @@ final class ID3v2
           require_once($filename);
         if (class_exists($classname = "ID3_Frame_" . $identifier))
           $frame = new $classname($this->_reader, $options);
-        else
-          $frame = new ID3_Frame($this->_reader, $options);
+        else {
+          require_once("ID3/Frame/Unknown.php");
+          $frame = new ID3_Frame_Unknown($this->_reader, $options);
+        }
         
         if (!isset($this->_frames[$frame->getIdentifier()]))
           $this->_frames[$frame->getIdentifier()] = array();
@@ -246,6 +248,7 @@ final class ID3v2
    * Returns <var>true</var> if one ore more frames are present,
    * <var>false</var> otherwise.
    *
+   * @param string $identifier The frame name.
    * @return boolean
    */
   public function hasFrame($identifier)
@@ -271,8 +274,9 @@ final class ID3v2
    *
    * Please note that one may also use the shorthand $obj->identifier to access
    * the first frame with the identifier given. Wildcards cannot be used with
-   * the shorthand.
+   * the shorthand method.
    *
+   * @param string $identifier The frame name.
    * @return Array
    */
   public function getFramesByIdentifier($identifier)
@@ -285,6 +289,27 @@ final class ID3v2
         foreach ($frames as $frame)
           $matches[] = $frame;
     return $matches;
+  }
+  
+  /**
+   * Removes any frames matching the given object identifier.
+   *
+   * The identifier may contain wildcard characters "*" and "?". The asterisk
+   * matches against zero or more characters, and the question mark matches any
+   * single character.
+   *
+   * One may also use the shorthand unset($obj->identifier) to achieve the same
+   * result. Wildcards cannot be used with the shorthand method.
+   * 
+   * @param string $identifier The frame name.
+   */
+  public final function removeFramesByIdentifier($identifier)
+  {
+    $searchPattern = "/^" .
+      str_replace(array("*", "?"), array(".*", "."), $identifier) . "$/i";
+    foreach ($this->_frames as $identifier => $frames)
+      if (preg_match($searchPattern, $identifier))
+        unset($this->_frames[$identifier]);
   }
 
   /**
@@ -299,6 +324,19 @@ final class ID3v2
     if (!$this->hasFrame($frame->getIdentifier()))
       $this->_frames[$frame->getIdentifier()] = array();
     return $this->_frames[$frame->getIdentifier()][] = $frame;
+  }
+
+  /**
+   * Remove the given frame from the tag.
+   *
+   * @param ID3_Frame $frame The frame to remove.
+   */
+  public function removeFrame($frame)
+  {
+    if (!$this->hasFrame($frame->getIdentifier()))
+      foreach ($this->_frames[$frame->getIdentifier()] as $key => $value)
+        if ($frame === $value)
+          unset($this->_frames[$frame->getIdentifier()][$key]);
   }
 
   /**

@@ -2,7 +2,8 @@
 /**
  * PHP Reader Library
  *
- * Copyright (c) 2008 The PHP Reader Project Workgroup. All rights reserved.
+ * Copyright (c) 2008-2009 The PHP Reader Project Workgroup. All rights
+ * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -30,7 +31,7 @@
  *
  * @package    php-reader
  * @subpackage ID3
- * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
+ * @copyright  Copyright (c) 2008-2009 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Id$
  */
@@ -53,7 +54,7 @@ require_once("ID3/Encoding.php");
  * @subpackage ID3
  * @author     Sven Vollbehr <svollbehr@gmail.com>
  * @author     Ryan Butterfield <buttza@gmail.com>
- * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
+ * @copyright  Copyright (c) 2008-2009 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Rev$
  */
@@ -121,46 +122,46 @@ final class ID3_Frame_COMR extends ID3_Frame
 
     $encoding = Transform::fromUInt8($this->_data[0]);
     list($pricing, $this->_data) =
-      $this->explodeString8(substr($this->_data, 1), 2);
+      $this->_explodeString8(substr($this->_data, 1), 2);
     $this->_currency = substr($pricing, 0, 3);
     $this->_price = substr($pricing, 3);
     $this->_date = substr($this->_data, 0, 8);
     list($this->_contact, $this->_data) =
-      $this->explodeString8(substr($this->_data, 8), 2);
+      $this->_explodeString8(substr($this->_data, 8), 2);
     $this->_delivery = Transform::fromUInt8($this->_data[0]);
     $this->_data = substr($this->_data, 1);
     
     switch ($encoding) {
     case self::UTF16:
       list ($this->_seller, $this->_description, $this->_data) =
-        $this->explodeString16($this->_data, 3);
-      $this->_seller = $this->convertString
+        $this->_explodeString16($this->_data, 3);
+      $this->_seller = $this->_convertString
         (Transform::fromString16($this->_seller), "utf-16");
-      $this->_description = $this->convertString
+      $this->_description = $this->_convertString
         (Transform::fromString16($this->_description), "utf-16");
       break;
     case self::UTF16BE:
       list ($this->_seller, $this->_description, $this->_data) =
-        $this->explodeString16($this->_data, 3);
-      $this->_seller = $this->convertString
+        $this->_explodeString16($this->_data, 3);
+      $this->_seller = $this->_convertString
         (Transform::fromString16BE($this->_seller), "utf-16be");
-      $this->_description = $this->convertString
+      $this->_description = $this->_convertString
         (Transform::fromString16BE($this->_description), "utf-16be");
       break;
     case self::UTF8:
       list ($this->_seller, $this->_description, $this->_data) =
-        $this->explodeString8($this->_data, 3);
-      $this->_seller = $this->convertString
+        $this->_explodeString8($this->_data, 3);
+      $this->_seller = $this->_convertString
         (Transform::fromString8($this->_seller), "utf-8");
-      $this->_description = $this->convertString
+      $this->_description = $this->_convertString
         (Transform::fromString8($this->_description), "utf-8");
       break;
     default:
       list ($this->_seller, $this->_description, $this->_data) =
-        $this->explodeString8($this->_data, 3);
-      $this->_seller = $this->convertString
+        $this->_explodeString8($this->_data, 3);
+      $this->_seller = $this->_convertString
         (Transform::fromString8($this->_seller), "iso-8859-1");
-      $this->_description = $this->convertString
+      $this->_description = $this->_convertString
         (Transform::fromString8($this->_description), "iso-8859-1");
     }
     
@@ -168,7 +169,7 @@ final class ID3_Frame_COMR extends ID3_Frame
       return;
     
     list($this->_mimeType, $this->_imageData) =
-      $this->explodeString8($this->_data, 2);
+      $this->_explodeString8($this->_data, 2);
       
     $this->_imageSize = strlen($this->_imageData);
   }
@@ -368,11 +369,11 @@ final class ID3_Frame_COMR extends ID3_Frame
   public function getImageSize() { return $this->_imageSize; }
   
   /**
-   * Returns the frame raw data.
+   * Returns the frame raw data without the header.
    *
    * @return string
    */
-  public function __toString()
+  protected function _getData()
   {
     $data = Transform::toUInt8($this->_encoding) . $this->_currency .
       $this->_price . "\0" . $this->_date . $this->_contact . "\0" .
@@ -392,9 +393,8 @@ final class ID3_Frame_COMR extends ID3_Frame
     default:
       $data .= $this->_seller . "\0" . $this->_description . "\0";
     }
-    parent::setData
-      ($data . ($this->_mimeType ?
-                $this->_mimeType . "\0" . $this->_imageData : ""));
-    return parent::__toString();
+    return
+      $data . ($this->_mimeType ?
+               $this->_mimeType . "\0" . $this->_imageData : "");
   }
 }

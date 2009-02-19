@@ -2,8 +2,7 @@
 /**
  * PHP Reader Library
  *
- * Copyright (c) 2008-2009 The PHP Reader Project Workgroup. All rights
- * reserved.
+ * Copyright (c) 2009 The PHP Reader Project Workgroup. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -31,7 +30,7 @@
  *
  * @package    php-reader
  * @subpackage ID3
- * @copyright  Copyright (c) 2008-2009 The PHP Reader Project Workgroup
+ * @copyright  Copyright (c) 2009 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Id$
  */
@@ -41,71 +40,21 @@ require_once("ID3/Frame.php");
 /**#@-*/
 
 /**
- * The <i>Play counter</i> is simply a counter of the number of times a file has
- * been played. The value is increased by one every time the file begins to
- * play. There may only be one PCNT frame in each tag.
+ * This class represents a frame that is not known to the library.
  *
  * @package    php-reader
  * @subpackage ID3
  * @author     Sven Vollbehr <svollbehr@gmail.com>
- * @author     Ryan Butterfield <buttza@gmail.com>
- * @copyright  Copyright (c) 2008-2009 The PHP Reader Project Workgroup
+ * @copyright  Copyright (c) 2009 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Rev$
  */
-final class ID3_Frame_PCNT extends ID3_Frame
+final class ID3_Frame_Unknown extends ID3_Frame
 {
-  /** @var integer */
-  private $_counter = 0;
-  
-  /**
-   * Constructs the class with given parameters and parses object related data.
-   *
-   * @param Reader $reader The reader object.
-   * @param Array $options The options array.
-   */
-  public function __construct($reader = null, &$options = array())
-  {
-    parent::__construct($reader, $options);
-    
-    if ($reader === null)
-      return;
-
-    if (strlen($this->_data) > 4)
-      $this->_counter = Transform::fromInt64BE($this->_data); // UInt64
-    else
-      $this->_counter = Transform::fromUInt32BE($this->_data);
-  }
-  
-  /**
-   * Returns the counter.
-   * 
-   * @return integer
-   */
-  public function getCounter() { return $this->_counter; }
-  
-  /**
-   * Adds counter by one.
-   */
-  public function addCounter() { $this->_counter++; }
-  
-  /**
-   * Sets the counter value.
-   * 
-   * @param integer $counter The counter value.
-   */
-  public function setCounter($counter) { $this->_counter = $counter; }
-  
   /**
    * Returns the frame raw data without the header.
    *
    * @return string
    */
-  protected function _getData()
-  {
-    return
-      $this->_counter > 4294967295 ?
-      Transform::toInt64BE($this->_counter) : // UInt64
-      Transform::toUInt32BE($this->_counter);
-  }
+  protected function _getData() { return $this->_data; }
 }

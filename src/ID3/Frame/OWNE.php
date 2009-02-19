@@ -2,7 +2,8 @@
 /**
  * PHP Reader Library
  *
- * Copyright (c) 2008 The PHP Reader Project Workgroup. All rights reserved.
+ * Copyright (c) 2008-2009 The PHP Reader Project Workgroup. All rights
+ * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -30,7 +31,7 @@
  *
  * @package    php-reader
  * @subpackage ID3
- * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
+ * @copyright  Copyright (c) 2008-2009 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Id$
  */
@@ -51,7 +52,7 @@ require_once("ID3/Encoding.php");
  * @subpackage ID3
  * @author     Sven Vollbehr <svollbehr@gmail.com>
  * @author     Ryan Butterfield <buttza@gmail.com>
- * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
+ * @copyright  Copyright (c) 2008-2009 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Rev$
  */
@@ -90,7 +91,7 @@ final class ID3_Frame_OWNE extends ID3_Frame
 
     $encoding = Transform::fromUInt8($this->_data[0]);
     list($tmp, $this->_data) =
-      $this->explodeString8(substr($this->_data, 1), 2);
+      $this->_explodeString8(substr($this->_data, 1), 2);
     $this->_currency = substr($tmp, 0, 3);
     $this->_price = substr($tmp, 3);
     $this->_date = substr($this->_data, 0, 8);
@@ -98,19 +99,19 @@ final class ID3_Frame_OWNE extends ID3_Frame
     
     switch ($encoding) {
     case self::UTF16:
-      $this->_seller = $this->convertString
+      $this->_seller = $this->_convertString
         (Transform::fromString16($this->_data), "utf-16");
       break;
     case self::UTF16BE:
-      $this->_seller = $this->convertString
+      $this->_seller = $this->_convertString
         (Transform::fromString16BE($this->_data), "utf-16be");
       break;
     case self::UTF8:
-      $this->_seller = $this->convertString
+      $this->_seller = $this->_convertString
         (Transform::fromString8($this->_data), "utf-8");
       break;
     default:
-      $this->_seller = $this->convertString
+      $this->_seller = $this->_convertString
         (Transform::fromString8($this->_data), "iso-8859-1");
     }
   }
@@ -212,11 +213,11 @@ final class ID3_Frame_OWNE extends ID3_Frame
   }
   
   /**
-   * Returns the frame raw data.
+   * Returns the frame raw data without the header.
    *
    * @return string
    */
-  public function __toString()
+  protected function _getData()
   {
     $data = Transform::toUInt8($this->_encoding) . $this->_currency .
       $this->_price . "\0" . $this->_date;
@@ -233,7 +234,6 @@ final class ID3_Frame_OWNE extends ID3_Frame
     default:
       $data .= $this->_seller;
     }
-    $this->setData($data);
-    return parent::__toString();
+    return $data;
   }
 }

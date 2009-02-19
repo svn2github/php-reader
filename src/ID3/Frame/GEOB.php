@@ -2,7 +2,8 @@
 /**
  * PHP Reader Library
  *
- * Copyright (c) 2008 The PHP Reader Project Workgroup. All rights reserved.
+ * Copyright (c) 2008-2009 The PHP Reader Project Workgroup. All rights
+ * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -30,7 +31,7 @@
  *
  * @package    php-reader
  * @subpackage ID3
- * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
+ * @copyright  Copyright (c) 2008-2009 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Id$
  */
@@ -48,7 +49,7 @@ require_once("ID3/Encoding.php");
  * @subpackage ID3
  * @author     Sven Vollbehr <svollbehr@gmail.com>
  * @author     Ryan Butterfield <buttza@gmail.com>
- * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
+ * @copyright  Copyright (c) 2008-2009 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Rev$
  */
@@ -93,34 +94,34 @@ final class ID3_Frame_GEOB extends ID3_Frame
     switch ($encoding) {
     case self::UTF16:
       list ($this->_filename, $this->_description, $this->_objectData) =
-        $this->explodeString16($this->_data, 3);
-      $this->_filename = $this->convertString
+        $this->_explodeString16($this->_data, 3);
+      $this->_filename = $this->_convertString
         (Transform::fromString16($this->_filename), "utf-16");
-      $this->_description = $this->convertString
+      $this->_description = $this->_convertString
         (Transform::fromString16($this->_description), "utf-16");
       break;
     case self::UTF16BE:
       list ($this->_filename, $this->_description, $this->_objectData) =
-        $this->explodeString16($this->_data, 3);
-      $this->_filename = $this->convertString
+        $this->_explodeString16($this->_data, 3);
+      $this->_filename = $this->_convertString
         (Transform::fromString16BE($this->_filename), "utf-16be");
-      $this->_description = $this->convertString
+      $this->_description = $this->_convertString
         (Transform::fromString16BE($this->_description), "utf-16be");
       break;
     case self::UTF8:
       list ($this->_filename, $this->_description, $this->_objectData) =
-        $this->explodeString8($this->_data, 3);
-      $this->_filename = $this->convertString
+        $this->_explodeString8($this->_data, 3);
+      $this->_filename = $this->_convertString
         (Transform::fromString8($this->_filename), "utf-8");
-      $this->_description = $this->convertString
+      $this->_description = $this->_convertString
         (Transform::fromString8($this->_description), "utf-8");
       break;
     default:
       list ($this->_filename, $this->_description, $this->_objectData) =
-        $this->explodeString8($this->_data, 3);
-      $this->_filename = $this->convertString
+        $this->_explodeString8($this->_data, 3);
+      $this->_filename = $this->_convertString
         (Transform::fromString8($this->_filename), "iso-8859-1");
-      $this->_description = $this->convertString
+      $this->_description = $this->_convertString
         (Transform::fromString8($this->_description), "iso-8859-1");
     }
   }
@@ -225,11 +226,11 @@ final class ID3_Frame_GEOB extends ID3_Frame
   }
   
   /**
-   * Returns the frame raw data.
+   * Returns the frame raw data without the header.
    *
    * @return string
    */
-  public function __toString()
+  protected function _getData()
   {
     $data = Transform::toUInt8($this->_encoding) . $this->_mimeType . "\0";
     switch ($this->_encoding) {
@@ -247,7 +248,6 @@ final class ID3_Frame_GEOB extends ID3_Frame
     default:
       $data .= $this->_filename . "\0" . $this->_description . "\0";
     }
-    $this->setData($data . $this->_objectData);
-    return parent::__toString();
+    return $data . $this->_objectData;
   }
 }

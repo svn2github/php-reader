@@ -2,7 +2,8 @@
 /**
  * PHP Reader Library
  *
- * Copyright (c) 2008 The PHP Reader Project Workgroup. All rights reserved.
+ * Copyright (c) 2008-2009 The PHP Reader Project Workgroup. All rights
+ * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -30,7 +31,7 @@
  *
  * @package    php-reader
  * @subpackage ID3
- * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
+ * @copyright  Copyright (c) 2008-2009 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Id$
  */
@@ -48,7 +49,7 @@ require_once("ID3/Object.php");
  * @subpackage ID3
  * @author     Sven Vollbehr <svollbehr@gmail.com>
  * @author     Ryan Butterfield <buttza@gmail.com>
- * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
+ * @copyright  Copyright (c) 2008-2009 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Rev$
  */
@@ -128,7 +129,7 @@ final class ID3_ExtendedHeader extends ID3_Object
     
     /* ID3v2.4.0 ExtendedHeader */
     else {
-      $this->_size = $this->decodeSynchsafe32($this->_size);
+      $this->_size = $this->_decodeSynchsafe32($this->_size);
       $this->_reader->skip(1);
       $this->_flags = $this->_reader->readInt8();
       if ($this->hasFlag(self::UPDATE))
@@ -137,7 +138,7 @@ final class ID3_ExtendedHeader extends ID3_Object
         $this->_reader->skip(1);
         $this->_crc =
           Transform::fromInt8($this->_reader->read(1)) * (0xfffffff + 1) +
-          decodeSynchsafe32(Transform::fromUInt32BE($this->_reader->read(4)));
+          _decodeSynchsafe32(Transform::fromUInt32BE($this->_reader->read(4)));
       }
       if ($this->hasFlag(self::RESTRICTED)) {
         $this->_reader->skip(1);
@@ -294,7 +295,7 @@ final class ID3_ExtendedHeader extends ID3_Object
   public function setPadding($padding) { return $this->_padding = $padding; }
   
   /**
-   * Returns the header raw data.
+   * Returns the header data.
    *
    * @return string
    */
@@ -310,12 +311,12 @@ final class ID3_ExtendedHeader extends ID3_Object
     
     /* ID3v2.4.0 ExtendedHeader */
     else {
-      return Transform::toUInt32BE($this->encodeSynchsafe32($this->_size)) .
+      return Transform::toUInt32BE($this->_encodeSynchsafe32($this->_size)) .
         Transform::toInt8(1) . Transform::toInt8($this->_flags) .
         ($this->hasFlag(self::UPDATE) ? "\0" : "") .
         ($this->hasFlag(self::CRC32) ? Transform::toInt8(5) .
          Transform::toInt8($this->_crc & 0xf0000000 >> 28 & 0xf /*eq >>> 28*/) .
-         Transform::toUInt32BE($this->encodeSynchsafe32($this->_crc)) : "") .
+         Transform::toUInt32BE($this->_encodeSynchsafe32($this->_crc)) : "") .
         ($this->hasFlag(self::RESTRICTED) ? 
            Transform::toInt8(1) . Transform::toInt8($this->_restrictions) : "");
     }

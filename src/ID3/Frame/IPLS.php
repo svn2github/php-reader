@@ -2,7 +2,8 @@
 /**
  * PHP Reader Library
  *
- * Copyright (c) 2008 The PHP Reader Project Workgroup. All rights reserved.
+ * Copyright (c) 2008-2009 The PHP Reader Project Workgroup. All rights
+ * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -30,7 +31,7 @@
  *
  * @package    php-reader
  * @subpackage ID3
- * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
+ * @copyright  Copyright (c) 2008-2009 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Id$
  * @deprecated ID3v2.3.0
@@ -50,7 +51,7 @@ require_once("ID3/Encoding.php");
  * @subpackage ID3
  * @author     Sven Vollbehr <svollbehr@gmail.com>
  * @author     Ryan Butterfield <buttza@gmail.com>
- * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
+ * @copyright  Copyright (c) 2008-2009 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Rev$
  * @deprecated ID3v2.3.0
@@ -84,22 +85,22 @@ final class ID3_Frame_IPLS extends ID3_Frame
     $order = Transform::MACHINE_ENDIAN_ORDER;
     switch ($encoding) {
     case self::UTF16:
-      $data = $this->explodeString16($data);
+      $data = $this->_explodeString16($data);
       foreach ($data as &$str)
-        $str = $this->convertString
+        $str = $this->_convertString
           (Transform::fromString16($str, $order), "utf-16");
       break;
     case self::UTF16BE:
-      $data = $this->explodeString16($data);
+      $data = $this->_explodeString16($data);
       foreach ($data as &$str)
-        $str = $this->convertString
+        $str = $this->_convertString
           (Transform::fromString16BE($str), "utf-16be");
       break;
     case self::UTF8:
-      $data = $this->convertString($this->explodeString8($data), "utf-8");
+      $data = $this->_convertString($this->_explodeString8($data), "utf-8");
       break;
     default:
-      $data = $this->convertString($this->explodeString8($data), "iso-8859-1");
+      $data = $this->_convertString($this->_explodeString8($data), "iso-8859-1");
     }
 
     for ($i = 0; $i < count($data) - 1; $i += 2)
@@ -161,11 +162,11 @@ final class ID3_Frame_IPLS extends ID3_Frame
   public function setPeople($people) { $this->_people = $people; }
 
   /**
-   * Returns the frame raw data.
+   * Returns the frame raw data without the header.
    *
    * @return string
    */
-  public function __toString()
+  protected function _getData()
   {
     $data = Transform::toUInt8($this->_encoding);
     $order = $this->_encoding == self::UTF16 ?
@@ -186,7 +187,6 @@ final class ID3_Frame_IPLS extends ID3_Frame
         }
       }
     }
-    $this->setData($data);
-    return parent::__toString();
+    return $data;
   }
 }

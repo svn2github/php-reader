@@ -2,7 +2,8 @@
 /**
  * PHP Reader Library
  *
- * Copyright (c) 2008 The PHP Reader Project Workgroup. All rights reserved.
+ * Copyright (c) 2008-2009 The PHP Reader Project Workgroup. All rights
+ * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -30,7 +31,7 @@
  *
  * @package    php-reader
  * @subpackage ID3
- * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
+ * @copyright  Copyright (c) 2008-2009 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Id$
  */
@@ -52,7 +53,7 @@ require_once("ID3/Language.php");
  * @subpackage ID3
  * @author     Sven Vollbehr <svollbehr@gmail.com>
  * @author     Ryan Butterfield <buttza@gmail.com>
- * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
+ * @copyright  Copyright (c) 2008-2009 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Rev$
  */
@@ -91,19 +92,19 @@ final class ID3_Frame_USER extends ID3_Frame
 
     switch ($encoding) {
     case self::UTF16:
-      $this->_text = $this->convertString
+      $this->_text = $this->_convertString
         (Transform::fromString16($this->_data), "utf-16");
       break;
     case self::UTF16BE:
-      $this->_text = $this->convertString
+      $this->_text = $this->_convertString
         (Transform::fromString16BE($this->_data), "utf-16be");
       break;
     case self::UTF8:
-      $this->_text = $this->convertString
+      $this->_text = $this->_convertString
         (Transform::fromString8($this->_data), "utf-8");
       break;
     default:
-      $this->_text = $this->convertString
+      $this->_text = $this->_convertString
         (Transform::fromString8($this->_data), "iso-8859-1");
     }
   }
@@ -180,11 +181,11 @@ final class ID3_Frame_USER extends ID3_Frame
   }
   
   /**
-   * Returns the frame raw data.
+   * Returns the frame raw data without the header.
    *
    * @return string
    */
-  public function __toString()
+  protected function _getData()
   {
     $data = Transform::toUInt8($this->_encoding) . $this->_language;
     switch ($this->_encoding) {
@@ -200,7 +201,6 @@ final class ID3_Frame_USER extends ID3_Frame
     default:
       $data .= $this->_text;
     }
-    $this->setData($data);
-    return parent::__toString();
+    return $data;
   }
 }

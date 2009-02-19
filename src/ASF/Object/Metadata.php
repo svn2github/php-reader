@@ -2,7 +2,8 @@
 /**
  * PHP Reader Library
  *
- * Copyright (c) 2008 The PHP Reader Project Workgroup. All rights reserved.
+ * Copyright (c) 2008-2009 The PHP Reader Project Workgroup. All rights
+ * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -30,7 +31,7 @@
  *
  * @package    php-reader
  * @subpackage ASF
- * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
+ * @copyright  Copyright (c) 2008-2009 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Id$
  */
@@ -48,14 +49,14 @@ require_once("ASF/Object.php");
  * @package    php-reader
  * @subpackage ASF
  * @author     Sven Vollbehr <svollbehr@gmail.com>
- * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
+ * @copyright  Copyright (c) 2008-2009 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Rev$
  */
 final class ASF_Object_Metadata extends ASF_Object
 {
   /** @var Array */
-  private $_descriptions = array();
+  private $_descriptionRecords = array();
   
   /**
    * Constructs the class with given parameters and reads object related data
@@ -64,50 +65,157 @@ final class ASF_Object_Metadata extends ASF_Object
    * @param Reader $reader  The reader object.
    * @param Array  $options The options array.
    */
-  public function __construct($reader, &$options = array())
+  public function __construct($reader = null, &$options = array())
   {
     parent::__construct($reader, $options);
+    
+    if ($reader === null)
+      return;
     
     $descriptionRecordsCount = $this->_reader->readUInt16LE();
     for ($i = 0; $i < $descriptionRecordsCount; $i++) {
       $this->_reader->skip(2);
-      $record = array("streamNumber" => $this->_reader->readUInt16LE());
+      $descriptionRecord = array("streamNumber" => $this->_reader->readUInt16LE());
       $nameLength = $this->_reader->readUInt16LE();
       $dataType = $this->_reader->readUInt16LE();
       $dataLength = $this->_reader->readUInt32LE();
-      $record["name"] = iconv
+      $descriptionRecord["name"] = iconv
         ("utf-16le", $this->getOption("encoding"),
          $this->_reader->readString16LE($nameLength));
       switch ($dataType) {
-      case 0:
-        $record["data"] = iconv
+      case 0: // Unicode string
+        $descriptionRecord["data"] = iconv
           ("utf-16le", $this->getOption("encoding"),
            $this->_reader->readString16LE($dataLength));
         break;
-      case 1:
-        $record["data"] = $this->_reader->readString16LE($dataLength);
+      case 1: // BYTE array
+        $descriptionRecord["data"] = $this->_reader->read($dataLength);
         break;
-      case 2:
-        $record["data"] = $this->_reader->readUInt16LE() ? true : false;
+      case 2: // BOOL
+        $descriptionRecord["data"] = $this->_reader->readUInt16LE() == 1;
         break;
-      case 3:
-        $record["data"] = $this->_reader->readUInt32LE();
+      case 3: // DWORD
+        $descriptionRecord["data"] = $this->_reader->readUInt32LE();
         break;
-      case 4:
-        $record["data"] = $this->_reader->readInt64LE();
+      case 4: // QWORD
+        $descriptionRecord["data"] = $this->_reader->readInt64LE();
         break;
-      case 5:
-        $record["data"] = $this->_reader->readUInt16LE();
+      case 5: // WORD
+        $descriptionRecord["data"] = $this->_reader->readUInt16LE();
         break;
       }
-      $this->_descriptions[] = $record;
+      $this->_descriptionRecords[] = $descriptionRecord;
     }
   }
-
+  
   /**
-   * Returns the array of description records.
+   * Returns the array of description records. Each record consists of the
+   * following keys.
+   * 
+   *   o streamNumber -- Specifies the stream number. Valid values are between
+   *     1 and 127.
+   *
+   *   o name -- Specifies the name that uniquely identifies the attribute being
+   *     described. Names are case-sensitive.
+   *
+   *   o data -- Specifies the actual metadata being stored.
    *
    * @return Array
    */
-  public function getDescriptions() { return $this->_descriptions; }
+  public function getDescriptionRecords() { return $this->_descriptionRecords; }
+  
+  /**
+   * Sets the array of description records. Each record must consist of the
+   * following keys.
+   * 
+   *   o streamNumber -- Specifies the stream number. Valid values are between
+   *     1 and 127.
+   *
+   *   o name -- Specifies the name that uniquely identifies the attribute being
+   *     described. Names are case-sensitive.
+   *
+   *   o data -- Specifies the actual metadata being stored.
+   *
+   * @param Array $descriptionRecords The array of description records.
+   */
+  public function setDescriptionRecords($descriptionRecords)
+  {
+    $this->_descriptionRecords = $descriptionRecords;
+  }
+  
+  /**
+   * Returns the whether the object is required to be present, or whether
+   * minimum cardinality is 1.
+   * 
+   * @return boolean
+   */
+  public function isMandatory() { return false; }
+  
+  /**
+   * Returns whether multiple instances of this object can be present, or
+   * whether maximum cardinality is greater than 1.
+   * 
+   * @return boolean
+   */
+  public function isMultiple() { return false; }
+  
+  /**
+   * Returns the object data with headers.
+   *
+   * @return string
+   */
+  public function __toString()
+  {
+    $data = Transform::toUInt16LE
+      ($descriptionRecordsCount = count($this->_descriptionRecords));
+    for ($i = 0; $i < $descriptionRecordsCount; $i++) {
+      $data .= Transform::toUInt16LE(0) .
+        Transform::toUInt16LE($this->_descriptionRecords[$i]["streamNumber"]) .
+        Transform::toUInt16LE(strlen($name = iconv
+          ($this->getOption("encoding"), "utf-16le",
+           $this->_descriptionRecords[$i]["name"]) . "\0\0"));
+      if (is_string($this->_descriptionRecords[$i]["data"])) {
+        /* There is no way to distinguish byte arrays from unicode strings and
+         * hence the need for a list of fields of type byte array */
+        static $byteArray = array (
+          ""
+        ); // TODO: Add to the list if you encounter one
+
+        if (in_array($name, $byteArray))
+          $data .= Transform::toUInt16LE(1) . Transform::toUInt32LE
+            (strlen($this->_descriptionRecords[$i]["data"])) . $name .
+            $this->_descriptionRecords[$i]["data"];
+        else {
+          $value = iconv
+            ($this->getOption("encoding"), "utf-16le",
+             $this->_descriptionRecords[$i]["data"]);
+          $value = ($value ? $value . "\0\0" : "");
+          $data .= Transform::toUInt16LE(0) .
+            Transform::toUInt32LE(strlen($value)) . $name .
+            Transform::toString16LE($value);
+        }
+      }
+      else if (is_bool($this->_descriptionRecords[$i]["data"])) {
+        $data .= Transform::toUInt16LE(2) . Transform::toUInt32LE(2) . $name .
+          Transform::toUInt16LE($this->_descriptionRecords[$i]["data"] ? 1 : 0);
+      }
+      else if (is_int($this->_descriptionRecords[$i]["data"])) {
+        $data .= Transform::toUInt16LE(3) . Transform::toUInt32LE(4) . $name .
+          Transform::toUInt32LE($this->_descriptionRecords[$i]["data"]);
+      }
+      else if (is_float($this->_descriptionRecords[$i]["data"])) {
+        $data .= Transform::toUInt16LE(4) . Transform::toUInt32LE(8) . $name .
+          Transform::toInt64LE($this->_descriptionRecords[$i]["data"]);
+      }
+      else {
+        // Invalid value and there is nothing to be done so cause a fatal error
+        require_once("ASF/Exception.php");
+        throw new ASF_Exception("Invalid data type");
+      }
+    }
+    $this->setSize(24 /* for header */ + strlen($data));
+    return
+      Transform::toGUID($this->getIdentifier()) .
+      Transform::toInt64LE($this->getSize())  . $data;
+  }
 }

@@ -2,7 +2,7 @@
 /**
  * PHP Reader Library
  *
- * Copyright (c) 2006-2008 The PHP Reader Project Workgroup. All rights
+ * Copyright (c) 2006-2009 The PHP Reader Project Workgroup. All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,7 +31,7 @@
  *
  * @package    php-reader
  * @subpackage ASF
- * @copyright  Copyright (c) 2006-2008 The PHP Reader Project Workgroup
+ * @copyright  Copyright (c) 2006-2009 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Id$
  */
@@ -49,7 +49,7 @@ require_once("ASF/Object.php");
  * @package    php-reader
  * @subpackage ASF
  * @author     Sven Vollbehr <svollbehr@gmail.com>
- * @copyright  Copyright (c) 2006-2008 The PHP Reader Project Workgroup
+ * @copyright  Copyright (c) 2006-2009 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Rev$
  */
@@ -77,10 +77,13 @@ final class ASF_Object_ContentDescription extends ASF_Object
    * @param Reader $reader  The reader object.
    * @param Array  $options The options array.
    */
-  public function __construct($reader, &$options = array())
+  public function __construct($reader = null, &$options = array())
   {
     parent::__construct($reader, $options);
-
+    
+    if ($reader === null)
+      return;
+    
     $titleLen = $this->_reader->readUInt16LE();
     $authorLen = $this->_reader->readUInt16LE();
     $copyrightLen = $this->_reader->readUInt16LE();
@@ -103,39 +106,133 @@ final class ASF_Object_ContentDescription extends ASF_Object
       ("utf-16le", $this->getOption("encoding"),
        $this->_reader->readString16LE($ratingLen));
   }
-
+  
   /**
    * Returns the title information.
    *
    * @return string
    */
   public function getTitle() { return $this->_title; }
-
+  
+  /**
+   * Sets the title information.
+   *
+   * @param string $title The title information.
+   */
+  public function setTitle($title) { $this->_title = $title; }
+  
   /**
    * Returns the author information.
    *
    * @return string
    */
   public function getAuthor() { return $this->_author; }
-
+  
+  /**
+   * Sets the author information.
+   *
+   * @param string $author The author information.
+   */
+  public function setAuthor($author) { $this->_author = $author; }
+  
   /**
    * Returns the copyright information.
    *
    * @return string
    */
   public function getCopyright() { return $this->_copyright; }
-
+  
+  /**
+   * Sets the copyright information.
+   *
+   * @param string $copyright The copyright information.
+   */
+  public function setCopyright($copyright) { $this->_copyright = $copyright; }
+  
   /**
    * Returns the description information.
    *
    * @return string
    */
   public function getDescription() { return $this->_description; }
-
+  
+  /**
+   * Sets the description information.
+   *
+   * @param string $description The description information.
+   */
+  public function setDescription($description)
+  {
+    $this->_description = $description;
+  }
+  
   /**
    * Returns the rating information.
    *
    * @return string
    */
   public function getRating() { return $this->_rating; }
+  
+  /**
+   * Sets the rating information.
+   *
+   * @param string $rating The rating information.
+   */
+  public function setRating($rating) { $this->_rating = $rating; }
+  
+  /**
+   * Returns the whether the object is required to be present, or whether
+   * minimum cardinality is 1.
+   * 
+   * @return boolean
+   */
+  public function isMandatory() { return false; }
+  
+  /**
+   * Returns whether multiple instances of this object can be present, or
+   * whether maximum cardinality is greater than 1.
+   * 
+   * @return boolean
+   */
+  public function isMultiple() { return false; }
+  
+  /**
+   * Returns the object data with headers.
+   *
+   * @return string
+   */
+  public function __toString()
+  {
+    $title = iconv
+      ($this->getOption("encoding"), "utf-16le",
+       $this->_title ? $this->_title . "\0" : "");
+    $author =  iconv
+      ($this->getOption("encoding"), "utf-16le",
+       $this->_author ? $this->_author . "\0" : "");
+    $copyright =  iconv
+      ($this->getOption("encoding"), "utf-16le",
+       $this->_copyright ? $this->_copyright . "\0" : "");
+    $description =  iconv
+      ($this->getOption("encoding"), "utf-16le",
+       $this->_description ? $this->_description . "\0" : "");
+    $rating =  iconv
+      ($this->getOption("encoding"), "utf-16le",
+       $this->_rating ? $this->_rating . "\0" : "");
+    
+    $data =
+      Transform::toUInt16LE(strlen($title)) .
+      Transform::toUInt16LE(strlen($author)) .
+      Transform::toUInt16LE(strlen($copyright)) .
+      Transform::toUInt16LE(strlen($description)) .
+      Transform::toUInt16LE(strlen($rating)) .
+      Transform::toString16LE($title) .
+      Transform::toString16LE($author) .
+      Transform::toString16LE($copyright) .
+      Transform::toString16LE($description) .
+      Transform::toString16LE($rating);
+    $this->setSize(24 /* for header */ + strlen($data));
+    return
+      Transform::toGUID($this->getIdentifier()) .
+      Transform::toInt64LE($this->getSize())  . $data;
+  }
 }

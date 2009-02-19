@@ -2,7 +2,8 @@
 /**
  * PHP Reader Library
  *
- * Copyright (c) 2008 The PHP Reader Project Workgroup. All rights reserved.
+ * Copyright (c) 2008-2009 The PHP Reader Project Workgroup. All rights
+ * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -30,7 +31,7 @@
  *
  * @package    php-reader
  * @subpackage ASF
- * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
+ * @copyright  Copyright (c) 2008-2009 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Id$
  */
@@ -47,7 +48,7 @@ require_once("ASF/Object.php");
  * @package    php-reader
  * @subpackage ASF
  * @author     Sven Vollbehr <svollbehr@gmail.com>
- * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
+ * @copyright  Copyright (c) 2008-2009 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Rev$
  */
@@ -111,12 +112,38 @@ final class ASF_Object_ContentBranding extends ASF_Object
   public function getBannerImageType() { return $this->_bannerImageType; }
   
   /**
+   * Sets the type of data contained in the <i>Banner Image Data</i>. Valid
+   * values are 0 to indicate that there is no banner image data; 1 to indicate
+   * that the data represent a bitmap; 2 to indicate that the data represents a
+   * JPEG; and 3 to indicate that the data represents a GIF. If this value is
+   * set to 0, then the <i>Banner Image Data Size field is set to 0, and the
+   * <i>Banner Image Data</i> field is empty.
+   * 
+   * @param integer $bannerImageType The type of data.
+   */
+  public function setBannerImageType($bannerImageType)
+  {
+    $this->_bannerImageType = $bannerImageType;
+  }
+  
+  /**
    * Returns the entire banner image, including the header for the appropriate
    * image format.
    *
    * @return string
    */
   public function getBannerImageData() { return $this->_bannerImageData; }
+  
+  /**
+   * Sets the entire banner image, including the header for the appropriate
+   * image format.
+   * 
+   * @param string $bannerImageData The entire banner image.
+   */
+  public function setBannerImageData($bannerImageData)
+  {
+    $this->_bannerImageData = $bannerImageData;
+  }
   
   /**
    * Returns, if present, a link to more information about the banner image.
@@ -126,10 +153,67 @@ final class ASF_Object_ContentBranding extends ASF_Object
   public function getBannerImageUrl() { return $this->_bannerImageUrl; }
   
   /**
+   * Sets a link to more information about the banner image.
+   * 
+   * @param string $bannerImageUrl The link.
+   */
+  public function setBannerImageUrl($bannerImageUrl)
+  {
+    $this->_bannerImageUrl = $bannerImageUrl;
+  }
+  
+  /**
    * Returns, if present, a link to more information about the copyright for the
    * content.
    *
    * @return string
    */
   public function getCopyrightUrl() { return $this->_copyrightUrl; }
+  
+  /**
+   * Sets a link to more information about the copyright for the content.
+   * 
+   * @param string $copyrightUrl The copyright link.
+   */
+  public function setCopyrightUrl($copyrightUrl)
+  {
+    $this->_copyrightUrl = $copyrightUrl;
+  }
+  
+  /**
+   * Returns the whether the object is required to be present, or whether
+   * minimum cardinality is 1.
+   * 
+   * @return boolean
+   */
+  public function isMandatory() { return false; }
+  
+  /**
+   * Returns whether multiple instances of this object can be present, or
+   * whether maximum cardinality is greater than 1.
+   * 
+   * @return boolean
+   */
+  public function isMultiple() { return false; }
+  
+  /**
+   * Returns the object data with headers.
+   *
+   * @return string
+   */
+  public function __toString()
+  {
+    $data =
+      Transform::toUInt32LE($this->_bannerImageType) .
+      Transform::toUInt32LE(count($this->_bannerImageData)) .
+      $this->_bannerImageData .
+      Transform::toUInt32LE(count($this->_bannerImageUrl)) .
+      $this->_bannerImageUrl .
+      Transform::toUInt32LE(count($this->_copyrightUrl)) .
+      $this->_copyrightUrl;
+    $this->setSize(24 /* for header */ + strlen($data));
+    return
+      Transform::toGUID($this->getIdentifier()) .
+      Transform::toInt64LE($this->getSize())  . $data;
+  }
 }

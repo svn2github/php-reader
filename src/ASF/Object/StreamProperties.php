@@ -2,7 +2,8 @@
 /**
  * PHP Reader Library
  *
- * Copyright (c) 2008 The PHP Reader Project Workgroup. All rights reserved.
+ * Copyright (c) 2008-2009 The PHP Reader Project Workgroup. All rights
+ * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -30,7 +31,7 @@
  *
  * @package    php-reader
  * @subpackage ASF
- * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
+ * @copyright  Copyright (c) 2008-2009 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Id$
  */
@@ -53,7 +54,7 @@ require_once("ASF/Object.php");
  * @package    php-reader
  * @subpackage ASF
  * @author     Sven Vollbehr <svollbehr@gmail.com>
- * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
+ * @copyright  Copyright (c) 2008-2009 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Rev$
  */
@@ -88,6 +89,9 @@ final class ASF_Object_StreamProperties extends ASF_Object
   /** @var integer */
   private $_flags;
 
+  /** @var integer */
+  private $_reserved;
+
   /** @var Array */
   private $_typeSpecificData = array();
 
@@ -111,7 +115,8 @@ final class ASF_Object_StreamProperties extends ASF_Object
     $typeSpecificDataLength = $this->_reader->readUInt32LE();
     $errorCorrectionDataLength = $this->_reader->readUInt32LE();
     $this->_flags = $this->_reader->readUInt16LE();
-    $this->_reader->skip(4);
+    $this->_reserved = $this->_reader->readUInt32LE();
+    
     switch ($this->_streamType) {
     case self::AUDIO_MEDIA:
       $this->_typeSpecificData = array
@@ -209,11 +214,38 @@ final class ASF_Object_StreamProperties extends ASF_Object
   public function getStreamNumber() { return $this->_flags & 0x3f; }
 
   /**
+   * Returns the number of this stream. 0 is an invalid stream. Valid values are
+   * between 1 and 127. The numbers assigned to streams in an ASF presentation
+   * may be any combination of unique values; parsing logic must not assume that
+   * streams are numbered sequentially.
+   * 
+   * @param integer $streamNumber The number of this stream.
+   */
+  public function setStreamNumber($streamNumber)
+  {
+    if ($streamNumber < 1 || $streamNumber > 127) {
+      require_once("ASF/Exception.php");
+      throw new ASF_Exception("Invalid argument");
+    }
+    $this->_flags = ($this->_flags & 0xffc0) | ($streamNumber & 0x3f);
+  }
+
+  /**
    * Returns the type of the stream (for example, audio, video, and so on).
    *
    * @return string
    */
   public function getStreamType() { return $this->_streamType; }
+
+  /**
+   * Sets the type of the stream (for example, audio, video, and so on).
+   * 
+   * @param integer $streamType The type of the stream.
+   */
+  public function setStreamType($streamType)
+  {
+    $this->_streamType = $streamType;
+  }
 
   /**
    * Returns the error correction type used by this digital media stream. For
@@ -225,6 +257,19 @@ final class ASF_Object_StreamProperties extends ASF_Object
   public function getErrorCorrectionType()
   {
     return $this->_errorCorrectionType;
+  }
+
+  /**
+   * Sets the error correction type used by this digital media stream. For
+   * streams other than audio, this value should be set to NO_ERROR_CORRECTION.
+   * For audio streams, this value should be set to AUDIO_SPREAD.
+   *
+   * @param integer $errorCorrectionType The error correction type used by this
+   *        digital media stream.
+   */
+  public function setErrorCorrectionType($errorCorrectionType)
+  {
+    $this->_errorCorrectionType = $errorCorrectionType;
   }
 
   /**
@@ -240,6 +285,23 @@ final class ASF_Object_StreamProperties extends ASF_Object
    * @return integer
    */
   public function getTimeOffset() { return $this->_timeOffset; }
+  
+  /**
+   * Sets the presentation time offset of the stream in 100-nanosecond units.
+   * The value of this field is added to all of the timestamps of the samples in
+   * the stream. This value shall be equal to the send time of the first
+   * interleaved packet in the data section. The value of this field is
+   * typically 0. It is non-zero in the case when an ASF file is edited and it
+   * is not possible for the editor to change the presentation times and send
+   * times of ASF packets. Note that if more than one stream is present in an
+   * ASF file the offset values of all stream properties objects must be equal.
+   *
+   * @param integer $timeOffset The presentation time offset of the stream.
+   */
+  public function setTimeOffset($timeOffset)
+  {
+    $this->_timeOffset = $timeOffset;
+  }
   
   /**
    * Checks whether or not the flag is set. Returns <var>true</var> if the flag
@@ -258,6 +320,13 @@ final class ASF_Object_StreamProperties extends ASF_Object
   public function getFlags() { return $this->_flags; }
   
   /**
+   * Sets the flags field.
+   *
+   * @param integer $flags The flags field.
+   */
+  public function setFlags($flags) { $this->_flags = $flags; }
+  
+  /**
    * Returns type-specific format data. The structure for the <i>Type-Specific
    * Data</i> field is determined by the value stored in the <i>Stream Type</i>
    * field.
@@ -268,6 +337,19 @@ final class ASF_Object_StreamProperties extends ASF_Object
    * @return Array
    */
   public function getTypeSpecificData() { return $this->_typeSpecificData; }
+  
+  /**
+   * Sets type-specific format data. The structure for the <i>Type-Specific
+   * Data</i> field is determined by the value stored in the <i>Stream Type</i>
+   * field.
+   * 
+   * @param Array $typeSpecificData The type-specific data as key-value pairs of
+   *        an associate array.
+   */
+  public function setTypeSpecificData($typeSpecificData)
+  {
+    $this->_typeSpecificData = $typeSpecificData;
+  }
 
   /**
    * Returns data specific to the error correction type. The structure for the
@@ -284,5 +366,151 @@ final class ASF_Object_StreamProperties extends ASF_Object
   public function getErrorCorrectionData()
   {
     return $this->_errorCorrectionData;
+  }
+  
+  /**
+   * Sets data specific to the error correction type. The structure for the
+   * <i>Error Correction Data</i> field is determined by the value stored in the
+   * <i>Error Correction Type</i> field. For example, an audio data stream might
+   * need to know how codec chunks were redistributed, or it might need a sample
+   * of encoded silence.
+   * 
+   * @param Array $errorCorrectionData The error correction type-specific data
+   *        as key-value pairs of an associate array.
+   */
+  public function setErrorCorrectionData($errorCorrectionData)
+  {
+    $this->_errorCorrectionData = $errorCorrectionData;
+  }
+  
+  /**
+   * Returns the whether the object is required to be present, or whether
+   * minimum cardinality is 1.
+   * 
+   * @return boolean
+   */
+  public function isMandatory() { return true; }
+  
+  /**
+   * Returns whether multiple instances of this object can be present, or
+   * whether maximum cardinality is greater than 1.
+   * 
+   * @return boolean
+   */
+  public function isMultiple() { return false; }
+  
+  /**
+   * Returns the object data with headers.
+   *
+   * @return string
+   */
+  public function __toString()
+  {
+    $data = 
+      Transform::toGUID($this->_streamType) .
+      Transform::toGUID($this->_errorCorrectionType) .
+      Transform::toInt64LE($this->_timeOffset);
+    
+    switch ($this->_streamType) {
+    case self::AUDIO_MEDIA:
+      $typeSpecificData = 
+        Transform::toUInt16LE($this->_typeSpecificData["codecId"]) .
+        Transform::toUInt16LE($this->_typeSpecificData["numberOfChannels"]) .
+        Transform::toUInt32LE($this->_typeSpecificData["samplesPerSecond"]) .
+        Transform::toUInt32LE
+          ($this->_typeSpecificData["avgNumBytesPerSecond"]) .
+        Transform::toUInt16LE($this->_typeSpecificData["blockAlignment"]) .
+        Transform::toUInt16LE($this->_typeSpecificData["bitsPerSample"]) .
+        Transform::toUInt16LE
+          (strlen($this->_typeSpecificData["codecSpecificData"])) .
+        $this->_typeSpecificData["codecSpecificData"];
+      break;
+    case self::VIDEO_MEDIA:
+      $typeSpecificData = 
+        Transform::toUInt32LE($this->_typeSpecificData["encodedImageWidth"]) .
+        Transform::toUInt32LE($this->_typeSpecificData["encodedImageHeight"]) .
+        Transform::toInt8($this->_typeSpecificData["reservedFlags"]) .
+        Transform::toUInt16LE(0) . // Reserved
+        Transform::toUInt32LE
+          (38 + strlen($this->_typeSpecificData["codecSpecificData"])) .
+        Transform::toUInt32LE($this->_typeSpecificData["imageWidth"]) .
+        Transform::toUInt32LE($this->_typeSpecificData["imageHeight"]) .
+        Transform::toUInt16LE($this->_typeSpecificData["reserved"]) .
+        Transform::toUInt16LE($this->_typeSpecificData["bitsPerPixelCount"]) .
+        Transform::toUInt32LE($this->_typeSpecificData["compressionId"]) .
+        Transform::toUInt32LE($this->_typeSpecificData["imageSize"]) .
+        Transform::toUInt32LE
+          ($this->_typeSpecificData["horizontalPixelsPerMeter"]) .
+        Transform::toUInt32LE
+          ($this->_typeSpecificData["verticalPixelsPerMeter"]) .
+        Transform::toUInt32LE($this->_typeSpecificData["colorsUsedCount"]) .
+        Transform::toUInt32LE
+          ($this->_typeSpecificData["importantColorsCount"]) .
+        $this->_typeSpecificData["codecSpecificData"];
+      break;
+    case self::JFIF_MEDIA:
+      $typeSpecificData = 
+        Transform::toUInt32LE($this->_typeSpecificData["imageWidth"]) .
+        Transform::toUInt32LE($this->_typeSpecificData["imageHeight"]) .
+        Transform::toUInt32LE(0);
+      break;
+    case self::DEGRADABLE_JPEG_MEDIA:
+      $typeSpecificData = 
+        Transform::toUInt32LE($this->_typeSpecificData["imageWidth"]) .
+        Transform::toUInt32LE($this->_typeSpecificData["imageHeight"]) .
+        Transform::toUInt16LE(0) .
+        Transform::toUInt16LE(0) .
+        Transform::toUInt16LE(0);
+      $interchangeDataSize = strlen
+        ($this->_typeSpecificData["interchangeData"]);
+      if ($interchangeDataSize == 1)
+        $interchangeDataSize = 0;
+      $typeSpecificData .= 
+        Transform::toUInt16LE($interchangeDataSize) .
+        $this->_typeSpecificData["interchangeData"];
+      break;
+    case self::FILE_TRANSFER_MEDIA:
+    case self::BINARY_MEDIA:
+      $typeSpecificData = 
+        Transform::toGUID($this->_typeSpecificData["majorMediaType"]) .
+        Transform::toGUID($this->_typeSpecificData["mediaSubtype"]) .
+        Transform::toUInt32LE($this->_typeSpecificData["fixedSizeSamples"]) .
+        Transform::toUInt32LE($this->_typeSpecificData["temporalCompression"]) .
+        Transform::toUInt32LE($this->_typeSpecificData["sampleSize"]) .
+        Transform::toGUID($this->_typeSpecificData["formatType"]) .
+        Transform::toUInt32LE(strlen($this->_typeSpecificData["formatData"])) .
+        $this->_typeSpecificData["formatData"];
+      break;
+    case self::COMMAND_MEDIA:
+    default:
+      $typeSpecificData = "";
+    }
+    switch ($this->_errorCorrectionType) {
+    case self::AUDIO_SPREAD:
+      $errorCorrectionData = 
+        Transform::toInt8($this->_errorCorrectionData["span"]) .
+        Transform::toUInt16LE
+          ($this->_errorCorrectionData["virtualPacketLength"]) .
+        Transform::toUInt16LE
+          ($this->_errorCorrectionData["virtualChunkLength"]) .
+        Transform::toUInt16LE
+          (strlen($this->_errorCorrectionData["silenceData"])) .
+        $this->_errorCorrectionData["silenceData"];
+      break;
+    case self::NO_ERROR_CORRECTION:
+    default:
+      $errorCorrectionData = "";
+    }
+    
+    $data .= 
+      Transform::toUInt32LE(strlen($typeSpecificData)) .
+      Transform::toUInt32LE(strlen($errorCorrectionData)) .
+      Transform::toUInt16LE($this->_flags) .
+      Transform::toUInt32LE($this->_reserved) .
+      $typeSpecificData . $errorCorrectionData;
+    $this->setSize(24 /* for header */ + strlen($data));
+    return
+      Transform::toGUID($this->getIdentifier()) .
+      Transform::toInt64LE($this->getSize())  . $data;
   }
 }

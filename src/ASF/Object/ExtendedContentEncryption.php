@@ -62,9 +62,12 @@ final class ASF_Object_ExtendedContentEncryption extends ASF_Object
    * @param Reader $reader  The reader object.
    * @param Array  $options The options array.
    */
-  public function __construct($reader, &$options = array())
+  public function __construct($reader = null, &$options = array())
   {
     parent::__construct($reader, $options);
+    
+    if ($reader === null)
+      return;
     
     $dataSize = $this->_reader->readUInt32LE();
     $this->_data = $this->_reader->read($dataSize);
@@ -77,4 +80,42 @@ final class ASF_Object_ExtendedContentEncryption extends ASF_Object
    * @return string
    */
   public function getData() { return $this->_data; }
+  
+  /**
+   * Sets the array of bytes required by the DRM client to manipulate the
+   * protected content.
+   * 
+   * @param string $data The data.
+   */
+  public function setData($data) { $this->_data = $data; }
+  
+  /**
+   * Returns the whether the object is required to be present, or whether
+   * minimum cardinality is 1.
+   * 
+   * @return boolean
+   */
+  public function isMandatory() { return false; }
+  
+  /**
+   * Returns whether multiple instances of this object can be present, or
+   * whether maximum cardinality is greater than 1.
+   * 
+   * @return boolean
+   */
+  public function isMultiple() { return true; }
+  
+  /**
+   * Returns the object data with headers.
+   *
+   * @return string
+   */
+  public function __toString()
+  {
+    $data = Transform::toUInt32LE(strlen($this->_data)) . $this->_data;
+    $this->setSize(24 /* for header */ + strlen($data));
+    return
+      Transform::toGUID($this->getIdentifier()) .
+      Transform::toInt64LE($this->getSize())  . $data;
+  }
 }

@@ -2,7 +2,8 @@
 /**
  * PHP Reader Library
  *
- * Copyright (c) 2008 The PHP Reader Project Workgroup. All rights reserved.
+ * Copyright (c) 2008-2009 The PHP Reader Project Workgroup. All rights
+ * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -30,7 +31,7 @@
  *
  * @package    php-reader
  * @subpackage ASF
- * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
+ * @copyright  Copyright (c) 2008-2009 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Id$
  */
@@ -45,7 +46,7 @@ require_once("ASF/Object.php");
  * @package    php-reader
  * @subpackage ASF
  * @author     Sven Vollbehr <svollbehr@gmail.com>
- * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
+ * @copyright  Copyright (c) 2008-2009 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Rev$
  */
@@ -64,10 +65,13 @@ final class ASF_Object_Compatibility extends ASF_Object
    * @param Reader $reader  The reader object.
    * @param Array  $options The options array.
    */
-  public function __construct($reader, &$options = array())
+  public function __construct($reader = null, &$options = array())
   {
     parent::__construct($reader, $options);
-
+    
+    if ($reader === null)
+      return;
+    
     $this->_profile = $this->_reader->readUInt8();
     $this->_mode = $this->_reader->readUInt8();
   }
@@ -80,9 +84,55 @@ final class ASF_Object_Compatibility extends ASF_Object
   public function getProfile() { return $this->_profile; }
 
   /**
+   * Returns the profile field. This field is reserved and is set to 2.
+   * 
+   * @param integer $profile The profile.
+   */
+  public function setProfile($profile) { $this->_profile = $profile; }
+
+  /**
    * Returns the mode field. This field is reserved and is set to 1.
    *
    * @return integer
    */
   public function getMode() { return $this->_mode; }
+
+  /**
+   * Sets the mode field. This field is reserved and is set to 1.
+   * 
+   * @param integer $mode The mode.
+   */
+  public function setMode($mode) { $this->_mode = $mode; }
+  
+  /**
+   * Returns the whether the object is required to be present, or whether
+   * minimum cardinality is 1.
+   * 
+   * @return boolean
+   */
+  public function isMandatory() { return false; }
+  
+  /**
+   * Returns whether multiple instances of this object can be present, or
+   * whether maximum cardinality is greater than 1.
+   * 
+   * @return boolean
+   */
+  public function isMultiple() { return false; }
+  
+  /**
+   * Returns the object data with headers.
+   *
+   * @return string
+   */
+  public function __toString()
+  {
+    $data =
+      Transform::toUInt8($this->_profile) .
+      Transform::toUInt8($this->_mode);
+    $this->setSize(24 /* for header */ + strlen($data));
+    return
+      Transform::toGUID($this->getIdentifier()) .
+      Transform::toInt64LE($this->getSize())  . $data;
+  }
 }

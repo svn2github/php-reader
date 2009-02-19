@@ -2,7 +2,7 @@
 /**
  * PHP Reader Library
  *
- * Copyright (c) 2006-2008 The PHP Reader Project Workgroup. All rights
+ * Copyright (c) 2006-2009 The PHP Reader Project Workgroup. All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,7 +31,7 @@
  *
  * @package    php-reader
  * @subpackage ASF
- * @copyright  Copyright (c) 2006-2008 The PHP Reader Project Workgroup
+ * @copyright  Copyright (c) 2006-2009 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Id$
  */
@@ -69,28 +69,17 @@ require_once("ASF/Object/Container.php");
  * @package    php-reader
  * @subpackage ASF
  * @author     Sven Vollbehr <svollbehr@gmail.com>
- * @copyright  Copyright (c) 2006-2008 The PHP Reader Project Workgroup
+ * @copyright  Copyright (c) 2006-2009 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Rev$
  */
 final class ASF_Object_Header extends ASF_Object_Container
 {
-  const FILE_PROPERTIES = "8cabdca1-a947-11cf-8ee4-00c00c205365";
-  const STREAM_PROPERTIES = "b7dc0791-a9b7-11cf-8ee6-00c00c205365";
-  const HEADER_EXTENSION = "5fbf03b5-a92e-11cf-8ee3-00c00c205365";
-  const CODEC_LIST = "86d15240-311d-11d0-a3a4-00a0c90348f6";
-  const SCRIPT_COMMAND = "1efb1a30-0b62-11d0-a39b-00a0c90348f6";
-  const MARKER = "f487cd01-a951-11cf-8ee6-00c00c205365";
-  const BITRATE_MUTUAL_EXCLUSION = "d6e229dc-35da-11d1-9034-00a0c90349be";
-  const ERROR_CORRECTION = "75b22635-668e-11cf-a6d9-00aa0062ce6c";
-  const CONTENT_DESCRIPTION = "75b22633-668e-11cf-a6d9-00aa0062ce6c";
-  const EXTENDED_CONTENT_DESCRIPTION = "d2d0a440-e307-11d2-97f0-00a0c95ea850";
-  const CONTENT_BRANDING = "2211b3fa-bd23-11d2-b4b7-00a0c955fc6e";
-  const STREAM_BITRATE_PROPERTIES = "7bf875ce-468d-11d1-8d82-006097c9a2b2";
-  const CONTENT_ENCRYPTION = "2211b3fb-bd23-11d2-b4b7-00a0c955fc6e";
-  const EXTENDED_CONTENT_ENCRYPTION = "298ae614-2622-4c17-b935-dae07ee9289c";
-  const DIGITAL_SIGNATURE = "2211b3fc-bd23-11d2-b4b7-00a0c955fc6e";
-  const PADDING = "1806d474-cadf-4509-a4ba-9aabcb96aae8";
+  /** @var integer */
+  private $_reserved1;
+  
+  /** @var integer */
+  private $_reserved2;
   
   /**
    * Constructs the class with given parameters and options.
@@ -102,7 +91,9 @@ final class ASF_Object_Header extends ASF_Object_Container
   {
     parent::__construct($reader, $options);
     
-    $this->_reader->skip(6);
+    $this->_reader->skip(4);
+    $this->_reserved1 = $this->_reader->readInt8();
+    $this->_reserved2 = $this->_reader->readInt8();
     $this->constructObjects
       (array
        (self::FILE_PROPERTIES => "FileProperties",
@@ -121,5 +112,42 @@ final class ASF_Object_Header extends ASF_Object_Container
         self::EXTENDED_CONTENT_ENCRYPTION => "ExtendedContentEncryption",
         self::DIGITAL_SIGNATURE => "DigitalSignature",
         self::PADDING => "Padding"));
+  }
+  
+  /**
+   * Returns the whether the object is required to be present, or whether
+   * minimum cardinality is 1.
+   * 
+   * @return boolean
+   */
+  public function isMandatory() { return true; }
+  
+  /**
+   * Returns whether multiple instances of this object can be present, or
+   * whether maximum cardinality is greater than 1.
+   * 
+   * @return boolean
+   */
+  public function isMultiple() { return false; }
+  
+  /**
+   * Returns the object data with headers.
+   *
+   * @return string
+   */
+  public function __toString()
+  {
+    $data = "";
+    foreach ($this->getObjects() as $objects)
+      foreach ($objects as $object)
+        $data .= $object->__toString();
+    $this->setSize
+      (24 /* for header */ + 6 + strlen($data) /* for object data */);
+    return
+      Transform::toGUID($this->getIdentifier()) .
+      Transform::toInt64LE($this->getSize()) .
+      Transform::toUInt32LE(count($this->getObjects())) .
+      Transform::toInt8($this->_reserved1) .
+      Transform::toInt8($this->_reserved2) . $data;
   }
 }

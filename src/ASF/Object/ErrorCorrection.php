@@ -2,7 +2,8 @@
 /**
  * PHP Reader Library
  *
- * Copyright (c) 2008 The PHP Reader Project Workgroup. All rights reserved.
+ * Copyright (c) 2008-2009 The PHP Reader Project Workgroup. All rights
+ * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -30,7 +31,7 @@
  *
  * @package    php-reader
  * @subpackage ASF
- * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
+ * @copyright  Copyright (c) 2008-2009 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Id$
  */
@@ -54,7 +55,7 @@ require_once("ASF/Object.php");
  * @package    php-reader
  * @subpackage ASF
  * @author     Sven Vollbehr <svollbehr@gmail.com>
- * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
+ * @copyright  Copyright (c) 2008-2009 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Rev$
  */
@@ -73,9 +74,12 @@ final class ASF_Object_ErrorCorrection extends ASF_Object
    * @param Reader $reader  The reader object.
    * @param Array  $options The options array.
    */
-  public function __construct($reader, &$options = array())
+  public function __construct($reader = null, &$options = array())
   {
     parent::__construct($reader, $options);
+    
+    if ($reader === null)
+      return;
     
     $this->_type = $this->_reader->readGUID();
     $dataLength = $this->_reader->readUInt32LE();
@@ -90,6 +94,13 @@ final class ASF_Object_ErrorCorrection extends ASF_Object
   public function getType() { return $this->_type; }
   
   /**
+   * Sets the type of error correction.
+   * 
+   * @param string $type The type of error correction.
+   */
+  public function setType($type) { $this->_type = $type; }
+  
+  /**
    * Returns the data specific to the error correction scheme. The structure for
    * the <i>Error Correction Data</i> field is determined by the value stored in
    * the <i>Error Correction Type</i> field.
@@ -97,4 +108,45 @@ final class ASF_Object_ErrorCorrection extends ASF_Object
    * @return Array
    */
   public function getData() { return $this->_data; }
+  
+  /**
+   * Sets the data specific to the error correction scheme. The structure for
+   * the <i>Error Correction Data</i> field is determined by the value stored in
+   * the <i>Error Correction Type</i> field.
+   * 
+   * @param Array $data The error correction specific data.
+   */
+  public function setData($data) { $this->_data = $data; }
+  
+  /**
+   * Returns the whether the object is required to be present, or whether
+   * minimum cardinality is 1.
+   * 
+   * @return boolean
+   */
+  public function isMandatory() { return false; }
+  
+  /**
+   * Returns whether multiple instances of this object can be present, or
+   * whether maximum cardinality is greater than 1.
+   * 
+   * @return boolean
+   */
+  public function isMultiple() { return false; }
+  
+  /**
+   * Returns the object data with headers.
+   *
+   * @return string
+   */
+  public function __toString()
+  {
+    $data =
+      Transform::toGUID($this->_type) .
+      Transform::toUInt32LE(strlen($this->_data)) . $this->_data;
+    $this->setSize(24 /* for header */ + strlen($data));
+    return
+      Transform::toGUID($this->getIdentifier()) .
+      Transform::toInt64LE($this->getSize()) . $data;
+  }
 }

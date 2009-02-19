@@ -2,7 +2,8 @@
 /**
  * PHP Reader Library
  *
- * Copyright (c) 2008 The PHP Reader Project Workgroup. All rights reserved.
+ * Copyright (c) 2008-2009 The PHP Reader Project Workgroup. All rights
+ * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -30,7 +31,7 @@
  *
  * @package    php-reader
  * @subpackage ASF
- * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
+ * @copyright  Copyright (c) 2008-2009 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Id$
  */
@@ -62,7 +63,7 @@ require_once("ASF/Object.php");
  * @package    php-reader
  * @subpackage ASF
  * @author     Sven Vollbehr <svollbehr@gmail.com>
- * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
+ * @copyright  Copyright (c) 2008-2009 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Rev$
  */
@@ -178,10 +179,13 @@ final class ASF_Object_ExtendedStreamProperties extends ASF_Object
    * @param Reader $reader  The reader object.
    * @param Array  $options The options array.
    */
-  public function __construct($reader, &$options = array())
+  public function __construct($reader = null, &$options = array())
   {
     parent::__construct($reader, $options);
-
+    
+    if ($reader === null)
+      return;
+    
     $this->_startTime = $this->_reader->readInt64LE();
     $this->_endTime = $this->_reader->readInt64LE();
     $this->_dataBitrate = $this->_reader->readUInt32LE();
@@ -230,6 +234,19 @@ final class ASF_Object_ExtendedStreamProperties extends ASF_Object
   public function getStartTime() { return $this->_startTime; }
 
   /**
+   * Sets the presentation time of the first object, indicating where this
+   * digital media stream starts within the context of the timeline of the ASF
+   * file as a whole. This time value corresponds to presentation times as they
+   * appear in the data packets (adjusted by the preroll).
+   * 
+   * The given value must be in units of milliseconds or optionally be set to 0,
+   * in which case the field will be ignored.
+   * 
+   * @param integer $startTime The presentation time of the first object.
+   */
+  public function setStartTime($startTime) { $this->_startTime = $startTime; }
+
+  /**
    * Returns the presentation time of the last object plus the duration of play,
    * indicating where this digital media stream ends within the context of the
    * timeline of the ASF file as a whole. This time value corresponds to
@@ -242,6 +259,21 @@ final class ASF_Object_ExtendedStreamProperties extends ASF_Object
   public function getEndTime() { return $this->_endTime; }
 
   /**
+   * Sets the presentation time of the last object plus the duration of play,
+   * indicating where this digital media stream ends within the context of the
+   * timeline of the ASF file as a whole. This time value corresponds to
+   * presentation times as they appear in the data packets (adjusted by the
+   * preroll).
+   * 
+   * The given value must be given in units of milliseconds or optionally be set
+   * to 0, in which case the field will be ignored.
+   * 
+   * @param integer $endTime The presentation time of the last object plus the
+   *        duration of play.
+   */
+  public function setEndTime($endTime) { $this->_endTime = $endTime; }
+
+  /**
    * Returns the leak rate R, in bits per second, of a leaky bucket that
    * contains the data portion of the stream without overflowing, excluding all
    * ASF Data Packet overhead. The size of the leaky bucket is specified by the
@@ -252,12 +284,38 @@ final class ASF_Object_ExtendedStreamProperties extends ASF_Object
   public function getDataBitrate() { return $this->_dataBitrate; }
 
   /**
+   * Sets the leak rate R, in bits per second, of a leaky bucket that
+   * contains the data portion of the stream without overflowing, excluding all
+   * ASF Data Packet overhead. The size of the leaky bucket is specified by the
+   * value of the <i>Buffer Size</i> field.
+   * 
+   * This field must be given a non-zero value.
+   * 
+   * @param integer $dataBitrate The leak rate.
+   */
+  public function setDataBitrate($dataBitrate)
+  {
+    $this->_dataBitrate = $dataBitrate;
+  }
+
+  /**
    * Returns the size B, in milliseconds, of the leaky bucket used in the
    * <i>Data Bitrate</i> definition.
    *
    * @return integer
    */
   public function getBufferSize() { return $this->_bufferSize; }
+
+  /**
+   * Sets the size B, in milliseconds, of the leaky bucket used in the
+   * <i>Data Bitrate</i> definition.
+   * 
+   * @param integer $bufferSize The size.
+   */
+  public function setBufferSize($bufferSize)
+  {
+    $this->_bufferSize = $bufferSize;
+  }
 
   /**
    * Returns the initial fullness, in milliseconds, of the leaky bucket used in
@@ -271,6 +329,20 @@ final class ASF_Object_ExtendedStreamProperties extends ASF_Object
   public function getInitialBufferFullness()
   {
     return $this->_initialBufferFullness;
+  }
+
+  /**
+   * Sets the initial fullness, in milliseconds, of the leaky bucket used in the
+   * <i>Data Bitrate</i> definition. This is the fullness of the buffer at the
+   * instant before the first bit in the stream is dumped into the bucket.
+   * Typically, this value is set to 0. This value shall not exceed the value in
+   * the <i>Buffer Size</i> field.
+   * 
+   * @param integer $initialBufferFullness The initial fullness.
+   */
+  public function setInitialBufferFullness($initialBufferFullness)
+  {
+    $this->_initialBufferFullness = $initialBufferFullness;
   }
 
   /**
@@ -291,6 +363,23 @@ final class ASF_Object_ExtendedStreamProperties extends ASF_Object
   }
 
   /**
+   * Sets the leak rate RAlt, in bits per second, of a leaky bucket that
+   * contains the data portion of the stream without overflowing, excluding all
+   * ASF <i>Data Packet</i> overhead. The size of the leaky bucket is specified
+   * by the value of the <i>Alternate Buffer Size</i> field. This value is
+   * relevant in most scenarios where the bit rate is not exactly constant, but
+   * it is especially useful for streams that have highly variable bit rates.
+   * This field can optionally be set to the same value as the <i>Data
+   * Bitrate</i> field.
+   * 
+   * @param integer $alternateDataBitrate The alternate leak rate.
+   */
+  public function setAlternateDataBitrate($alternateDataBitrate)
+  {
+    $this->_alternateDataBitrate = $alternateDataBitrate;
+  }
+
+  /**
    * Returns the size BAlt, in milliseconds, of the leaky bucket used in the
    * <i>Alternate Data Bitrate</i> definition. This value is relevant in most
    * scenarios where the bit rate is not exactly constant, but it is especially
@@ -302,6 +391,20 @@ final class ASF_Object_ExtendedStreamProperties extends ASF_Object
   public function getAlternateBufferSize()
   {
     return $this->_alternateBufferSize;
+  }
+
+  /**
+   * Sets the size BAlt, in milliseconds, of the leaky bucket used in the
+   * <i>Alternate Data Bitrate</i> definition. This value is relevant in most
+   * scenarios where the bit rate is not exactly constant, but it is especially
+   * useful for streams that have highly variable bit rates. This field can
+   * optionally be set to the same value as the <i>Buffer Size</i> field.
+   * 
+   * @param integer $alternateBufferSize
+   */
+  public function setAlternateBufferSize($alternateBufferSize)
+  {
+    $this->_alternateBufferSize = $alternateBufferSize;
   }
 
   /**
@@ -319,6 +422,22 @@ final class ASF_Object_ExtendedStreamProperties extends ASF_Object
   }
 
   /**
+   * Sets the initial fullness, in milliseconds, of the leaky bucket used in the
+   * <i>Alternate Data Bitrate</i> definition. This is the fullness of the
+   * buffer at the instant before the first bit in the stream is dumped into the
+   * bucket. Typically, this value is set to 0. This value does not exceed the
+   * value of the <i>Alternate Buffer Size</i> field.
+   * 
+   * @param integer $alternateInitialBufferFullness The alternate initial
+   *        fullness.
+   */
+  public function setAlternateInitialBufferFullness
+    ($alternateInitialBufferFullness)
+  {
+    $this->_alternateInitialBufferFullness = $alternateInitialBufferFullness;
+  }
+
+  /**
    * Returns the maximum size of the largest sample stored in the data packets
    * for a stream. A value of 0 means unknown.
    *
@@ -327,6 +446,17 @@ final class ASF_Object_ExtendedStreamProperties extends ASF_Object
   public function getMaximumObjectSize()
   {
     return $this->_maximumObjectSize;
+  }
+
+  /**
+   * Sets the maximum size of the largest sample stored in the data packets for
+   * a stream. A value of 0 means unknown.
+   * 
+   * @param integer $maximumObjectSize The maximum size of the largest sample.
+   */
+  public function setMaximumObjectSize($maximumObjectSize)
+  {
+    $this->_maximumObjectSize = $maximumObjectSize;
   }
 
   /**
@@ -343,6 +473,19 @@ final class ASF_Object_ExtendedStreamProperties extends ASF_Object
   }
 
   /**
+   * Sets the average time duration, measured in 100-nanosecond units, of
+   * each frame. This number should be rounded to the nearest integer. This
+   * field can optionally be set to 0 if the average time per frame is unknown
+   * or unimportant. It is recommended that this field be set for video.
+   * 
+   * @param integer $averageTimePerFrame The average time duration.
+   */
+  public function setAverageTimePerFrame($averageTimePerFrame)
+  {
+    $this->_averageTimePerFrame = $averageTimePerFrame;
+  }
+
+  /**
    * Returns the number of this stream. 0 is an invalid stream number (that is,
    * other <i>Header Objects</i> use stream number 0 to refer to the entire file
    * as a whole rather than to a specific media stream within the file). Valid
@@ -353,6 +496,19 @@ final class ASF_Object_ExtendedStreamProperties extends ASF_Object
   public function getStreamNumber()
   {
     return $this->_streamNumber;
+  }
+
+  /**
+   * Sets the number of this stream. 0 is an invalid stream number (that is,
+   * other <i>Header Objects</i> use stream number 0 to refer to the entire file
+   * as a whole rather than to a specific media stream within the file). Valid
+   * values are between 1 and 127.
+   * 
+   * @param integer $streamNumber The number of this stream.
+   */
+  public function setStreamNumber($streamNumber)
+  {
+    $this->_streamNumber = $streamNumber;
   }
 
   /**
@@ -371,11 +527,26 @@ final class ASF_Object_ExtendedStreamProperties extends ASF_Object
   }
 
   /**
+   * Sets the language, if any, which the content of the stream uses or assumes.
+   * Refer to the {@link LanguageList Language List Object} description for the
+   * details concerning how the <i>Stream Language Index</i> and <i>Language
+   * Index</i> fields should be used. Note that this is an index into the
+   * languages listed in the <i>Language List Object</i> rather than a language
+   * identifier.
+   * 
+   * @param integer $streamLanguageIndex The language index.
+   */
+  public function setStreamLanguageIndex($streamLanguageIndex)
+  {
+    $this->_streamLanguageIndex = $streamLanguageIndex;
+  }
+
+  /**
    * Returns an array of Stream Names. Each stream name instance is potentially
    * localized into a specific language. The <i>Language Index</i> field
    * indicates the language in which the <i>Stream Name</i> has been written.
    * 
-   * The array contains the following keys:
+   * The array entry contains the following keys:
    *   o languageIndex -- The language index
    *   o streamName -- The localized stream name
    *
@@ -384,6 +555,22 @@ final class ASF_Object_ExtendedStreamProperties extends ASF_Object
   public function getStreamNames()
   {
     return $this->_streamNames;
+  }
+
+  /**
+   * Sets the array of stream names. Each stream name instance is potentially
+   * localized into a specific language. The <i>Language Index</i> field
+   * indicates the language in which the <i>Stream Name</i> has been written.
+   * 
+   * The array entries are to contain the following keys:
+   *   o languageIndex -- The language index
+   *   o streamName -- The localized stream name
+   * 
+   * @param Array $streamNames The array of stream names
+   */
+  public function setStreamNames($streamNames)
+  {
+    $this->_streamNames = $streamNames;
   }
 
   /**
@@ -397,7 +584,7 @@ final class ASF_Object_ExtendedStreamProperties extends ASF_Object
    * <i>Extended Stream Properties Object</i> for each type of per-media-object
    * properties that will appear with the payloads for this stream.
    * 
-   * The array contains the following keys:
+   * The array entry contains the following keys:
    *   o extensionSystemId -- Specifies a unique identifier for the extension
    *     system.
    *   o extensionDataSize -- Specifies the fixed size of the extension data for
@@ -414,5 +601,97 @@ final class ASF_Object_ExtendedStreamProperties extends ASF_Object
   public function getPayloadExtensionSystems()
   {
     return $this->_payloadExtensionSystems;
+  }
+
+  /**
+   * Sets an array of payload extension systems. Payload extensions provide a
+   * way for content creators to specify kinds of data that will appear in the
+   * payload header for every payload from this stream. This system is used when
+   * stream properties must be conveyed at the media object level. The
+   * <i>Replicated Data</i> bytes in the payload header will contain these
+   * properties in the order in which the <i>Payload Extension Systems</i>
+   * appear in this object. A <i>Payload Extension System</i> must appear in the
+   * <i>Extended Stream Properties Object</i> for each type of per-media-object
+   * properties that will appear with the payloads for this stream.
+   * 
+   * The array enties are to contain the following keys:
+   *   o extensionSystemId -- Specifies a unique identifier for the extension
+   *     system.
+   *   o extensionDataSize -- Specifies the fixed size of the extension data for
+   *     this system that will appear in the replicated data alongside every
+   *     payload for this stream. If this extension system uses variable-size
+   *     data, then this should be set to 0xffff. Note, however, that replicated
+   *     data length is limited to 255 bytes, which limits the total size of all
+   *     extension systems for a particular stream.
+   *   o extensionSystemInfo -- Specifies additional information to describe
+   *     this extension system (optional).
+   * 
+   * @param Array $payloadExtensionSystems The array of payload extension
+   *        systems.
+   */
+  public function setPayloadExtensionSystems($payloadExtensionSystems)
+  {
+    $this->_payloadExtensionSystems = $payloadExtensionSystems;
+  }
+  
+  /**
+   * Returns the whether the object is required to be present, or whether
+   * minimum cardinality is 1.
+   * 
+   * @return boolean
+   */
+  public function isMandatory() { return false; }
+  
+  /**
+   * Returns whether multiple instances of this object can be present, or
+   * whether maximum cardinality is greater than 1.
+   * 
+   * @return boolean
+   */
+  public function isMultiple() { return true; }
+  
+  /**
+   * Returns the object data with headers.
+   *
+   * @return string
+   */
+  public function __toString()
+  {
+    $data =
+      Transform::toInt64LE($this->_startTime) .
+      Transform::toInt64LE($this->_endTime) . 
+      Transform::toUInt32LE($this->_dataBitrate) .
+      Transform::toUInt32LE($this->_bufferSize) .
+      Transform::toUInt32LE($this->_initialBufferFullness) .
+      Transform::toUInt32LE($this->_alternateDataBitrate) .
+      Transform::toUInt32LE($this->_alternateBufferSize) .
+      Transform::toUInt32LE($this->_alternateInitialBufferFullness) .
+      Transform::toUInt32LE($this->_maximumObjectSize) .
+      Transform::toUInt32LE($this->_flags) .
+      Transform::toUInt16LE($this->_streamNumber) .
+      Transform::toUInt16LE($this->_streamLanguageIndex) .
+      Transform::toInt64LE($this->_averageTimePerFrame) .
+      Transform::toUInt16LE($streamNameCount = count($this->_streamNames)) .
+      Transform::toUInt16LE
+        ($payloadExtensionSystemCount = count($this->_payloadExtensionSystems));
+    for ($i = 0; $i < $streamNameCount; $i++)
+      $data .=
+        Transform::toUInt16LE($this->_streamNames["languageIndex"]) .
+        Transform::toUInt16LE(strlen($streamName = iconv
+          ($this->getOption("encoding"), "utf-16le",
+           $this->_streamNames["streamName"]) . "\0\0")) .
+        Transform::toString16LE($streamName);
+    for ($i = 0; $i < $payloadExtensionSystemCount; $i++)
+      $data .=
+        Transform::toGUID($this->_streamNames["extensionSystemId"]) .
+        Transform::toUInt16LE($this->_streamNames["extensionDataSize"]) .
+        Transform::toUInt16LE(strlen($extensionSystemInfo = iconv
+          ($this->getOption("encoding"), "utf-16le",
+           $this->_streamNames["extensionSystemInfo"]) . "\0\0")) .
+        Transform::toString16LE($extensionSystemInfo);
+    $this->setSize(24 /* for header */ + strlen($data));
+    return
+      Transform::toGUID($this->getIdentifier()) .
+      Transform::toInt64LE($this->getSize())  . $data;
   }
 }

@@ -2,7 +2,7 @@
 /**
  * PHP Reader Library
  *
- * Copyright (c) 2008 The PHP Reader Project Workgroup. All rights reserved.
+ * Copyright (c) 2008-2009 The PHP Reader Project Workgroup. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -30,7 +30,7 @@
  *
  * @package    php-reader
  * @subpackage ASF
- * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
+ * @copyright  Copyright (c) 2008-2009 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Id$
  */
@@ -49,7 +49,7 @@ require_once("ASF/Object.php");
  * @package    php-reader
  * @subpackage ASF
  * @author     Sven Vollbehr <svollbehr@gmail.com>
- * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
+ * @copyright  Copyright (c) 2008-2009 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Rev$
  */
@@ -79,7 +79,10 @@ final class ASF_Object_BandwidthSharing extends ASF_Object
    */
   public function __construct($reader, &$options = array())
   {
-    parent::__construct($reader, $options);
+    parent::__construct($reader = null, $options);
+    
+    if ($reader === null)
+      return;
     
     $this->_sharingType = $this->_reader->readGUID();
     $this->_dataBitrate = $this->_reader->readUInt32LE();
@@ -101,6 +104,20 @@ final class ASF_Object_BandwidthSharing extends ASF_Object
   public function getSharingType() { return $this->_sharingType; }
   
   /**
+   * Sets the type of sharing relationship for this object. Two types are
+   * predefined: SHARING_PARTIAL, in which any number of the streams in the
+   * relationship may be streaming data at any given time; and
+   * SHARING_EXCLUSIVE, in which only one of the streams in the relationship
+   * may be streaming data at any given time.
+   *
+   * @return string
+   */
+  public function setSharingType($sharingType)
+  {
+    $this->_sharingType = $sharingType;
+  }
+  
+  /**
    * Returns the leak rate R, in bits per second, of a leaky bucket that
    * contains the data portion of all of the streams, excluding all ASF Data
    * Packet overhead, without overflowing. The size of the leaky bucket is
@@ -114,6 +131,22 @@ final class ASF_Object_BandwidthSharing extends ASF_Object
   public function getDataBitrate() { return $this->_dataBitrate; }
   
   /**
+   * Sets the leak rate R, in bits per second, of a leaky bucket that contains
+   * the data portion of all of the streams, excluding all ASF Data Packet
+   * overhead, without overflowing. The size of the leaky bucket is specified by
+   * the value of the Buffer Size field. This value can be less than the sum of
+   * all of the data bit rates in the
+   * {@link ASF_Object_ExtendedStreamProperties Extended Stream Properties}
+   * Objects for the streams contained in this bandwidth-sharing relationship.
+   * 
+   * @param integer $dataBitrate The data bitrate.
+   */
+  public function setDataBitrate($dataBitrate)
+  {
+    $this->_dataBitrate = $dataBitrate;
+  }
+  
+  /**
    * Specifies the size B, in bits, of the leaky bucket used in the Data Bitrate
    * definition. This value can be less than the sum of all of the buffer sizes
    * in the {@link ASF_Object_ExtendedStreamProperties Extended Stream
@@ -125,9 +158,69 @@ final class ASF_Object_BandwidthSharing extends ASF_Object
   public function getBufferSize() { return $this->_bufferSize; }
   
   /**
+   * Sets the size B, in bits, of the leaky bucket used in the Data Bitrate
+   * definition. This value can be less than the sum of all of the buffer sizes
+   * in the {@link ASF_Object_ExtendedStreamProperties Extended Stream
+   * Properties} Objects for the streams contained in this bandwidth-sharing
+   * relationship.
+   * 
+   * @param integer $bufferSize The buffer size.
+   */
+  public function setBufferSize($bufferSize)
+  {
+    $this->_bufferSize = $bufferSize;
+  }
+  
+  /**
    * Returns an array of stream numbers.
    *
    * @return Array
    */
   public function getStreamNumbers() { return $this->_streamNumbers; }
+  
+  /**
+   * Sets the array of stream numbers.
+   *
+   * @param Array $streamNumbers The array of stream numbers.
+   */
+  public function setStreamNumbers($streamNumbers)
+  {
+    $this->_streamNumbers = $streamNumbers;
+  }
+  
+  /**
+   * Returns the whether the object is required to be present, or whether
+   * minimum cardinality is 1.
+   * 
+   * @return boolean
+   */
+  public function isMandatory() { return false; }
+  
+  /**
+   * Returns whether multiple instances of this object can be present, or
+   * whether maximum cardinality is greater than 1.
+   * 
+   * @return boolean
+   */
+  public function isMultiple() { return true; }
+  
+  /**
+   * Returns the object data with headers.
+   *
+   * @return string
+   */
+  public function __toString()
+  {
+    $data =
+      Transform::toGUID($this->_sharingType) .
+      Transform::toUInt32LE($this->_dataBitrate) .
+      Transform::toUInt32LE($this->_bufferSize) .
+      Transform::toUInt16LE($streamNumbersCount = count($this->_streamNumber));
+    for ($i = 0; $i < $streamNumbersCount; $i++)
+      $data .= Transform::toUInt16LE($this->_streamNumbers[$i]);
+    $this->setSize(24 /* for header */ + strlen($data));
+    return
+      Transform::toGUID($this->getIdentifier()) .
+      Transform::toInt64LE($this->getSize())  . $data;
+  }
 }

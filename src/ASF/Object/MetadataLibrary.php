@@ -2,7 +2,8 @@
 /**
  * PHP Reader Library
  *
- * Copyright (c) 2008 The PHP Reader Project Workgroup. All rights reserved.
+ * Copyright (c) 2008-2009 The PHP Reader Project Workgroup. All rights
+ * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -30,7 +31,7 @@
  *
  * @package    php-reader
  * @subpackage ASF
- * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
+ * @copyright  Copyright (c) 2008-2009 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Id$
  */
@@ -52,7 +53,7 @@ require_once("ASF/Object.php");
  * @package    php-reader
  * @subpackage ASF
  * @author     Sven Vollbehr <svollbehr@gmail.com>
- * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
+ * @copyright  Copyright (c) 2008-2009 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Rev$
  */
@@ -68,9 +69,12 @@ final class ASF_Object_MetadataLibrary extends ASF_Object
    * @param Reader $reader  The reader object.
    * @param Array  $options The options array.
    */
-  public function __construct($reader, &$options = array())
+  public function __construct($reader = null, &$options = array())
   {
     parent::__construct($reader, $options);
+    
+    if ($reader === null)
+      return;
     
     $descriptionRecordsCount = $this->_reader->readUInt16LE();
     for ($i = 0; $i < $descriptionRecordsCount; $i++) {
@@ -116,6 +120,30 @@ final class ASF_Object_MetadataLibrary extends ASF_Object
    * Returns an array of description records. Each record consists of the
    * following keys.
    * 
+   *   o languageIndex -- Specifies the index into the
+   *     {@link LanguageList Language List Object} that identifies the language
+   *     of this attribute. If there is no <i>Language List Object</i> present,
+   *     this field is zero.
+   * 
+   *   o streamNumber -- Specifies whether the entry applies to a specific
+   *     digital media stream or whether it applies to the whole file. A value
+   *     of 0 in this field indicates that it applies to the whole file;
+   *     otherwise, the entry applies only to the indicated stream number. Valid
+   *     values are between 1 and 127.
+   * 
+   *   o name -- Specifies the name that identifies the attribute being
+   *     described.
+   * 
+   *   o data -- Specifies the actual metadata being stored.
+   * 
+   * @return Array
+   */
+  public function getDescriptionRecords() { return $this->_descriptionRecords; }
+  
+  /**
+   * Sets an array of description records. Each record must consist of the
+   * following keys.
+   * 
    *   o languageIndex -- Specifies the index into the <i>Language List
    *     Object</i> that identifies the language of this attribute. If there is
    *     no <i>Language List Object</i> present, this field is zero.
@@ -133,5 +161,94 @@ final class ASF_Object_MetadataLibrary extends ASF_Object
    * 
    * @return Array
    */
-  public function getDescriptionRecords() { return $this->_descriptionRecords; }
+  public function setDescriptionRecords($descriptionRecords)
+  {
+    $this->_descriptionRecords = $descriptionRecords;
+  }
+  
+  /**
+   * Returns the whether the object is required to be present, or whether
+   * minimum cardinality is 1.
+   * 
+   * @return boolean
+   */
+  public function isMandatory() { return false; }
+  
+  /**
+   * Returns whether multiple instances of this object can be present, or
+   * whether maximum cardinality is greater than 1.
+   * 
+   * @return boolean
+   */
+  public function isMultiple() { return false; }
+  
+  /**
+   * Returns the object data with headers.
+   *
+   * @return string
+   */
+  public function __toString()
+  {
+    $data = Transform::toUInt16LE
+      ($descriptionRecordsCount = count($this->_descriptionRecords));
+    for ($i = 0; $i < $descriptionRecordsCount; $i++) {
+      $data .=
+        Transform::toUInt16LE($this->_descriptionRecords[$i]["languageIndex"]) .
+        Transform::toUInt16LE($this->_descriptionRecords[$i]["streamNumber"]) .
+        Transform::toUInt16LE(strlen($name = iconv
+          ($this->getOption("encoding"), "utf-16le",
+           $this->_descriptionRecords[$i]["name"]) . "\0\0"));
+      if (is_string($this->_descriptionRecords[$i]["data"])) {
+        $chunks = array();
+        if (preg_match
+            ("/^[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}$/i",
+             $this->_descriptionRecords[$i]["data"]))
+          $data .= Transform::toUInt16LE(6) . Transform::toUInt32LE(16) .
+            $name . Transform::toGUID($this->_descriptionRecords[$i]["data"]);
+        else {
+          /* There is no way to distinguish byte arrays from unicode strings and
+           * hence the need for a list of fields of type byte array */
+          static $byteArray = array (
+            "W\0M\0/\0L\0y\0r\0i\0c\0s\0_\0S\0y\0n\0c\0h\0r\0o\0n\0i\0s\0e\0d\0\0\0",
+            "W\0M\0/\0P\0i\0c\0t\0u\0r\0e\0\0\0"
+          ); // TODO: Add to the list if you encounter one
+          
+          if (in_array($name, $byteArray))
+            $data .= Transform::toUInt16LE(1) . Transform::toUInt32LE
+              (strlen($this->_descriptionRecords[$i]["data"])) . $name .
+              $this->_descriptionRecords[$i]["data"];
+          else {
+            $value = iconv
+              ($this->getOption("encoding"), "utf-16le",
+               $this->_descriptionRecords[$i]["data"]);
+            $value = ($value ? $value . "\0\0" : "");
+            $data .= Transform::toUInt16LE(0) .
+              Transform::toUInt32LE(strlen($value)) . $name .
+              Transform::toString16LE($value);
+          }
+        }
+      }
+      else if (is_bool($this->_descriptionRecords[$i]["data"])) {
+        $data .= Transform::toUInt16LE(2) . Transform::toUInt32LE(2) . $name .
+          Transform::toUInt16LE($this->_descriptionRecords[$i]["data"] ? 1 : 0);
+      }
+      else if (is_int($this->_descriptionRecords[$i]["data"])) {
+        $data .= Transform::toUInt16LE(3) . Transform::toUInt32LE(4) . $name .
+          Transform::toUInt32LE($this->_descriptionRecords[$i]["data"]);
+      }
+      else if (is_float($this->_descriptionRecords[$i]["data"])) {
+        $data .= Transform::toUInt16LE(4) . Transform::toUInt32LE(8) . $name .
+          Transform::toInt64LE($this->_descriptionRecords[$i]["data"]);
+      }
+      else {
+        // Invalid value and there is nothing to be done so cause a fatal error
+        require_once("ASF/Exception.php");
+        throw new ASF_Exception("Invalid data type");
+      }
+    }
+    $this->setSize(24 /* for header */ + strlen($data));
+    return
+      Transform::toGUID($this->getIdentifier()) .
+      Transform::toInt64LE($this->getSize())  . $data;
+  }
 }

@@ -2,7 +2,8 @@
 /**
  * PHP Reader Library
  *
- * Copyright (c) 2008 The PHP Reader Project Workgroup. All rights reserved.
+ * Copyright (c) 2008-2009 The PHP Reader Project Workgroup. All rights
+ * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -30,7 +31,7 @@
  *
  * @package    php-reader
  * @subpackage ASF
- * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
+ * @copyright  Copyright (c) 2008-2009 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Id$
  */
@@ -48,27 +49,18 @@ require_once("ASF/Object/Container.php");
  * @package    php-reader
  * @subpackage ASF
  * @author     Sven Vollbehr <svollbehr@gmail.com>
- * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
+ * @copyright  Copyright (c) 2008-2009 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Rev$
  */
 final class ASF_Object_HeaderExtension extends ASF_Object_Container
 {
-  const EXTENDED_STREAM_PROPERTIES = "14e6a5cb-c672-4332-8399-a96952065b5a";
-  const ADVANCED_MUTUAL_EXCLUSION = "a08649cf-4775-4670-8a16-6e35357566cd";
-  const GROUP_MUTUAL_EXCLUSION = "d1465a40-5a79-4338-b71b-e36b8fd6c249";
-  const STREAM_PRIORITIZATION  = "d4fed15b-88d3-454f-81f0-ed5c45999e24";
-  const BANDWIDTH_SHARING  = "a69609e6-517b-11d2-b6af-00c04fd908e9";
-  const LANGUAGE_LIST  = "7c4346a9-efe0-4bfc-b229-393ede415c85";
-  const METADATA  = "c5f8cbea-5baf-4877-8467-aa8c44fa4cca";
-  const METADATA_LIBRARY = "44231c94-9498-49d1-a141-1d134e457054";
-  const INDEX_PARAMETERS  = "d6e229df-35da-11d1-9034-00a0c90349be";
-  const MEDIA_OBJECT_INDEX_PARAMETERS = "6b203bad-3f11-48e4-aca8-d7613de2cfa7";
-  const TIMECODE_INDEX_PARAMETERS = "f55e496d-9797-4b5d-8c8b-604dfe9bfb24";
-  const COMPATIBILITY = "75b22630-668e-11cf-a6d9-00aa0062ce6c";
-  const ADVANCED_CONTENT_ENCRYPTION = "43058533-6981-49e6-9b74-ad12cb86d58c";
-  const PADDING = "1806d474-cadf-4509-a4ba-9aabcb96aae8";
-
+  /** @var string */
+  private $_reserved1;
+  
+  /** @var integer */
+  private $_reserved2;
+  
   /**
    * Constructs the class with given parameters and reads object related data
    * from the ASF file.
@@ -80,7 +72,9 @@ final class ASF_Object_HeaderExtension extends ASF_Object_Container
   {
     parent::__construct($reader, $options);
     
-    $this->_reader->skip(22);
+    $this->_reserved1 = $this->_reader->readGUID();
+    $this->_reserved2 = $this->_reader->readUInt16LE();
+    $this->_reader->skip(4);
     $this->constructObjects
       (array
        (self::EXTENDED_STREAM_PROPERTIES => "ExtendedStreamProperties",
@@ -97,5 +91,42 @@ final class ASF_Object_HeaderExtension extends ASF_Object_Container
         self::COMPATIBILITY => "Compatibility",
         self::ADVANCED_CONTENT_ENCRYPTION => "AdvancedContentEncryption",
         self::PADDING => "Padding"));
+  }
+  
+  /**
+   * Returns the whether the object is required to be present, or whether
+   * minimum cardinality is 1.
+   * 
+   * @return boolean
+   */
+  public function isMandatory() { return true; }
+  
+  /**
+   * Returns whether multiple instances of this object can be present, or
+   * whether maximum cardinality is greater than 1.
+   * 
+   * @return boolean
+   */
+  public function isMultiple() { return false; }
+  
+  /**
+   * Returns the object data with headers.
+   *
+   * @return string
+   */
+  public function __toString()
+  {
+    $data = "";
+    foreach ($this->getObjects() as $objects)
+      foreach ($objects as $object)
+        $data .= $object->__toString();
+    $this->setSize
+      (24 /* for header */ + 22 + strlen($data) /* for object data */);
+    return
+      Transform::toGUID($this->getIdentifier()) .
+      Transform::toInt64LE($this->getSize()) .
+      Transform::toGUID($this->_reserved1) .
+      Transform::toUInt16LE($this->_reserved2) .
+      Transform::toUInt32LE(strlen($data)) . $data;
   }
 }

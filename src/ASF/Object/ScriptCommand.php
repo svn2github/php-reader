@@ -2,7 +2,8 @@
 /**
  * PHP Reader Library
  *
- * Copyright (c) 2008 The PHP Reader Project Workgroup. All rights reserved.
+ * Copyright (c) 2008-2009 The PHP Reader Project Workgroup. All rights
+ * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -30,7 +31,7 @@
  *
  * @package    php-reader
  * @subpackage ASF
- * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
+ * @copyright  Copyright (c) 2008-2009 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Id$
  */
@@ -55,17 +56,33 @@ require_once("ASF/Object.php");
  * @package    php-reader
  * @subpackage ASF
  * @author     Sven Vollbehr <svollbehr@gmail.com>
- * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
+ * @copyright  Copyright (c) 2008-2009 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Rev$
  */
 final class ASF_Object_ScriptCommand extends ASF_Object
 {
-  /** @var Array */
-  private $_commandTypes = array();
-
+  /** @var string */
+  private $_reserved;
+  
   /** @var Array */
   private $_commands = array();
+  
+  /**
+   * Returns the whether the object is required to be present, or whether
+   * minimum cardinality is 1.
+   * 
+   * @return boolean
+   */
+  public function isMandatory() { return false; }
+  
+  /**
+   * Returns whether multiple instances of this object can be present, or
+   * whether maximum cardinality is greater than 1.
+   * 
+   * @return boolean
+   */
+  public function isMultiple() { return false; }
   
   /**
    * Constructs the class with given parameters and reads object related data
@@ -74,23 +91,27 @@ final class ASF_Object_ScriptCommand extends ASF_Object
    * @param Reader $reader  The reader object.
    * @param Array  $options The options array.
    */
-  public function __construct($reader, &$options = array())
+  public function __construct($reader = null, &$options = array())
   {
     parent::__construct($reader, $options);
     
-    $this->_reader->skip(16);
+    if ($reader === null)
+      return;
+    
+    $this->_reserved = $this->_reader->readGUID();
     $commandsCount = $this->_reader->readUInt16LE();
     $commandTypesCount = $this->_reader->readUInt16LE();
+    $commandTypes = array();
     for ($i = 0; $i < $commandTypesCount; $i++) {
       $commandTypeNameLength = $this->_reader->readUInt16LE();
-      $this->_commandTypes[] = iconv
+      $commandTypes[] = iconv
         ("utf-16le", $this->getOption("encoding"),
          $this->_reader->readString16LE($commandTypeNameLength * 2));
     }
     for ($i = 0; $i < $commandsCount; $i++) {
       $command = array
         ("presentationTime" => $this->_reader->readUInt32LE(),
-         "typeIndex" => $this->_reader->readUInt16LE());
+         "type" => $commandTypes[$this->_reader->readUInt16LE()]);
       $commandNameLength = $this->_reader->readUInt16LE();
       $command["name"] = iconv
         ("utf-16le", $this->getOption("encoding"),
@@ -100,25 +121,68 @@ final class ASF_Object_ScriptCommand extends ASF_Object
   }
 
   /**
-   * Returns an array of command type names.
-   *
-   * @return Array
-   */
-  public function getCommandTypes() { return $this->_commandTypes; }
-  
-  /**
    * Returns an array of index entries. Each entry consists of the following
    * keys.
    * 
    *   o presentationTime -- Specifies the presentation time of the command, in
    *     milliseconds.
    * 
-   *   o typeIndex -- Specifies the type of this command, as a zero-based index
-   *     into the array of Command Types of this object.
+   *   o type -- Specifies the type of this command.
    * 
    *   o name -- Specifies the name of this command.
    *
    * @return Array
    */
   public function getCommands() { return $this->_commands; }
+
+  /**
+   * Sets the array of index entries. Each entry is to consist of the following
+   * keys.
+   * 
+   *   o presentationTime -- Specifies the presentation time of the command, in
+   *     milliseconds.
+   * 
+   *   o type -- Specifies the type of this command.
+   * 
+   *   o name -- Specifies the name of this command.
+   * 
+   * @param Array $commands The array of index entries.
+   */
+  public function setCommands($commands) { $this->_commands = $commands; }
+  
+  /**
+   * Returns the object data with headers.
+   *
+   * @return string
+   */
+  public function __toString()
+  {
+    $commandTypes = array();
+    foreach ($this->_commands as $command)
+      if (!in_array($command["type"], $commandTypes))
+        $commandTypes[] = $command["type"];
+    $data = 
+      Transform::toGUID($this->_reserved) .
+      Transform::toUInt16LE($commandsCount = count($this->_commands)) .
+      Transform::toUInt16LE($commandTypesCount = count($commandTypes));
+    for ($i = 0; $i < $commandTypesCount; $i++)
+      $data .=
+        Transform::toUInt16LE
+          (strlen($commandType = iconv
+           ($this->getOption("encoding"), "utf-16le",
+            $commandTypes[$i])) / 2) . $commandType;
+    for ($i = 0; $i < $commandsCount; $i++)
+      $data .=
+        Transform::toUInt32LE($this->_commands[$i]["presentationTime"]) .
+        Transform::toUInt16LE
+          (array_search($this->_commands[$i]["type"], $commandTypes)) .
+        Transform::toUInt16LE
+          (strlen($command = iconv
+           ($this->getOption("encoding"), "utf-16le",
+            $this->_commands[$i]["name"])) / 2) . $command;
+    $this->setSize(24 /* for header */ + strlen($data));
+    return
+      Transform::toGUID($this->getIdentifier()) .
+      Transform::toInt64LE($this->getSize())  . $data;
+  }
 }

@@ -2,7 +2,8 @@
 /**
  * PHP Reader Library
  *
- * Copyright (c) 2008 The PHP Reader Project Workgroup. All rights reserved.
+ * Copyright (c) 2008-2009 The PHP Reader Project Workgroup. All rights
+ * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -30,7 +31,7 @@
  *
  * @package    php-reader
  * @subpackage ASF
- * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
+ * @copyright  Copyright (c) 2008-2009 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Id$
  */
@@ -46,7 +47,7 @@ require_once("ASF/Object.php");
  * @package    php-reader
  * @subpackage ASF
  * @author     Sven Vollbehr <svollbehr@gmail.com>
- * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
+ * @copyright  Copyright (c) 2008-2009 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Rev$
  */
@@ -62,9 +63,12 @@ final class ASF_Object_StreamBitrateProperties extends ASF_Object
    * @param Reader $reader  The reader object.
    * @param Array  $options The options array.
    */
-  public function __construct($reader, &$options = array())
+  public function __construct($reader = null, &$options = array())
   {
     parent::__construct($reader, $options);
+    
+    if ($reader === null)
+      return;
     
     $bitrateRecordsCount = $this->_reader->readUInt16LE();
     for ($i = 0; $i < $bitrateRecordsCount; $i++)
@@ -90,4 +94,60 @@ final class ASF_Object_StreamBitrateProperties extends ASF_Object
    * @return Array
    */
   public function getBitrateRecords() { return $this->_bitrateRecords; }
+  
+  /**
+   * Sets an array of bitrate records. Each record consists of the following
+   * keys.
+   * 
+   *   o streamNumber -- Specifies the number of this stream described by this
+   *     record. 0 is an invalid stream. Valid values are between 1 and 127.
+   * 
+   *   o flags -- These bits are reserved and should be set to 0.
+   * 
+   *   o averageBitrate -- Specifies the average bit rate of the stream in bits
+   *     per second. This value should include an estimate of ASF packet and
+   *     payload overhead associated with this stream.
+   * 
+   * @param Array $bitrateRecords The array of bitrate records.
+   */
+  public function setBitrateRecords($bitrateRecords)
+  {
+    $this->_bitrateRecords = $bitrateRecords;
+  }
+  
+  /**
+   * Returns the whether the object is required to be present, or whether
+   * minimum cardinality is 1.
+   * 
+   * @return boolean
+   */
+  public function isMandatory() { return false; }
+  
+  /**
+   * Returns whether multiple instances of this object can be present, or
+   * whether maximum cardinality is greater than 1.
+   * 
+   * @return boolean
+   */
+  public function isMultiple() { return false; }
+  
+  /**
+   * Returns the object data with headers.
+   *
+   * @return string
+   */
+  public function __toString()
+  {
+    $data = Transform::toUInt16LE
+      ($bitrateRecordsCount = count($this->_bitrateRecords));
+    for ($i = 0; $i < $bitrateRecordsCount; $i++)
+      $data .= Transform::toUInt16LE
+        (($this->_bitrateRecords[$i]["flags"] << 5) |
+         ($this->_bitrateRecords[$i]["streamNumber"] & 0x1f)) .
+        Transform::toUInt32LE($this->_bitrateRecords[$i]["averageBitrate"]);
+    $this->setSize(24 /* for header */ + strlen($data));
+    return
+      Transform::toGUID($this->getIdentifier()) .
+      Transform::toInt64LE($this->getSize())  . $data;
+  }
 }

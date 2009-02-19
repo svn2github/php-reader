@@ -2,7 +2,8 @@
 /**
  * PHP Reader Library
  *
- * Copyright (c) 2008 The PHP Reader Project Workgroup. All rights reserved.
+ * Copyright (c) 2008-2009 The PHP Reader Project Workgroup. All rights
+ * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -30,7 +31,7 @@
  *
  * @package    php-reader
  * @subpackage ASF
- * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
+ * @copyright  Copyright (c) 2008-2009 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Id$
  */
@@ -47,7 +48,7 @@ require_once("ASF/Object.php");
  * @package    php-reader
  * @subpackage ASF
  * @author     Sven Vollbehr <svollbehr@gmail.com>
- * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
+ * @copyright  Copyright (c) 2008-2009 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Rev$
  */
@@ -96,7 +97,9 @@ final class ASF_Object_AdvancedContentEncryption extends ASF_Object
    *     system.
    * 
    *   o streamNumbers -- An array of stream numbers a particular Content
-   *     Encryption Record is associated with.
+   *     Encryption Record is associated with. A value of 0 in this field
+   *     indicates that it applies to the whole file; otherwise, the entry
+   *     applies only to the indicated stream number.
    * 
    *   o data -- The content protection data for this Content Encryption Record.
    *
@@ -105,5 +108,79 @@ final class ASF_Object_AdvancedContentEncryption extends ASF_Object
   public function getContentEncryptionRecords()
   {
     return $this->_contentEncryptionRecords;
+  }
+  
+  /**
+   * Sets the array of content encryption records. Each record must consist of
+   * the following keys.
+   * 
+   *   o systemId -- Specifies the unique identifier for the content encryption
+   *     system.
+   * 
+   *   o systemVersion -- Specifies the version of the content encryption
+   *     system.
+   * 
+   *   o streamNumbers -- An array of stream numbers a particular Content
+   *     Encryption Record is associated with. A value of 0 in this field
+   *     indicates that it applies to the whole file; otherwise, the entry
+   *     applies only to the indicated stream number.
+   * 
+   *   o data -- The content protection data for this Content Encryption Record.
+   * 
+   * @param Array $contentEncryptionRecords The array of content encryption
+   *        records.
+   */
+  public function setContentEncryptionRecords($contentEncryptionRecords)
+  {
+    $this->_contentEncryptionRecords = $contentEncryptionRecords;
+  }
+  
+  /**
+   * Returns the whether the object is required to be present, or whether
+   * minimum cardinality is 1.
+   * 
+   * @return boolean
+   */
+  public function isMandatory() { return false; }
+  
+  /**
+   * Returns whether multiple instances of this object can be present, or
+   * whether maximum cardinality is greater than 1.
+   * 
+   * @return boolean
+   */
+  public function isMultiple() { return false; }
+  
+  /**
+   * Returns the object data with headers.
+   *
+   * @return string
+   */
+  public function __toString()
+  {
+    $data =
+      Transform::toUInt16LE
+        ($contentEncryptionRecordsCount =
+         count($this->_contentEncryptionRecords));
+    for ($i = 0; $i < $contentEncryptionRecordsCount; $i++) {
+      $data .=
+        Transform::toGUID($this->_contentEncryptionRecords["systemId"]) .
+        Transform::toUInt32LE
+          ($this->_contentEncryptionRecords["systemVersion"]) . 
+        Transform::toUInt16LE
+          ($encryptedObjectRecordCount =
+           $this->_contentEncryptionRecords["streamNumbers"]);
+      for ($j = 0; $j < $encryptedObjectRecordCount; $j++)
+        $data .=
+          Transform::toUInt16LE(1) . Transform::toUInt16LE(2) . 
+          Transform::toUInt16LE
+            ($this->_contentEncryptionRecords["streamNumbers"][$j]);
+      $data .= strlen($this->_contentEncryptionRecords["data"]) .
+        $this->_contentEncryptionRecords;
+    }
+    $this->setSize(24 /* for header */ + strlen($data));
+    return
+      Transform::toGUID($this->getIdentifier()) .
+      Transform::toInt64LE($this->getSize())  . $data;
   }
 }

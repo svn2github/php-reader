@@ -2,7 +2,8 @@
 /**
  * PHP Reader Library
  *
- * Copyright (c) 2008 The PHP Reader Project Workgroup. All rights reserved.
+ * Copyright (c) 2008-2009 The PHP Reader Project Workgroup. All rights
+ * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -30,13 +31,14 @@
  *
  * @package    php-reader
  * @subpackage ASF
- * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
+ * @copyright  Copyright (c) 2008-2009 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Id$
  */
 
 /**#@+ @ignore */
 require_once("ASF/Object.php");
+require_once("ASF/Object/Unknown.php");
 /**#@-*/
 
 /**
@@ -45,7 +47,7 @@ require_once("ASF/Object.php");
  * @package    php-reader
  * @subpackage ASF
  * @author     Sven Vollbehr <svollbehr@gmail.com>
- * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
+ * @copyright  Copyright (c) 2008-2009 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Rev$
  */
@@ -57,7 +59,7 @@ abstract class ASF_Object_Container extends ASF_Object
   /**
    * Reads and constructs the objects found within this object.
    */
-  protected function constructObjects($defaultclassnames = array())
+  protected final function constructObjects($defaultclassnames = array())
   {
     while (true) {
       $offset = $this->_reader->getOffset();
@@ -75,9 +77,9 @@ abstract class ASF_Object_Container extends ASF_Object
             ($classname = "ASF_Object_" . $defaultclassnames[$guid]))
           $object = new $classname($this->_reader, $this->_options);
         else
-          $object = new ASF_Object($this->_reader, $this->_options);
+          $object = new ASF_Object_Unknown($this->_reader, $this->_options);
       } else
-        $object = new ASF_Object($this->_reader, $this->_options);
+        $object = new ASF_Object_Unknown($this->_reader, $this->_options);
       $object->setParent($this);
       if (!$this->hasObject($object->getIdentifier()))
         $this->_objects[$object->getIdentifier()] = array();
@@ -87,15 +89,26 @@ abstract class ASF_Object_Container extends ASF_Object
   }
   
   /**
-   * Checks whether the object with given GUID is present in the file. Returns
-   * <var>true</var> if one or more objects are present, <var>false</var>
-   * otherwise.
+   * Checks whether the object with given identifier is present in the file. The
+   * identifier can either be the object GUID, or name of the constant
+   * containing the GUID, or the name of the object class.
    * 
+   * Returns <var>true</var> if one or more objects are present,
+   * <var>false</var> otherwise.
+   * 
+   * @param string $identifier The object GUID, name of the GUID constant, or
+   *        object class name.
    * @return boolean
    */
-  public function hasObject($identifier)
+  public final function hasObject($identifier)
   {
-    return isset($this->_objects[$identifier]);
+    if (defined($constname = get_class($this) . "::" . strtoupper
+                (preg_replace("/[A-Z]/", "_$0", $identifier)))) {
+      $objects = $this->getObjectsByIdentifier(constant($constname));
+      return isset($objects[0]);
+    }
+    else
+      return isset($this->_objects[$identifier]);
   }
   
   /**
@@ -105,10 +118,7 @@ abstract class ASF_Object_Container extends ASF_Object
    * 
    * @return Array
    */
-  public function getObjects()
-  {
-    return $this->_objects;
-  }
+  public final function getObjects() { return $this->_objects; }
   
   /**
    * Returns an array of objects matching the given object GUID or an empty
@@ -117,14 +127,11 @@ abstract class ASF_Object_Container extends ASF_Object
    * The identifier may contain wildcard characters "*" and "?". The asterisk
    * matches against zero or more characters, and the question mark matches any
    * single character.
-   *
-   * Please note that one may also use the shorthand $obj->identifier to access
-   * the first box with the identifier given. Wildcards cannot be used with
-   * the shorthand and they will not work with user defined uuid types.
    * 
+   * @param string $identifier The object GUID.
    * @return Array
    */
-  public function getObjectsByIdentifier($identifier)
+  public final function getObjectsByIdentifier($identifier)
   {
     $matches = array();
     $searchPattern = "/^" .
@@ -137,12 +144,80 @@ abstract class ASF_Object_Container extends ASF_Object
   }
   
   /**
+   * Returns an array of objects matching the given object constant name or an
+   * empty array if no object matched the name.
+   * 
+   * The object constant name can be given in three forms; either using the full
+   * name of the constant, the name of the class or the shorthand style of the
+   * class name having its first letter in lower case.
+   *
+   * One may use the shorthand $obj->name to access the first box with the name
+   * given directly. Shorthands will not work with user defined uuid types.
+   * 
+   * The name may not contain wildcard characters.
+   * 
+   * @param string $name The object constant name or class name.
+   * @return Array
+   */
+  public final function getObjectsByName($name)
+  {
+    if (defined($constname = get_class($this) . "::" . $name) ||
+        defined($constname = get_class($this) . "::" . strtoupper
+                (preg_replace
+                 ("/^_/", "", preg_replace("/[A-Z]/", "_$0", $name)))))
+      return $this->getObjectsByIdentifier(constant($constname));
+    return array();
+  }
+  
+  /**
+   * Removes any objects matching the given object GUID.
+   *
+   * The identifier may contain wildcard characters "*" and "?". The asterisk
+   * matches against zero or more characters, and the question mark matches any
+   * single character.
+   *
+   * One may also use the shorthand unset($obj->name) to achieve the same
+   * result. Wildcards cannot be used with the shorthand method.
+   * 
+   * @param string $identifier The object GUID.
+   */
+  public final function removeObjectsByIdentifier($identifier)
+  {
+    $searchPattern = "/^" .
+      str_replace(array("*", "?"), array(".*", "."), $identifier) . "$/i";
+    foreach ($this->_objects as $identifier => $objects)
+      if (preg_match($searchPattern, $identifier))
+        unset($this->_objects[$identifier]);
+  }
+  
+  /**
+   * Removes any objects matching the given object name.
+   * 
+   * The name can be given in three forms; either using the full name of the
+   * constant, the name of the class or the shorthand style of the class name
+   * having its first letter in lower case.
+   *
+   * One may also use the shorthand unset($obj->name) to achieve the same
+   * result.
+   * 
+   * The name may not contain wildcard characters.
+   * 
+   * @param string $name The object constant name or class name.
+   */
+  public final function removeObjectsByName($name)
+  {
+    if (defined($constname = get_class($this) . "::" . strtoupper
+                (preg_replace("/[A-Z]/", "_$0", $name))))
+      unset($this->_objects[constant($constname)]);
+  }
+  
+  /**
    * Adds a new object into the current object and returns it.
    *
-   * @param ASF_Object The object to add
+   * @param ASF_Object $object The object to add
    * @return ASF_Object
    */
-  public function addObject($object)
+  public final function addObject($object)
   {
     $object->setParent($this);
     $object->setOptions($this->_options);
@@ -152,12 +227,28 @@ abstract class ASF_Object_Container extends ASF_Object
   }
   
   /**
+   * Removes the object.
+   *
+   * @param ASF_Object $object The object to remove
+   */
+  public final function removeObject($object)
+  {
+    if ($this->hasObject($object->getIdentifier())) {
+      foreach ($this->_objects[$object->getIdentifier()] as $key => $value)
+        if ($object === $value)
+          unset($this->_objects[$object->getIdentifier()][$key]);
+    }
+  }
+  
+  /**
    * Override magic function so that $obj->value will work as expected.
    * 
    * The method first attempts to call the appropriate getter method. If no
    * field with given name is found, the method attempts to return the right
    * object instead. In other words, calling $obj->value will attempt to return
    * the first object returned by $this->getObjectsByIdentifier(self::value).
+   * If no object is found by the given value, a respective class name is tried
+   * to instantiate and add to the container.
    *
    * @param string $name The field or object name.
    * @return mixed
@@ -166,30 +257,74 @@ abstract class ASF_Object_Container extends ASF_Object
   {
     if (method_exists($this, "get" . ucfirst($name)))
       return call_user_func(array($this, "get" . ucfirst($name)));
+    if (method_exists($this, "is" . ucfirst($name)))
+      return call_user_func(array($this, "is" . ucfirst($name)));
     if (defined($constname = get_class($this) . "::" . strtoupper
                 (preg_replace("/[A-Z]/", "_$0", $name)))) {
       $objects = $this->getObjectsByIdentifier(constant($constname));
       if (isset($objects[0]))
         return $objects[0];
+      else {
+        if (@fopen($filename = "ASF/Object/" . ucfirst($name) .
+                   ".php", "r", true) !== false)
+          require_once($filename);
+        if (class_exists
+            ($classname = "ASF_Object_" . ucfirst($name))) {
+          $obj = new $classname();
+          $obj->setIdentifier(constant($constname));
+          return $this->addObject($obj);
+        }
+      }
     }
+    require_once("ASF/Exception.php");
     throw new ASF_Exception("Unknown field/object: " . $name);
   }
   
   /**
-   * Magic function so that isset($obj->value) will work. This method checks
-   * whether the object by given identifier is contained by this container.
+   * Override magic function so that $obj->value will work as expected.
+   * 
+   * The method first attempts to call the appropriate setter method. If no
+   * field with given name is found, the method attempts to set the right
+   * object instead. In other words, assigning to $obj->value will attempt to
+   * set the object with given value's identifier.
+   * 
+   * Please note that using this method will override any prior objects having
+   * the same object identifier.
    *
-   * @param string $name The object name.
-   * @return boolean
+   * @param string $name  The field or object name.
+   * @param string $value The field value or object.
+   * @return mixed
    */
-  public function __isset($name)
+  public function __set($name, $value)
   {
+    if (method_exists($this, "set" . ucfirst($name)))
+      call_user_func(array($this, "set" . ucfirst($name)), $value);
     if (defined($constname = get_class($this) . "::" . strtoupper
                 (preg_replace("/[A-Z]/", "_$0", $name)))) {
-      $objects = $this->getObjectsByIdentifier(constant($constname));
-      return isset($objects[0]);
+      $value->setOptions($this->_options);
+      $this->_objects[constant($constname)] = array($value);
     }
-    else
-      return isset($this->_objects[$name]);
+    else {
+      require_once("ASF/Exception.php");
+      throw new ASF_Exception("Unknown field/object: " . $name);
+    }
   }
+  
+  /**
+   * Magic function so that isset($obj->value) will work. This method checks
+   * whether the object by given identifier or name is contained by this
+   * container.
+   *
+   * @param string $name The object identifier or logical name.
+   * @return boolean
+   */
+  public function __isset($name) { return $this->hasObject($name); }
+  
+  /**
+   * Magic function so that unset($obj->value) will work. This method removes
+   * all the objects with the given identifier or name.
+   *
+   * @param string $name The object identifier or logical name.
+   */
+  public function __unset($name) { $this->removeObjectsByName($name); }
 }

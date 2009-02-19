@@ -2,7 +2,8 @@
 /**
  * PHP Reader Library
  *
- * Copyright (c) 2008 The PHP Reader Project Workgroup. All rights reserved.
+ * Copyright (c) 2008-2009 The PHP Reader Project Workgroup. All rights
+ * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -30,7 +31,7 @@
  *
  * @package    php-reader
  * @subpackage ASF
- * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
+ * @copyright  Copyright (c) 2008-2009 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Id$
  */
@@ -52,7 +53,7 @@ require_once("ASF/Object.php");
  * @package    php-reader
  * @subpackage ASF
  * @author     Sven Vollbehr <svollbehr@gmail.com>
- * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
+ * @copyright  Copyright (c) 2008-2009 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Rev$
  */
@@ -75,9 +76,13 @@ final class ASF_Object_BitrateMutualExclusion extends ASF_Object
    * @param Reader $reader  The reader object.
    * @param Array  $options The options array.
    */
-  public function __construct($reader, &$options = array())
+  public function __construct($reader = null, &$options = array())
   {
     parent::__construct($reader, $options);
+    
+    if ($reader === null)
+      return;
+    
     $this->_exclusionType = $this->_reader->readGUID();
     $streamNumbersCount = $this->_reader->readUInt16LE();
     for ($i = 0; $i < $streamNumbersCount; $i++)
@@ -92,9 +97,64 @@ final class ASF_Object_BitrateMutualExclusion extends ASF_Object
   public function getExclusionType() { return $this->_exclusionType; }
   
   /**
+   * Sets the nature of the mutual exclusion relationship.
+   * 
+   * @param string $exclusionType The nature of the mutual exclusion
+   *        relationship.
+   */
+  public function setExclusionType($exclusionType)
+  {
+    $this->_exclusionType = $exclusionType;
+  }
+  
+  /**
    * Returns an array of stream numbers.
    *
    * @return Array
    */
   public function getStreamNumbers() { return $this->_streamNumbers; }
+  
+  /**
+   * Sets the array of stream numbers.
+   * 
+   * @param Array $streamNumbers The array of stream numbers.
+   */
+  public function setStreamNumbers($streamNumbers)
+  {
+    $this->_streamNumbers = $streamNumbers;
+  }
+  
+  /**
+   * Returns the whether the object is required to be present, or whether
+   * minimum cardinality is 1.
+   * 
+   * @return boolean
+   */
+  public function isMandatory() { return false; }
+  
+  /**
+   * Returns whether multiple instances of this object can be present, or
+   * whether maximum cardinality is greater than 1.
+   * 
+   * @return boolean
+   */
+  public function isMultiple() { return false; }
+  
+  /**
+   * Returns the object data with headers.
+   *
+   * @return string
+   */
+  public function __toString()
+  {
+    $data = 
+      Transform::toGUID($this->_exclusionType) .
+      Transform::toUInt16LE($streamNumbersCount = count($this->_streamNumbers));
+    for ($i = 0; $i < $streamNumbersCount; $i++)
+      $data .= Transform::toUInt16LE($this->_streamNumbers[$i]);
+    $this->setSize(24 /* for header */ + strlen($data));
+    return
+      Transform::toGUID($this->getIdentifier()) .
+      Transform::toInt64LE($this->getSize())  . $data;
+  }
 }

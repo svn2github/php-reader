@@ -2,7 +2,7 @@
 /**
  * PHP Reader Library
  *
- * Copyright (c) 2006-2008 The PHP Reader Project Workgroup. All rights
+ * Copyright (c) 2006-2009 The PHP Reader Project Workgroup. All rights
  * reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -31,7 +31,7 @@
  *
  * @package    php-reader
  * @subpackage ASF
- * @copyright  Copyright (c) 2006-2008 The PHP Reader Project Workgroup
+ * @copyright  Copyright (c) 2006-2009 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Id$
  */
@@ -56,19 +56,12 @@ require_once("ASF/Object/Container.php");
  * @package    php-reader
  * @subpackage ASF
  * @author     Sven Vollbehr <svollbehr@gmail.com>
- * @copyright  Copyright (c) 2006-2008 The PHP Reader Project Workgroup
+ * @copyright  Copyright (c) 2006-2009 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Rev$
  */
 class ASF extends ASF_Object_Container
 {
-  const HEADER = "75b22630-668e-11cf-a6d9-00aa0062ce6c";
-  const DATA = "75b22636-668e-11cf-a6d9-00aa0062ce6c";
-  const SIMPLE_INDEX = "33000890-e5b1-11cf-89f4-00a0c90349cb";
-  const INDEX = "d6e229d3-35da-11d1-9034-00a0c90349be";
-  const MEDIA_OBJECT_INDEX = "feb103f8-12ad-4c64-840f-2a1d2f7ad48c";
-  const TIMECODE_INDEX = "3cb73fd0-0c4a-4803-953d-edf7b6228f0c";
-  
   /** @var string */
   private $_filename;
   
@@ -140,12 +133,84 @@ class ASF extends ASF_Object_Container
   
   /**
    * Writes the changes back to the original media file.
-   *
-   * Please note: currently the method writes only Content Description and
-   * Extended Content Description Objects.
    */
-  public function write()
+  public function write($filename = false)
   {
-    throw new ASF_Exception("Not yet supported");
+    if ($filename === false)
+      $filename = $this->_filename;
+    if ($filename !== false && $this->_filename !== false &&
+        realpath($filename) != realpath($this->_filename) &&
+        !copy($this->_filename, $filename)) {
+      require_once("ASF/Exception.php");
+      throw new ASF_Exception("Unable to copy source to destination: " .
+        realpath($this->_filename) . "->" . realpath($filename));
+    }
+    
+    if (($fd = fopen
+         ($filename, file_exists($filename) ? "r+b" : "wb")) === false) {
+      require_once("ASF/Exception.php");
+      throw new ASF_Exception("Unable to open file for writing: " . $filename);
+    }
+
+    $header = $this->getHeader();
+    $headerLengthOld = $header->getSize();
+    $header->removeObjectsByIdentifier(ASF_Object::PADDING);
+    $header->headerExtension->removeObjectsByIdentifier(ASF_Object::PADDING);
+
+    $headerData = $header->__toString();
+    $headerLengthNew = $header->getSize();
+
+    // Fits right in
+    if ($headerLengthOld == $headerLengthNew) {
+    }
+    
+    // Fits with adjusted padding
+    else if ($headerLengthOld >= $headerLengthNew + 24 /* for header */) {
+      $header->headerExtension->padding->setSize
+        ($headerLengthOld - $headerLengthNew);
+      $headerData = $header->__toString();
+      $headerLengthNew = $header->getSize();
+    }
+    
+    // Must expand
+    else {
+      $header->headerExtension->padding->setSize(4096);
+      $headerData = $header->__toString();
+      $headerLengthNew = $header->getSize();
+      
+      fseek($fd, 0, SEEK_END);
+      $oldFileSize = ftell($fd);
+      ftruncate
+        ($fd, $newFileSize = $headerLengthNew - $headerLengthOld +
+         $oldFileSize);
+      for ($i = 1, $cur = $oldFileSize; $cur > 0; $cur -= 1024, $i++) {
+        fseek($fd, -(($i * 1024) + ($newFileSize - $oldFileSize)), SEEK_END);
+        $buffer = fread($fd, 1024);
+        fseek($fd, -($i * 1024), SEEK_END);
+        fwrite($fd, $buffer, 1024);
+      }
+    }
+
+    fseek($fd, 0);
+    fwrite($fd, $headerData, $headerLengthNew);
+    fclose($fd);
+
+    $this->_filename = $filename;
   }
+  
+  /**
+   * Returns the whether the object is required to be present, or whether
+   * minimum cardinality is 1.
+   * 
+   * @return boolean
+   */
+  public function isMandatory() { return true; }
+  
+  /**
+   * Returns whether multiple instances of this object can be present, or
+   * whether maximum cardinality is greater than 1.
+   * 
+   * @return boolean
+   */
+  public function isMultiple() { return false; }
 }

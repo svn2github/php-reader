@@ -2,7 +2,7 @@
 /**
  * PHP Reader Library
  *
- * Copyright (c) 2006-2008 The PHP Reader Project Workgroup. All rights
+ * Copyright (c) 2006-2009 The PHP Reader Project Workgroup. All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,7 +31,7 @@
  *
  * @package    php-reader
  * @subpackage ASF
- * @copyright  Copyright (c) 2006-2008 The PHP Reader Project Workgroup
+ * @copyright  Copyright (c) 2006-2009 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Id$
  */
@@ -47,7 +47,7 @@ require_once("ASF/Object.php");
  * @package    php-reader
  * @subpackage ASF
  * @author     Sven Vollbehr <svollbehr@gmail.com>
- * @copyright  Copyright (c) 2006-2008 The PHP Reader Project Workgroup
+ * @copyright  Copyright (c) 2006-2009 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Rev$
  */
@@ -129,14 +129,21 @@ final class ASF_Object_FileProperties extends ASF_Object
     $this->_maximumDataPacketSize = $this->_reader->readUInt32LE();
     $this->_maximumBitrate = $this->_reader->readUInt32LE();
   }
-
+  
   /**
    * Returns the file id field.
    *
    * @return integer
    */
   public function getFileId() { return $this->_fileId; }
-
+  
+  /**
+   * Sets the file id field.
+   * 
+   * @param GUID $fileId The new file id.
+   */
+  public function setFileId($fileId) { $this->_fileId = $fileId; }
+  
   /**
    * Returns the size, in bytes, of the entire file. The value of this field is
    * invalid if the broadcast flag bit in the flags field is set to 1.
@@ -144,7 +151,15 @@ final class ASF_Object_FileProperties extends ASF_Object
    * @return integer
    */
   public function getFileSize() { return $this->_fileSize; }
-
+  
+  /**
+   * Sets the size, in bytes, of the entire file. The value of this field is
+   * invalid if the broadcast flag bit in the flags field is set to 1.
+   * 
+   * @param integer $fileSize The size of the entire file.
+   */
+  public function setFileSize($fileSize) { $this->_fileSize = $fileSize; }
+  
   /**
    * Returns the date and time of the initial creation of the file. The value is
    * given as the number of 100-nanosecond intervals since January 1, 1601,
@@ -155,7 +170,22 @@ final class ASF_Object_FileProperties extends ASF_Object
    * @return integer
    */
   public function getCreationDate() { return $this->_creationDate; }
-
+  
+  /**
+   * Sets the date and time of the initial creation of the file. The value is
+   * given as the number of 100-nanosecond intervals since January 1, 1601,
+   * according to Coordinated Universal Time (Greenwich Mean Time). The value of
+   * this field may be invalid if the broadcast flag bit in the flags field is
+   * set to 1.
+   * 
+   * @param integer $creationDate The date and time of the initial creation of
+   *        the file.
+   */
+  public function setCreationDate($creationDate)
+  {
+    $this->_creationDate = $creationDate;
+  }
+  
   /**
    * Returns the number of Data Packet entries that exist within the
    * {@link ASF_Object_Data Data Object}. The value of this field is invalid if
@@ -164,6 +194,18 @@ final class ASF_Object_FileProperties extends ASF_Object
    * @return integer
    */
   public function getDataPacketsCount() { return $this->_dataPacketsCount; }
+  
+  /**
+   * Sets the number of Data Packet entries that exist within the
+   * {@link ASF_Object_Data Data Object}. The value of this field is invalid if
+   * the broadcast flag bit in the flags field is set to 1.
+   * 
+   * @param integer $dataPacketsCount The number of Data Packet entries.
+   */
+  public function setDataPacketsCount($dataPacketsCount)
+  {
+    $this->_dataPacketsCount = $dataPacketsCount;
+  }
 
   /**
    * Returns the time needed to play the file in 100-nanosecond units. This
@@ -177,6 +219,20 @@ final class ASF_Object_FileProperties extends ASF_Object
   public function getPlayDuration() { return $this->_playDuration; }
 
   /**
+   * Sets the time needed to play the file in 100-nanosecond units. This
+   * value should include the duration (estimated, if an exact value is
+   * unavailable) of the the last media object in the presentation. The value of
+   * this field is invalid if the broadcast flag bit in the flags field is set
+   * to 1.
+   * 
+   * @param integer $playDuration The time needed to play the file.
+   */
+  public function setPlayDuration($playDuration)
+  {
+    $this->_playDuration = $playDuration;
+  }
+
+  /**
    * Returns the time needed to send the file in 100-nanosecond units. This
    * value should include the duration of the last packet in the content. The
    * value of this field is invalid if the broadcast flag bit in the flags field
@@ -185,6 +241,19 @@ final class ASF_Object_FileProperties extends ASF_Object
    * @return integer
    */
   public function getSendDuration() { return $this->_sendDuration; }
+
+  /**
+   * Sets the time needed to send the file in 100-nanosecond units. This
+   * value should include the duration of the last packet in the content. The
+   * value of this field is invalid if the broadcast flag bit in the flags field
+   * is set to 1.
+   * 
+   * @param integer $sendDuration The time needed to send the file.
+   */
+  public function setSendDuration($sendDuration)
+  {
+    $this->_sendDuration = $sendDuration;
+  }
 
   /**
    * Returns the amount of time to buffer data before starting to play the file,
@@ -197,6 +266,18 @@ final class ASF_Object_FileProperties extends ASF_Object
    * @return integer
    */
   public function getPreroll() { return $this->_preroll; }
+
+  /**
+   * Sets the amount of time to buffer data before starting to play the file,
+   * in millisecond units. If this value is nonzero, the <i>Play Duration</i>
+   * field and all of the payload <i>Presentation Time</i> fields have been
+   * offset by this amount. Therefore, player software must subtract the value
+   * in the preroll field from the play duration and presentation times to
+   * calculate their actual values.
+   * 
+   * @param integer $preroll The amount of time to buffer data.
+   */
+  public function setPreroll($preroll) { $this->_preroll = $preroll; }
 
   /**
    * Checks whether or not the flag is set. Returns <var>true</var> if the flag
@@ -215,6 +296,13 @@ final class ASF_Object_FileProperties extends ASF_Object
   public function getFlags() { return $this->_flags; }
   
   /**
+   * Sets the flags field.
+   * 
+   * @param integer $flags The flags field.
+   */
+  public function setFlags($flags) { $this->_flags = $flags; }
+  
+  /**
    * Returns the minimum <i>Data Packet</i> size in bytes. In general, the value
    * of this field is invalid if the broadcast flag bit in the flags field is
    * set to 1. However, the values for the <i>Minimum Data Packet Size</i> and
@@ -227,6 +315,22 @@ final class ASF_Object_FileProperties extends ASF_Object
   public function getMinimumDataPacketSize()
   {
     return $this->_minimumDataPacketSize;
+  }
+  
+  /**
+   * Sets the minimum <i>Data Packet</i> size in bytes. In general, the value
+   * of this field is invalid if the broadcast flag bit in the flags field is
+   * set to 1. However, the values for the <i>Minimum Data Packet Size</i> and
+   * <i>Maximum Data Packet Size</i> fields shall be set to the same value, and
+   * this value should be set to the packet size, even when the broadcast flag
+   * in the flags field is set to 1.
+   * 
+   * @param integer $minimumDataPacketSize The minimum <i>Data Packet</i> size
+   *        in bytes.
+   */
+  public function setMinimumDataPacketSize($minimumDataPacketSize)
+  {
+    $this->_minimumDataPacketSize = $minimumDataPacketSize;
   }
   
   /**
@@ -245,6 +349,22 @@ final class ASF_Object_FileProperties extends ASF_Object
   }
   
   /**
+   * Sets the maximum <i>Data Packet</i> size in bytes. In general, the value
+   * of this field is invalid if the broadcast flag bit in the flags field is
+   * set to 1. However, the values for the <i>Minimum Data Packet Size</i> and
+   * <i>Maximum Data Packet Size</i> fields shall be set to the same value, and
+   * this value should be set to the packet size, even when the broadcast flag
+   * in the flags field is set to 1.
+   * 
+   * @param integer $maximumDataPacketSize The maximum <i>Data Packet</i> size
+   *        in bytes
+   */
+  public function setMaximumDataPacketSize($maximumDataPacketSize)
+  {
+    $this->_maximumDataPacketSize = $maximumDataPacketSize;
+  }
+  
+  /**
    * Returns the maximum instantaneous bit rate in bits per second for the
    * entire file. This is equal the sum of the bit rates of the individual
    * digital media streams.
@@ -252,4 +372,58 @@ final class ASF_Object_FileProperties extends ASF_Object
    * @return integer
    */
   public function getMaximumBitrate() { return $this->_maximumBitrate; }
+  
+  /**
+   * Sets the maximum instantaneous bit rate in bits per second for the
+   * entire file. This is equal the sum of the bit rates of the individual
+   * digital media streams.
+   * 
+   * @param integer $maximumBitrate The maximum instantaneous bit rate in bits
+   *        per second.
+   */
+  public function setMaximumBitrate($maximumBitrate)
+  {
+    $this->_maximumBitrate = $maximumBitrate;
+  }
+  
+  /**
+   * Returns the whether the object is required to be present, or whether
+   * minimum cardinality is 1.
+   * 
+   * @return boolean
+   */
+  public function isMandatory() { return true; }
+  
+  /**
+   * Returns whether multiple instances of this object can be present, or
+   * whether maximum cardinality is greater than 1.
+   * 
+   * @return boolean
+   */
+  public function isMultiple() { return false; }
+  
+  /**
+   * Returns the object data with headers.
+   *
+   * @return string
+   */
+  public function __toString()
+  {
+    $data =
+      Transform::toGUID($this->_fileId) .
+      Transform::toInt64LE($this->_fileSize) .
+      Transform::toInt64LE($this->_creationDate) .
+      Transform::toInt64LE($this->_dataPacketsCount) .
+      Transform::toInt64LE($this->_playDuration) .
+      Transform::toInt64LE($this->_sendDuration) .
+      Transform::toInt64LE($this->_preroll) .
+      Transform::toUInt32LE($this->_flags) .
+      Transform::toUInt32LE($this->_minimumDataPacketSize) .
+      Transform::toUInt32LE($this->_maximumDataPacketSize) .
+      Transform::toUInt32LE($this->_maximumBitrate);
+    $this->setSize(24 /* for header */ + strlen($data));
+    return
+      Transform::toGUID($this->getIdentifier()) .
+      Transform::toInt64LE($this->getSize())  . $data;
+  }
 }

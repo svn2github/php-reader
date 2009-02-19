@@ -2,8 +2,7 @@
 /**
  * PHP Reader Library
  *
- * Copyright (c) 2008-2009 The PHP Reader Project Workgroup. All rights
- * reserved.
+ * Copyright (c) 2009 The PHP Reader Project Workgroup. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -31,7 +30,7 @@
  *
  * @package    php-reader
  * @subpackage ASF
- * @copyright  Copyright (c) 2008-2009 The PHP Reader Project Workgroup
+ * @copyright  Copyright (c) 2009 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Id$
  */
@@ -41,72 +40,18 @@ require_once("ASF/Object.php");
 /**#@-*/
 
 /**
- * The <i>Digital Signature Object</i> lets authors sign the portion of their
- * header that lies between the end of the <i>File Properties Object</i> and the
- * beginning of the <i>Digital Signature Object</i>.
+ * The <i>Unknown Object</i> represents objects that are not known to the
+ * library.
  *
  * @package    php-reader
  * @subpackage ASF
  * @author     Sven Vollbehr <svollbehr@gmail.com>
- * @copyright  Copyright (c) 2008-2009 The PHP Reader Project Workgroup
+ * @copyright  Copyright (c) 2009 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Rev$
  */
-final class ASF_Object_DigitalSignature extends ASF_Object
+final class ASF_Object_Unknown extends ASF_Object
 {
-  /** @var integer */
-  private $_type;
-  
-  /** @var string */
-  private $_data;
-  
-  /**
-   * Constructs the class with given parameters and reads object related data
-   * from the ASF file.
-   *
-   * @param Reader $reader  The reader object.
-   * @param Array  $options The options array.
-   */
-  public function __construct($reader = null, &$options = array())
-  {
-    parent::__construct($reader, $options);
-    
-    if ($reader === null)
-      return;
-    
-    $this->_type = $this->_reader->readUInt32LE();
-    $dataLength = $this->_reader->readUInt32LE();
-    $this->_data = $this->_reader->read($dataLength);
-  }
-  
-  /**
-   * Returns the type of digital signature used. This field is set to 2.
-   *
-   * @return integer
-   */
-  public function getType() { return $this->_type; }
-  
-  /**
-   * Sets the type of digital signature used. This field must be set to 2.
-   * 
-   * @param integer $type The type of digital signature used.
-   */
-  public function setType($type) { $this->_type = $type; }
-  
-  /**
-   * Returns the digital signature data.
-   *
-   * @return string
-   */
-  public function getData() { return $this->_data; }
-  
-  /**
-   * Sets the digital signature data.
-   *
-   * @return string
-   */
-  public function setData($data) { $this->_data = $data; }
-  
   /**
    * Returns the whether the object is required to be present, or whether
    * minimum cardinality is 1.
@@ -121,7 +66,7 @@ final class ASF_Object_DigitalSignature extends ASF_Object
    * 
    * @return boolean
    */
-  public function isMultiple() { return false; }
+  public function isMultiple() { return true; }
   
   /**
    * Returns the object data with headers.
@@ -130,9 +75,10 @@ final class ASF_Object_DigitalSignature extends ASF_Object
    */
   public function __toString()
   {
-    $data =
-      Transform::toUInt32LE($this->_type) .
-      Transform::toUInt32LE(strlen($this->_data)) . $this->_data;
+    $offset = $this->_reader->getOffset();
+    $this->_reader->setOffset($this->getOffset() + 24 /* for header */);
+    $data = $this->_reader->read($this->getSize() - 24 /* for header */);
+    $this->_reader->setOffset($offset);
     $this->setSize(24 /* for header */ + strlen($data));
     return
       Transform::toGUID($this->getIdentifier()) .

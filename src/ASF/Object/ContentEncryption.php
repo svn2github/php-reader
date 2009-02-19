@@ -2,7 +2,8 @@
 /**
  * PHP Reader Library
  *
- * Copyright (c) 2008 The PHP Reader Project Workgroup. All rights reserved.
+ * Copyright (c) 2008-2009 The PHP Reader Project Workgroup. All rights
+ * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -30,7 +31,7 @@
  *
  * @package    php-reader
  * @subpackage ASF
- * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
+ * @copyright  Copyright (c) 2008-2009 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Id$
  */
@@ -46,7 +47,7 @@ require_once("ASF/Object.php");
  * @package    php-reader
  * @subpackage ASF
  * @author     Sven Vollbehr <svollbehr@gmail.com>
- * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
+ * @copyright  Copyright (c) 2008-2009 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Rev$
  */
@@ -71,9 +72,12 @@ final class ASF_Object_ContentEncryption extends ASF_Object
    * @param Reader $reader  The reader object.
    * @param Array  $options The options array.
    */
-  public function __construct($reader, &$options = array())
+  public function __construct($reader = null, &$options = array())
   {
     parent::__construct($reader, $options);
+    
+    if ($reader === null)
+      return;
     
     $secretDataLength = $this->_reader->readUInt32LE();
     $this->_secretData = $this->_reader->read($secretDataLength);
@@ -93,12 +97,33 @@ final class ASF_Object_ContentEncryption extends ASF_Object
   public function getSecretData() { return $this->_secretData; }
   
   /**
+   * Sets the secret data.
+   * 
+   * @param string $secretData The secret data.
+   */
+  public function setSecretData($secretData)
+  {
+    $this->_secretData = $secretData;
+  }
+  
+  /**
    * Returns the type of protection mechanism used. The value of this field
    * is set to "DRM".
    *
    * @return string
    */
   public function getProtectionType() { return $this->_protectionType; }
+  
+  /**
+   * Sets the type of protection mechanism used. The value of this field
+   * is to be set to "DRM".
+   * 
+   * @param string $protectionType The protection mechanism used.
+   */
+  public function setProtectionType($protectionType)
+  {
+    $this->_protectionType = $protectionType;
+  }
   
   /**
    * Returns the key ID used.
@@ -108,10 +133,66 @@ final class ASF_Object_ContentEncryption extends ASF_Object
   public function getKeyId() { return $this->_keyId; }
   
   /**
+   * Sets the key ID used.
+   * 
+   * @param string $keyId The key ID used.
+   */
+  public function setKeyId($keyId) { $this->_keyId = $keyId; }
+  
+  /**
    * Returns the URL from which a license to manipulate the content can be
    * acquired.
    *
    * @return string
    */
   public function getLicenseUrl() { return $this->_licenseUrl; }
+  
+  /**
+   * Returns the URL from which a license to manipulate the content can be
+   * acquired.
+   * 
+   * @param string $licenseUrl The URL from which a license can be acquired.
+   */
+  public function setLicenseUrl($licenseUrl)
+  {
+    $this->_licenseUrl = $licenseUrl;
+  }
+  
+  /**
+   * Returns the whether the object is required to be present, or whether
+   * minimum cardinality is 1.
+   * 
+   * @return boolean
+   */
+  public function isMandatory() { return false; }
+  
+  /**
+   * Returns whether multiple instances of this object can be present, or
+   * whether maximum cardinality is greater than 1.
+   * 
+   * @return boolean
+   */
+  public function isMultiple() { return false; }
+  
+  /**
+   * Returns the object data with headers.
+   *
+   * @return string
+   */
+  public function __toString()
+  {
+    $data =
+      Transform::toUInt32LE(strlen($this->_secretData)) .
+      $this->_secretData .
+      Transform::toUInt32LE($len = strlen($this->_protectionType) + 1) .
+      Transform::toString8($this->_protectionType, $len) .
+      Transform::toUInt32LE($len = strlen($this->_keyId) + 1) .
+      Transform::toString8($this->_keyId, $len) .
+      Transform::toUInt32LE($len = strlen($this->_licenseUrl) + 1) .
+      Transform::toString8($this->_licenseUrl, $len);
+    $this->setSize(24 /* for header */ + strlen($data));
+    return
+      Transform::toGUID($this->getIdentifier()) .
+      Transform::toInt64LE($this->getSize())  . $data;
+  }
 }

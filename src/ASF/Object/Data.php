@@ -2,7 +2,8 @@
 /**
  * PHP Reader Library
  *
- * Copyright (c) 2008 The PHP Reader Project Workgroup. All rights reserved.
+ * Copyright (c) 2008-2009 The PHP Reader Project Workgroup. All rights
+ * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -30,7 +31,7 @@
  *
  * @package    php-reader
  * @subpackage ASF
- * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
+ * @copyright  Copyright (c) 2008-2009 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Id$
  */
@@ -57,7 +58,7 @@ require_once("ASF/Object.php");
  * @package    php-reader
  * @subpackage ASF
  * @author     Sven Vollbehr <svollbehr@gmail.com>
- * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
+ * @copyright  Copyright (c) 2008-2009 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Rev$
  */
@@ -86,10 +87,9 @@ final class ASF_Object_Data extends ASF_Object
     $this->_fileId = $this->_reader->readGUID();
     $this->_totalDataPackets = $this->_reader->readInt64LE();
     $this->_reader->skip(2);
-    /* Data packets are not supported
-     * for ($i = 0; $i < $this->_totalDataPackets; $i++) {
+    /* Support for Data Packets is not done yet
+     * for ($i = 0; $i < $this->_totalDataPackets; $i++)
      *   $this->_dataPackets[] = new ASF_Object_Data_Packet($reader);
-     * }
      */
   }
   
@@ -120,6 +120,23 @@ final class ASF_Object_Data extends ASF_Object
    */
   public function getDataPackets()
   {
-    throw new ASF_Exception("Data packets are not supported.");
+    require_once("ASF/Exception.php");
+    throw new ASF_Exception("Support for Data Packets is not done yet");
   }
+  
+  /**
+   * Returns the whether the object is required to be present, or whether
+   * minimum cardinality is 1.
+   * 
+   * @return boolean
+   */
+  public function isMandatory() { return true; }
+  
+  /**
+   * Returns whether multiple instances of this object can be present, or
+   * whether maximum cardinality is greater than 1.
+   * 
+   * @return boolean
+   */
+  public function isMultiple() { return false; }
 }

@@ -38,7 +38,6 @@
 
 /**#@+ @ignore */
 require_once("Reader.php");
-require_once("MPEG/Exception.php");
 /**#@-*/
 
 /**
@@ -132,8 +131,11 @@ abstract class MPEG_Object
     $buffer = "    ";
     for ($i = 0; $i < 4; $i++) {
       $start = $this->_reader->getOffset();
-      if (($buffer = substr($buffer, -4) . $this->_reader->read(512)) === false)
+      if (($buffer = substr($buffer, -4) .
+           $this->_reader->read(512)) === false) {
+        require_once("MPEG/Exception.php");
         throw new MPEG_Exception("Invalid data");
+      }
       $limit = strlen($buffer);
       $pos = 0;
       while ($pos < $limit - 3) {
@@ -151,6 +153,7 @@ abstract class MPEG_Object
     }
     
     /* No start code found within 2048 bytes, the maximum size of a pack */
+    require_once("MPEG/Exception.php");
     throw new MPEG_Exception("Invalid data");
   }
   
@@ -171,8 +174,10 @@ abstract class MPEG_Object
     while ($position > 0) {
       $start = 0;
       $position = $position - 512;
-      if ($position < 0)
+      if ($position < 0) {
+        require_once("MPEG/Exception.php");
         throw new MPEG_Exception("Invalid data");
+      }
       $this->_reader->setOffset($position);
       $buffer = $this->_reader->read(512) . substr($buffer, 0, 4);
       $pos = 512 - 8;
@@ -227,7 +232,10 @@ abstract class MPEG_Object
   {
     if (method_exists($this, "get" . ucfirst($name)))
       return call_user_func(array($this, "get" . ucfirst($name)));
-    else throw new MPEG_Exception("Unknown field: " . $name);
+    else {
+      require_once("MPEG/Exception.php");
+      throw new MPEG_Exception("Unknown field: " . $name);
+    }
   }
   
   /**
@@ -242,6 +250,9 @@ abstract class MPEG_Object
     if (method_exists($this, "set" . ucfirst($name)))
       call_user_func
         (array($this, "set" . ucfirst($name)), $value);
-    else throw new MPEG_Exception("Unknown field: " . $name);
+    else {
+      require_once("MPEG/Exception.php");
+      throw new MPEG_Exception("Unknown field: " . $name);
+    }
   }
 }

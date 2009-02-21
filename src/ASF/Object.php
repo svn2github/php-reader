@@ -36,9 +36,6 @@
  * @version    $Id$
  */
 
-/**#@+ @ignore */
-/**#@-*/
-
 /**
  * The base unit of organization for ASF files is called the ASF object. It
  * consists of a 128-bit GUID for the object, a 64-bit integer object size, and

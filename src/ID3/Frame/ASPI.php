@@ -84,8 +84,10 @@ final class ID3_Frame_ASPI extends ID3_Frame
   {
     parent::__construct($reader, $options);
     
-    if ($reader === null)
+    if ($reader === null) {
+      require_once("ID3/Exception.php");
       throw new ID3_Exception("Write not supported yet");
+    }
 
     $this->_dataStart = Transform::fromInt32BE(substr($this->_data, 0, 4));
     $this->_dataLength = Transform::fromInt32BE(substr($this->_data, 4, 4));

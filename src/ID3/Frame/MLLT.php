@@ -92,8 +92,10 @@ final class ID3_Frame_MLLT extends ID3_Frame
   {
     parent::__construct($reader, $options);
     
-    if ($reader === null)
+    if ($reader === null) {
+      require_once("ID3/Exception.php");
       throw new ID3_Exception("Write not supported yet");
+    }
 
     $this->_frames = Transform::fromInt16BE(substr($this->_data, 0, 2));
     $this->_bytes = Transform::fromInt32BE(substr($this->_data, 2, 3));

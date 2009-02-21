@@ -254,6 +254,7 @@ final class ISO14496_Box_DATA extends ISO14496_Box_Full
       return $this;
     if (method_exists($this, "get" . ucfirst($name)))
       return call_user_func(array($this, "get" . ucfirst($name)));
+    require_once("ISO14496/Exception.php");
     throw new ISO14496_Exception("Unknown box/field: " . $name);
   }
   

@@ -74,9 +74,11 @@ final class ID3_Frame_EQUA extends ID3_Frame
       return;
     
     $adjustmentBits = Transform::fromInt8($this->_data[0]);
-    if ($adjustmentBits <= 8 || $adjustmentBits > 16)
+    if ($adjustmentBits <= 8 || $adjustmentBits > 16) {
+      require_once("ID3/Exception.php");
       throw new ID3_Exception
           ("Unsupported adjustment bit size of: " . $adjustmentBits);
+    }
     
     for ($i = 1; $i < strlen($this->_data); $i += 4) {
       $frequency = Transform::fromUInt16BE(substr($this->_data, $i, 2));

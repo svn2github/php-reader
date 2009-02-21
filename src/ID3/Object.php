@@ -124,7 +124,10 @@ abstract class ID3_Object
   {
     if (method_exists($this, "get" . ucfirst($name)))
       return call_user_func(array($this, "get" . ucfirst($name)));
-    else throw new ID3_Exception("Unknown field: " . $name);
+    else {
+      require_once("ID3/Exception.php");
+      throw new ID3_Exception("Unknown field: " . $name);
+    }
   }
   
   /**
@@ -139,7 +142,10 @@ abstract class ID3_Object
     if (method_exists($this, "set" . ucfirst($name)))
       call_user_func
         (array($this, "set" . ucfirst($name)), $value);
-    else throw new ID3_Exception("Unknown field: " . $name);
+    else {
+      require_once("ID3/Exception.php");
+      throw new ID3_Exception("Unknown field: " . $name);
+    }
   }
   
   /**

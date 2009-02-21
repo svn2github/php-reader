@@ -38,10 +38,7 @@
 
 /**#@+ @ignore */
 require_once("Reader.php");
-require_once("ID3/Exception.php");
 require_once("ID3/Header.php");
-require_once("ID3/ExtendedHeader.php");
-require_once("ID3/Frame.php");
 /**#@-*/
 
 /**
@@ -61,6 +58,7 @@ require_once("ID3/Frame.php");
  * unique and predefined identifier which allows software to skip unknown
  * frames.
  *
+ * @todo       Unsynchronisation not supported for ID3v2.3 tag
  * @package    php-reader
  * @subpackage ID3
  * @author     Sven Vollbehr <svollbehr@gmail.com>
@@ -138,23 +136,32 @@ final class ID3v2
       
       $startOffset = $this->_reader->getOffset();
       
-      if ($this->_reader->readString8(3) != "ID3")
+      if ($this->_reader->readString8(3) != "ID3") {
+        require_once("ID3/Exception.php");
         throw new ID3_Exception("File does not contain ID3v2 tag");
+      }
       
       $this->_header = new ID3_Header($this->_reader, $options);
-      if ($this->_header->getVersion() < 3 || $this->_header->getVersion() > 4)
+      if ($this->_header->getVersion() < 3 ||
+          $this->_header->getVersion() > 4) {
+        require_once("ID3/Exception.php");
         throw new ID3_Exception
           ("File does not contain ID3v2 tag of supported version");
+      }
       if ($this->_header->getVersion() < 4 &&
-          $this->_header->hasFlag(ID3_Header::UNSYNCHRONISATION))
+          $this->_header->hasFlag(ID3_Header::UNSYNCHRONISATION)) {
+        require_once("ID3/Exception.php");
         throw new ID3_Exception
           ("Unsynchronisation not supported for this version of ID3v2 tag");
+      }
       unset($this->_options["unsyncronisation"]);
       if ($this->_header->hasFlag(ID3_Header::UNSYNCHRONISATION))
         $this->_options["unsyncronisation"] = true;
-      if ($this->_header->hasFlag(ID3_Header::EXTENDEDHEADER))
+      if ($this->_header->hasFlag(ID3_Header::EXTENDEDHEADER)) {
+        require_once("ID3/ExtendedHeader.php");
         $this->_extendedHeader =
           new ID3_ExtendedHeader($this->_reader, $options);
+      }
       if ($this->_header->hasFlag(ID3_Header::FOOTER))
         $this->_footer = &$this->_header; // skip footer, and rather copy header
       
@@ -240,7 +247,10 @@ final class ID3v2
         $this->_header->flags | ID3_Header::EXTENDEDHEADER;
       $this->_extendedHeader->setOptions($this->_options);
       $this->_extendedHeader = $extendedHeader;
-    } else throw new ID3_Exception("Invalid argument");
+    } else {
+      require_once("ID3/Exception.php");
+      throw new ID3_Exception("Invalid argument");
+    }
   }
 
   /**
@@ -398,17 +408,23 @@ final class ID3v2
    */
   public function write($filename = false)
   {
-    if ($filename === false && ($filename = $this->_filename) === false)
+    if ($filename === false && ($filename = $this->_filename) === false) {
+      require_once("ID3/Exception.php");
       throw new ID3_Exception("No file given to write the tag to");
+    }
     else if ($filename !== false && $this->_filename !== false &&
              realpath($filename) != realpath($this->_filename) &&
-             !copy($this->_filename, $filename))
+             !copy($this->_filename, $filename)) {
+      require_once("ID3/Exception.php");
       throw new ID3_Exception("Unable to copy source to destination: " .
         realpath($this->_filename) . "->" . realpath($filename));
+    }
 
     if (($fd = fopen
-         ($filename, file_exists($filename) ? "r+b" : "wb")) === false)
+         ($filename, file_exists($filename) ? "r+b" : "wb")) === false) {
+      require_once("ID3/Exception.php");
       throw new ID3_Exception("Unable to open file for writing: " . $filename);
+    }
 
     $oldTagSize = $this->_header->getSize();
     $tag = $this->__toString();
@@ -455,6 +471,7 @@ final class ID3v2
       require_once($filename);
     if (class_exists($classname = "ID3_Frame_" . strtoupper($name)))
       return $this->addFrame(new $classname());
+    require_once("ID3/Exception.php");
     throw new ID3_Exception("Unknown frame/field: " . $name);
   }
 

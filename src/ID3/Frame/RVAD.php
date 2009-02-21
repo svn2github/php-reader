@@ -120,9 +120,11 @@ final class ID3_Frame_RVAD extends ID3_Frame
     
     $flags = Transform::fromInt8($this->_data[0]);
     $descriptionBits = Transform::fromInt8($this->_data[1]);
-    if ($descriptionBits <= 8 || $descriptionBits > 16)
+    if ($descriptionBits <= 8 || $descriptionBits > 16) {
+      require_once("ID3/Exception.php");
       throw new ID3_Exception
           ("Unsupported description bit size of: " . $descriptionBits);
+    }
     
     $this->_adjustments[self::right] =
       ($flags & 0x1) == 0x1 ?

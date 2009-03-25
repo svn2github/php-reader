@@ -86,17 +86,16 @@ final class ID3_Frame_TXXX extends ID3_Frame_AbstractText
       list($this->_description, $this->_text) =
         $this->_explodeString16($this->_data, 2);
       $this->_description = $this->_convertString
-        (Transform::fromString16($this->_description), "utf-16");
-      $this->_text = $this->_convertString
-        (array(Transform::fromString16($this->_text)), "utf-16");
+        ($this->_description, "utf-16");
+      $this->_text = $this->_convertString(array($this->_text), "utf-16");
       break;
     case self::UTF16BE:
       list($this->_description, $this->_text) =
         $this->_explodeString16($this->_data, 2);
       $this->_description = $this->_convertString
-        (Transform::fromString16BE($this->_description), "utf-16be");
+        ($this->_description, "utf-16be");
       $this->_text = $this->_convertString
-        (array(Transform::fromString16BE($this->_text)), "utf-16be");
+        (array($this->_text), "utf-16be");
       break;
     case self::UTF8:
       list($this->_description, $this->_text) = $this->_convertString
@@ -139,16 +138,12 @@ final class ID3_Frame_TXXX extends ID3_Frame_AbstractText
   {
     $data = Transform::toUInt8($this->_encoding);
     switch ($this->_encoding) {
-    case self::UTF16:
     case self::UTF16LE:
-      $order = $this->_encoding == self::UTF16 ?
-        Transform::MACHINE_ENDIAN_ORDER : Transform::LITTLE_ENDIAN_ORDER;
-      $data .= Transform::toString16($this->_description, $order) . "\0\0" .
-        Transform::toString16($this->_text[0], $order);
+      $data .= 0xfeff . $this->_description . "\0\0" . 0xfeff . $this->_text[0];
       break;
+    case self::UTF16:
     case self::UTF16BE:
-      $data .= Transform::toString16BE($this->_description) . "\0\0" .
-        Transform::toString16BE($this->_text[0]);
+      $data .= $this->_description . "\0\0" . $this->_text[0];
       break;
     default:
       $data .= $this->_description . "\0" . $this->_text[0];

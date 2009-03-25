@@ -89,13 +89,11 @@ abstract class ID3_Frame_AbstractText extends ID3_Frame
     switch ($encoding) {
     case self::UTF16:
       $this->_text = $this->_convertString
-        ($this->_explodeString16(Transform::fromString16($this->_data)),
-         "utf-16");
+        ($this->_explodeString16($this->_data), "utf-16");
       break;
     case self::UTF16BE:
       $this->_text = $this->_convertString
-        ($this->_explodeString16(Transform::fromString16BE($this->_data)),
-         "utf-16be");
+        ($this->_explodeString16($this->_data), "utf-16be");
       break;
     case self::UTF8:
       $this->_text = $this->_convertString
@@ -170,17 +168,12 @@ abstract class ID3_Frame_AbstractText extends ID3_Frame
   {
     $data = Transform::toUInt8($this->_encoding);
     switch ($this->_encoding) {
-    case self::UTF16:
     case self::UTF16LE:
-      $array = $this->_text;
-      foreach ($array as &$text)
-        $text = Transform::toString16($text);
-      $data .= Transform::toString16
-        (implode("\0\0", $array), $this->_encoding == self::UTF16 ?
-         Transform::MACHINE_ENDIAN_ORDER : Transform::LITTLE_ENDIAN_ORDER);
+      $data .= 0xfeff . implode(0xfeff . "\0\0", $this->_text);
       break;
+    case self::UTF16:
     case self::UTF16BE:
-      $data .= Transform::toString16BE(implode("\0\0", $this->_text));
+      $data .= implode("\0\0", $this->_text);
       break;
     default:
       $data .= implode("\0", $this->_text);

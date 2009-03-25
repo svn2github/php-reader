@@ -82,25 +82,23 @@ final class ID3_Frame_IPLS extends ID3_Frame
 
     $encoding = Transform::fromUInt8($this->_data[0]);
     $data = substr($this->_data, 1);
-    $order = Transform::MACHINE_ENDIAN_ORDER;
     switch ($encoding) {
     case self::UTF16:
       $data = $this->_explodeString16($data);
       foreach ($data as &$str)
-        $str = $this->_convertString
-          (Transform::fromString16($str, $order), "utf-16");
+        $str = $this->_convertString($str, "utf-16");
       break;
     case self::UTF16BE:
       $data = $this->_explodeString16($data);
       foreach ($data as &$str)
-        $str = $this->_convertString
-          (Transform::fromString16BE($str), "utf-16be");
+        $str = $this->_convertString($str, "utf-16be");
       break;
     case self::UTF8:
       $data = $this->_convertString($this->_explodeString8($data), "utf-8");
       break;
     default:
-      $data = $this->_convertString($this->_explodeString8($data), "iso-8859-1");
+      $data = $this->_convertString
+        ($this->_explodeString8($data), "iso-8859-1");
     }
 
     for ($i = 0; $i < count($data) - 1; $i += 2)
@@ -169,18 +167,15 @@ final class ID3_Frame_IPLS extends ID3_Frame
   protected function _getData()
   {
     $data = Transform::toUInt8($this->_encoding);
-    $order = $this->_encoding == self::UTF16 ?
-      Transform::MACHINE_ENDIAN_ORDER : Transform::LITTLE_ENDIAN_ORDER;
     foreach ($this->_people as $entry) {
       foreach ($entry as $key => $val) {
         switch ($this->_encoding) {
-        case self::UTF16:
         case self::UTF16LE:
-          $data .= Transform::toString16($key, $order) . "\0\0" .
-                   Transform::toString16($val, $order) . "\0\0";
+          $data .= 0xfeff . $key . "\0\0" . 0xfeff . $val . "\0\0";
           break;
+        case self::UTF16:
         case self::UTF16BE:
-          $data .= Transform::toString16BE($key . "\0\0" . $val . "\0\0");
+          $data .= $key . "\0\0" . $val . "\0\0";
           break;
         default:
           $data .= $key . "\0" . $val . "\0";

@@ -88,13 +88,13 @@ final class ID3_Frame_WXXX extends ID3_Frame_AbstractLink
       list($this->_description, $this->_link) = 
         $this->_explodeString16($this->_data, 2);
       $this->_description = $this->_convertString
-        (Transform::fromString16($this->_description), "utf-16");
+        ($this->_description, "utf-16");
       break;
     case self::UTF16BE:
       list($this->_description, $this->_link) = 
         $this->_explodeString16($this->_data, 2);
       $this->_description = $this->_convertString
-        (Transform::fromString16BE($this->_description), "utf-16be");
+        ($this->_description, "utf-16be");
       break;
     case self::UTF8:
       list($this->_description, $this->_link) =
@@ -165,15 +165,12 @@ final class ID3_Frame_WXXX extends ID3_Frame_AbstractLink
   {
     $data = Transform::toUInt8($this->_encoding);
     switch ($this->_encoding) {
-    case self::UTF16:
     case self::UTF16LE:
-      $data .= Transform::toString16
-        ($this->_description, $this->_encoding == self::UTF16 ?
-         Transform::MACHINE_ENDIAN_ORDER : Transform::LITTLE_ENDIAN_ORDER) .
-        "\0\0";
+      $data .= 0xfeff . $this->_description . "\0\0";
       break;
+    case self::UTF16:
     case self::UTF16BE:
-      $data .= Transform::toString16BE($this->_description) . "\0\0";
+      $data .= $this->_description . "\0\0";
       break;
     default:
       $data .= $this->_description . "\0";

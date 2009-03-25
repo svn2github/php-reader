@@ -92,12 +92,10 @@ final class ID3_Frame_USER extends ID3_Frame
 
     switch ($encoding) {
     case self::UTF16:
-      $this->_text = $this->_convertString
-        (Transform::fromString16($this->_data), "utf-16");
+      $this->_text = $this->_convertString($this->_data, "utf-16");
       break;
     case self::UTF16BE:
-      $this->_text = $this->_convertString
-        (Transform::fromString16BE($this->_data), "utf-16be");
+      $this->_text = $this->_convertString($this->_data, "utf-16be");
       break;
     case self::UTF8:
       $this->_text = $this->_convertString
@@ -189,15 +187,8 @@ final class ID3_Frame_USER extends ID3_Frame
   {
     $data = Transform::toUInt8($this->_encoding) . $this->_language;
     switch ($this->_encoding) {
-    case self::UTF16:
     case self::UTF16LE:
-      $data .= Transform::toString16
-        ($this->_text, $this->_encoding == self::UTF16 ?
-         Transform::MACHINE_ENDIAN_ORDER : Transform::LITTLE_ENDIAN_ORDER);
-      break;
-    case self::UTF16BE:
-      $data .= Transform::toString16BE($this->_text);
-      break;
+      $data .= 0xfeff . $this->_text;
     default:
       $data .= $this->_text;
     }

@@ -84,11 +84,11 @@ final class ASF_Object_CodecList extends ASF_Object
       $codecNameLength = $this->_reader->readUInt16LE() * 2;
       $entry["codecName"] = iconv
         ("utf-16le", $this->getOption("encoding"),
-         $this->_reader->readString16LE($codecNameLength));
+         $this->_reader->readString16($codecNameLength));
       $codecDescriptionLength = $this->_reader->readUInt16LE() * 2;
       $entry["codecDescription"] = iconv
         ("utf-16le", $this->getOption("encoding"),
-         $this->_reader->readString16LE($codecDescriptionLength));
+         $this->_reader->readString16($codecDescriptionLength));
       $codecInformationLength = $this->_reader->readUInt16LE();
       $entry["codecInformation"] =
         $this->_reader->read($codecInformationLength);
@@ -165,11 +165,11 @@ final class ASF_Object_CodecList extends ASF_Object
         Transform::toUInt16LE(strlen($codecName = iconv
           ($this->getOption("encoding"), "utf-16le",
            $this->_entries[$i]["codecName"]) . "\0\0") / 2) .
-        Transform::toString16LE($codecName) .
+        Transform::toString16($codecName) .
         Transform::toUInt16LE(strlen($codecDescription = iconv
           ($this->getOption("encoding"), "utf-16le",
            $this->_entries[$i]["codecDescription"]) . "\0\0") / 2) .
-        Transform::toString16LE($codecDescription) .
+        Transform::toString16($codecDescription) .
         Transform::toUInt16LE(strlen($this->_entries[$i]["codecInformation"])) .
         $this->_entries[$i]["codecInformation"];
     }

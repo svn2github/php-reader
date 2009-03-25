@@ -82,23 +82,25 @@ final class ID3_Frame_IPLS extends ID3_Frame
 
     $encoding = Transform::fromUInt8($this->_data[0]);
     $data = substr($this->_data, 1);
+    $order = Transform::MACHINE_ENDIAN_ORDER;
     switch ($encoding) {
     case self::UTF16:
       $data = $this->_explodeString16($data);
       foreach ($data as &$str)
-        $str = $this->_convertString($str, "utf-16");
+        $str = $this->_convertString
+          (Transform::fromString16($str, $order), "utf-16");
       break;
     case self::UTF16BE:
       $data = $this->_explodeString16($data);
       foreach ($data as &$str)
-        $str = $this->_convertString($str, "utf-16be");
+        $str = $this->_convertString
+          (Transform::fromString16($str), "utf-16be");
       break;
     case self::UTF8:
       $data = $this->_convertString($this->_explodeString8($data), "utf-8");
       break;
     default:
-      $data = $this->_convertString
-        ($this->_explodeString8($data), "iso-8859-1");
+      $data = $this->_convertString($this->_explodeString8($data), "iso-8859-1");
     }
 
     for ($i = 0; $i < count($data) - 1; $i += 2)
@@ -171,11 +173,13 @@ final class ID3_Frame_IPLS extends ID3_Frame
       foreach ($entry as $key => $val) {
         switch ($this->_encoding) {
         case self::UTF16LE:
-          $data .= 0xfeff . $key . "\0\0" . 0xfeff . $val . "\0\0";
-          break;
+          $data .= Transform::toString16
+              ($key, Transform::LITTLE_ENDIAN_ORDER, 1) .
+            Transform::toString16($val, Transform::LITTLE_ENDIAN_ORDER, 1);
         case self::UTF16:
         case self::UTF16BE:
-          $data .= $key . "\0\0" . $val . "\0\0";
+          $data .= Transform::toString16($key, false, 1) .
+                   Transform::toString16($val, false, 1);
           break;
         default:
           $data .= $key . "\0" . $val . "\0";

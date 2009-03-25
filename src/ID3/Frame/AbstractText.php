@@ -89,11 +89,13 @@ abstract class ID3_Frame_AbstractText extends ID3_Frame
     switch ($encoding) {
     case self::UTF16:
       $this->_text = $this->_convertString
-        ($this->_explodeString16($this->_data), "utf-16");
+        ($this->_explodeString16(Transform::fromString16($this->_data)),
+         "utf-16");
       break;
     case self::UTF16BE:
       $this->_text = $this->_convertString
-        ($this->_explodeString16($this->_data), "utf-16be");
+        ($this->_explodeString16(Transform::fromString16($this->_data)),
+         "utf-16be");
       break;
     case self::UTF8:
       $this->_text = $this->_convertString
@@ -169,7 +171,10 @@ abstract class ID3_Frame_AbstractText extends ID3_Frame
     $data = Transform::toUInt8($this->_encoding);
     switch ($this->_encoding) {
     case self::UTF16LE:
-      $data .= 0xfeff . implode(0xfeff . "\0\0", $this->_text);
+      $array = $this->_text;
+      foreach ($array as &$text)
+        $text = Transform::toString16($text, Transform::LITTLE_ENDIAN_ORDER);
+      $data .= implode("\0\0", $array);
       break;
     case self::UTF16:
     case self::UTF16BE:

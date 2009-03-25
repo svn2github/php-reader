@@ -106,7 +106,7 @@ final class ASF_Object_ScriptCommand extends ASF_Object
       $commandTypeNameLength = $this->_reader->readUInt16LE();
       $commandTypes[] = iconv
         ("utf-16le", $this->getOption("encoding"),
-         $this->_reader->readString16LE($commandTypeNameLength * 2));
+         $this->_reader->readString16($commandTypeNameLength * 2));
     }
     for ($i = 0; $i < $commandsCount; $i++) {
       $command = array
@@ -115,7 +115,7 @@ final class ASF_Object_ScriptCommand extends ASF_Object
       $commandNameLength = $this->_reader->readUInt16LE();
       $command["name"] = iconv
         ("utf-16le", $this->getOption("encoding"),
-         $this->_reader->readString16LE($commandNameLength * 2));
+         $this->_reader->readString16($commandNameLength * 2));
       $this->_commands[] = $command;
     }
   }

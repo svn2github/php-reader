@@ -135,16 +135,18 @@ final class ID3_Frame_COMR extends ID3_Frame
     case self::UTF16:
       list ($this->_seller, $this->_description, $this->_data) =
         $this->_explodeString16($this->_data, 3);
-      $this->_seller = $this->_convertString($this->_seller, "utf-16");
+      $this->_seller = $this->_convertString
+        (Transform::fromString16($this->_seller), "utf-16");
       $this->_description = $this->_convertString
-        ($this->_description, "utf-16");
+        (Transform::fromString16($this->_description), "utf-16");
       break;
     case self::UTF16BE:
       list ($this->_seller, $this->_description, $this->_data) =
         $this->_explodeString16($this->_data, 3);
-      $this->_seller = $this->_convertString($this->_seller, "utf-16be");
+      $this->_seller = $this->_convertString
+        (Transform::fromString16($this->_seller), "utf-16be");
       $this->_description = $this->_convertString
-        ($this->_description, "utf-16be");
+        (Transform::fromString16($this->_description), "utf-16be");
       break;
     case self::UTF8:
       list ($this->_seller, $this->_description, $this->_data) =
@@ -378,12 +380,15 @@ final class ID3_Frame_COMR extends ID3_Frame
       Transform::toUInt8($this->_delivery);
     switch ($this->_encoding) {
     case self::UTF16LE:
-      $data .= 0xfeff . $this->_seller . "\0\0" . 0xfeff . 
-        $this->_description . "\0\0";
+      $data .= Transform::toString16
+          ($this->_seller, Transform::LITTLE_ENDIAN_ORDER, 1) .
+        Transform::toString16
+          ($this->_description, Transform::LITTLE_ENDIAN_ORDER, 1);
       break;
     case self::UTF16:
     case self::UTF16BE:
-      $data .= $this->_seller . "\0\0" . $this->_description . "\0\0";
+      $data .= Transform::toString16($this->_seller, false, 1) .
+        Transform::toString16($this->_description, false, 1);
       break;
     default:
       $data .= $this->_seller . "\0" . $this->_description . "\0";

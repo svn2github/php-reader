@@ -74,7 +74,7 @@ final class ASF_Object_LanguageList extends ASF_Object
     $languageIdRecordsCount = $this->_reader->readUInt16LE();
     for ($i = 0; $i < $languageIdRecordsCount; $i++) {
       $languageIdLength = $this->_reader->readInt8();
-      $languageId = $this->_reader->readString16LE($languageIdLength);
+      $languageId = $this->_reader->readString16($languageIdLength);
       $this->_languages[] = iconv
         ("utf-16le", $this->getOption("encoding"), $languageId);
     }
@@ -123,7 +123,7 @@ final class ASF_Object_LanguageList extends ASF_Object
       $data .=
         Transform::toInt8(strlen($languageId = iconv
           ($this->getOption("encoding"), "utf-16le", $this->_languages[$i]) .
-          "\0\0")) . Transform::toString16LE($languageId);
+          "\0\0")) . Transform::toString16($languageId);
     $this->setSize(24 /* for header */ + strlen($data));
     return
       Transform::toGUID($this->getIdentifier()) .

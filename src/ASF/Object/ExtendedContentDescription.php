@@ -45,6 +45,8 @@ require_once("ASF/Object.php");
  * This object contains unlimited number of attribute fields giving more
  * information about the file.
  * 
+ * @todo       Implement better handling of various types of attributes
+ *             according to http://msdn.microsoft.com/en-us/library/aa384495(VS.85).aspx
  * @package    php-reader
  * @subpackage ASF
  * @author     Sven Vollbehr <svollbehr@gmail.com>
@@ -76,7 +78,7 @@ final class ASF_Object_ExtendedContentDescription extends ASF_Object
       $nameLen = $this->_reader->readUInt16LE();
       $name = iconv
         ("utf-16le", $this->getOption("encoding"),
-         $this->_reader->readString16LE($nameLen));
+         $this->_reader->readString16($nameLen));
       $valueDataType = $this->_reader->readUInt16LE();
       $valueLen = $this->_reader->readUInt16LE();
       
@@ -84,7 +86,7 @@ final class ASF_Object_ExtendedContentDescription extends ASF_Object
       case 0: // string
         $this->_contentDescriptors[$name] = iconv
           ("utf-16le", $this->getOption("encoding"),
-           $this->_reader->readString16LE($valueLen));
+           $this->_reader->readString16($valueLen));
         break;
       case 1: // byte array
         $this->_contentDescriptors[$name] = $this->_reader->read($valueLen);
@@ -183,7 +185,7 @@ final class ASF_Object_ExtendedContentDescription extends ASF_Object
       $descriptor = iconv
         ($this->getOption("encoding"), "utf-16le", $name ? $name . "\0" : "");
       $data .= Transform::toUInt16LE(strlen($descriptor)) .
-        Transform::toString16LE($descriptor);
+        Transform::toString16($descriptor);
       
       if (is_string($value)) {
         /* There is no way to distinguish byte arrays from unicode strings and
@@ -203,7 +205,7 @@ final class ASF_Object_ExtendedContentDescription extends ASF_Object
             ($this->getOption("encoding"), "utf-16le", $value) . "\0\0";
           $data .= Transform::toUInt16LE(0) .
             Transform::toUInt16LE(strlen($value)) .
-            Transform::toString16LE($value);
+            Transform::toString16($value);
         }
       }
       else if (is_bool($value))

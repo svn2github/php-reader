@@ -82,7 +82,7 @@ final class ASF_Object_Marker extends ASF_Object
     $nameLength = $this->_reader->readUInt16LE();
     $this->_name = iconv
       ("utf-16le", $this->getOption("encoding"),
-       $this->_reader->readString16LE($nameLength));
+       $this->_reader->readString16($nameLength));
     for ($i = 0; $i < $markersCount; $i++) {
       $marker = array
         ("offset" => $this->_reader->readInt64LE(),
@@ -93,7 +93,7 @@ final class ASF_Object_Marker extends ASF_Object
       $descriptionLength = $this->_reader->readUInt32LE();
       $marker["description"] = iconv
         ("utf-16le", $this->getOption("encoding"),
-         $this->_reader->readString16LE($descriptionLength));
+         $this->_reader->readString16($descriptionLength));
       $this->_markers[] = $marker;
     }
   }
@@ -186,7 +186,7 @@ final class ASF_Object_Marker extends ASF_Object
       Transform::toUInt16LE
         (strlen($name = iconv
          ($this->getOption("encoding"), "utf-16le", $this->_name) . "\0\0")) .
-      Transform::toString16LE($name);
+      Transform::toString16($name);
     for ($i = 0; $i < $markersCount; $i++)
       $data .=
         Transform::toInt64LE($this->_markers[$i]["offset"]) .
@@ -198,7 +198,7 @@ final class ASF_Object_Marker extends ASF_Object
         Transform::toUInt32LE($this->_markers[$i]["sendTime"]) .
         Transform::toUInt32LE($this->_markers[$i]["flags"]) .
         Transform::toUInt32LE($descriptionLength) .
-        Transform::toString16LE($description);
+        Transform::toString16($description);
     $this->setSize(24 /* for header */ + strlen($data));
     return
       Transform::toGUID($this->getIdentifier()) .

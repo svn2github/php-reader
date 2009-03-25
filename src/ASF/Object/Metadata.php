@@ -46,6 +46,8 @@ require_once("ASF/Object.php");
  * <i>Extended Content Description Object</i> except that it also allows a
  * stream number to be specified.
  *
+ * @todo       Implement better handling of various types of attributes
+ *             according to http://msdn.microsoft.com/en-us/library/aa384495(VS.85).aspx
  * @package    php-reader
  * @subpackage ASF
  * @author     Sven Vollbehr <svollbehr@gmail.com>
@@ -81,12 +83,12 @@ final class ASF_Object_Metadata extends ASF_Object
       $dataLength = $this->_reader->readUInt32LE();
       $descriptionRecord["name"] = iconv
         ("utf-16le", $this->getOption("encoding"),
-         $this->_reader->readString16LE($nameLength));
+         $this->_reader->readString16($nameLength));
       switch ($dataType) {
       case 0: // Unicode string
         $descriptionRecord["data"] = iconv
           ("utf-16le", $this->getOption("encoding"),
-           $this->_reader->readString16LE($dataLength));
+           $this->_reader->readString16($dataLength));
         break;
       case 1: // BYTE array
         $descriptionRecord["data"] = $this->_reader->read($dataLength);
@@ -192,7 +194,7 @@ final class ASF_Object_Metadata extends ASF_Object
           $value = ($value ? $value . "\0\0" : "");
           $data .= Transform::toUInt16LE(0) .
             Transform::toUInt32LE(strlen($value)) . $name .
-            Transform::toString16LE($value);
+            Transform::toString16($value);
         }
       }
       else if (is_bool($this->_descriptionRecords[$i]["data"])) {

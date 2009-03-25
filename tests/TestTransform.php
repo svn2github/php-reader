@@ -2,7 +2,8 @@
 /**
  * PHP Reader Library
  *
- * Copyright (c) 2008 The PHP Reader Project Workgroup. All rights reserved.
+ * Copyright (c) 2008-2009 The PHP Reader Project Workgroup. All rights
+ * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -30,7 +31,7 @@
  *
  * @package    php-reader
  * @subpackage Tests
- * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
+ * @copyright  Copyright (c) 2008-2009 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Id$
  */
@@ -47,7 +48,7 @@ require_once("Transform.php");
  * @subpackage Tests
  * @author     Sven Vollbehr <svollbehr@gmail.com>
  * @author     Ryan Butterfield <buttza@gmail.com>
- * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
+ * @copyright  Copyright (c) 2008-2009 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version    $Rev$
  */
@@ -160,43 +161,9 @@ final class TestTransform extends PHPUnit_Framework_TestCase
     $this->assertEquals("00e4", Transform::fromHHex
       (Transform::fromString16(Transform::toString16("\x00\xe4"))));
     $this->assertEquals
-      ("\0T\0h\0i\0s\0 \0i\0s\0 \0a\0 \0t\0e\0s\0t\0.",
-       Transform::fromString16(Transform::toString16LE
-        ("\xff\xfe\0T\0h\0i\0s\0 \0i\0s\0 \0a\0 \0t\0e\0s\0t\0.")));
-    $this->assertEquals
-      ("\0T\0h\0i\0s\0 \0i\0s\0 \0a\0 \0t\0e\0s\0t\0.",
-       Transform::fromString16(Transform::toString16BE
-        ("\xff\xfe\0T\0h\0i\0s\0 \0i\0s\0 \0a\0 \0t\0e\0s\0t\0.")));
-    $this->assertEquals
-      ("\0T\0h\0i\0s\0 \0i\0s\0 \0a\0 \0t\0e\0s\0t\0.",
+      ("\xff\xfe\0T\0h\0i\0s\0 \0i\0s\0 \0a\0 \0t\0e\0s\0t\0.",
        Transform::fromString16(Transform::toString16
-        ("\0T\0h\0i\0s\0 \0i\0s\0 \0a\0 \0t\0e\0s\0t\0.",
-         Transform::LITTLE_ENDIAN_ORDER)));
-    $this->assertEquals
-      ("\0T\0h\0i\0s\0 \0i\0s\0 \0a\0 \0t\0e\0s\0t\0.",
-       Transform::fromString16(Transform::toString16
-        ("\0T\0h\0i\0s\0 \0i\0s\0 \0a\0 \0t\0e\0s\0t\0.",
-         Transform::BIG_ENDIAN_ORDER)));
-  }
-
-  function testString16LE()
-  {
-    $this->assertEquals
-      ("fffe", Transform::fromHHex(Transform::toString16LE("\xff\xfe")));
-    $this->assertEquals
-      ("\0T\0h\0i\0s\0 \0i\0s\0 \0a\0 \0t\0e\0s\0t\0.",
-       Transform::fromString16LE(Transform::toString16LE
-        ("\0T\0h\0i\0s\0 \0i\0s\0 \0a\0 \0t\0e\0s\0t\0.")));
-  }
-
-  function testString16BE()
-  {
-    $this->assertEquals
-      ("feff", Transform::fromHHex(Transform::toString16BE("\xff\xfe")));
-    $this->assertEquals
-      ("\0T\0h\0i\0s\0 \0i\0s\0 \0a\0 \0t\0e\0s\0t\0.",
-       Transform::fromString16BE(Transform::toString16BE
-        ("\0T\0h\0i\0s\0 \0i\0s\0 \0a\0 \0t\0e\0s\0t\0.")));
+        ("\xff\xfe\0T\0h\0i\0s\0 \0i\0s\0 \0a\0 \0t\0e\0s\0t\0.")));
   }
 
   function testHHex()

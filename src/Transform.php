@@ -2,7 +2,7 @@
 /**
  * PHP Reader Library
  *
- * Copyright (c) 2006-2008 The PHP Reader Project Workgroup. All rights
+ * Copyright (c) 2006-2009 The PHP Reader Project Workgroup. All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,7 +30,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  *
  * @package   php-reader
- * @copyright Copyright (c) 2006-2008 The PHP Reader Project Workgroup
+ * @copyright Copyright (c) 2006-2009 The PHP Reader Project Workgroup
  * @license   http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version   $Id$
  */
@@ -41,7 +41,7 @@
  * @package   php-reader
  * @author    Sven Vollbehr <svollbehr@gmail.com>
  * @author    Ryan Butterfield <buttza@gmail.com>
- * @copyright Copyright (c) 2006-2008 The PHP Reader Project Workgroup
+ * @copyright Copyright (c) 2006-2009 The PHP Reader Project Workgroup
  * @license   http://code.google.com/p/php-reader/wiki/License New BSD License
  * @version   $Rev$
  * @static
@@ -530,13 +530,21 @@ final class Transform
   }
 
   /**
-   * Returns string as binary data padded to given length with zeros.
+   * Returns string as binary data padded to given length with zeros. If length
+   * is smaller than the length of the string, it is considered as the length of
+   * the padding.
    *
-   * @param string $value The input value.
+   * @param string  $value   The input value.
+   * @param integer $length  The length to which to pad the value.
+   * @param string  $padding The padding character.
    * @return string
    */
-  public static function toString8($value, $length, $padding = "\0")
+  public static function toString8($value, $length = false, $padding = "\0")
   {
+    if ($length === false)
+      $length = strlen($value);
+    if ($length < ($tmp = strlen($value)))
+      $length = $tmp + $length;
     return str_pad($value, $length, $padding);
   }
 
@@ -552,113 +560,71 @@ final class Transform
   }
 
   /**
-   * Returns machine-ordered multibyte string as UTF-16 defined-order binary
-   * data. The byte order is stored using a byte order mask (BOM) in the binary
-   * data string.
+   * Returns the multibyte string as binary data with given byte order mark
+   * (BOM) and padded to given length with zeros. Length is given in unicode
+   * characters so each character adds two zeros to the string. If length is
+   * smaller than the length of the string, it is considered as the length of
+   * the padding.
+   * 
+   * If byte order mark is <var>false</var> no mark is inserted to the binary
+   * data.
    *
-   * @param string $value The input value.
-   * @param integer $order The byte order of the binary data string.
+   * @param string  $value   The input value.
+   * @param integer $order   The byte order of the binary data string.
+   * @param integer $length  The length to which to pad the value.
+   * @param string  $padding The padding character.
    * @return string
    */
-  public static function toString16($value, $order = self::MACHINE_ENDIAN_ORDER)
+  public static function toString16
+    ($value, $order = false, $length = false, $padding = "\0")
   {
-    $format = $order == self::BIG_ENDIAN_ORDER ? "n" :
-      ($order == self::LITTLE_ENDIAN_ORDER ? "v" : "S");
-    $string = pack($format, 0xfeff);
-    foreach (unpack("S*", $value) as $char)
-      $string .= pack($format, $char);
-    return $string;
+    if ($length === false)
+      $length = (int)(strlen($value) / 2);
+    if ($length < ($tmp = strlen($value) / 2))
+      $length = $tmp + $length;
+    if ($order == self::BIG_ENDIAN_ORDER &&
+        !(ord($value[0]) == 0xfe && ord($value[1]) == 0xff)) {
+      $value = 0xfeff . $value;
+      $length++;
+    }
+    if ($order == self::LITTLE_ENDIAN_ORDER &&
+        !(ord($value[0]) == 0xff && ord($value[1]) == 0xfe)) {
+      $value = 0xfffe . $value;
+      $length++;
+    }
+    return str_pad($value, $length * 2, $padding);
   }
 
   /**
-   * Returns UTF-16 formatted binary data as machine-ordered multibyte string.
-   * The byte order is determined from the byte order mark included in the
-   * binary data string. The order parameter is updated if a BOM is found.
+   * Returns binary data as multibyte Unicode string. Removes terminating zero.
+   * 
+   * The byte order is possibly determined from the byte order mark included in
+   * the binary data string. The order parameter is updated if the BOM is found.
    *
    * @param string  $value The binary data string.
-   * @param integer $order The endian to decode using if no BOM was found.
+   * @param integer $order The endianess of the string.
+   * @param integer $trimOrder Whether to remove the byte order mark from the
+   *                string.
    * @return string
    */
   public static function fromString16
-    ($value, &$order = self::MACHINE_ENDIAN_ORDER)
+    ($value, &$order = false, $trimOrder = false)
   {
     if (strlen($value) < 2)
       return "";
     
     if (ord($value[0]) == 0xfe && ord($value[1]) == 0xff) {
       $order = self::BIG_ENDIAN_ORDER;
-      return self::fromString16BE(substr($value, 2));
+      if ($trimOrder)
+        $value = substr($value, 2);
     }
-    else if (ord($value[0]) == 0xff && ord($value[1]) == 0xfe) {
+    if (ord($value[0]) == 0xff && ord($value[1]) == 0xfe) {
       $order = self::LITTLE_ENDIAN_ORDER;
-      return self::fromString16LE(substr($value, 2));
+      if ($trimOrder)
+        $value = substr($value, 2);
     }
-    else if ($order == self::BIG_ENDIAN_ORDER ||
-      ($order == self::MACHINE_ENDIAN_ORDER && self::isBigEndian()))
-      return self::fromString16BE($value);
-    else
-      return self::fromString16LE($value);
-  }
-
-  /**
-   * Returns machine-ordered multibyte string as little-endian ordered binary
-   * data.
-   *
-   * @param string $value The input value.
-   * @return string
-   */
-  public static function toString16LE($value)
-  {
-    $string = "";
-    foreach (unpack("S*", $value) as $char)
-      $string .= pack("v", $char);
-    return $string;
-  }
-
-  /**
-   * Returns little-endian ordered binary data as machine ordered multibyte
-   * string. Removes terminating zero.
-   *
-   * @param string $value The binary data string.
-   * @return string
-   */
-  public static function fromString16LE($value)
-  {
-    $string = "";
-    foreach (unpack("v*", substr($value, -2) == "\0\0" ?
-                    substr($value, 0, -2) : $value) as $char)
-      $string .= pack("S", $char);
-    return $string;
-  }
-
-  /**
-   * Returns machine ordered multibyte string as big-endian ordered binary data.
-   *
-   * @param string $value The input value.
-   * @return string
-   */
-  public static function toString16BE($value)
-  {
-    $string = "";
-    foreach (unpack("S*", $value) as $char)
-      $string .= pack("n", $char);
-    return $string;
-  }
-
-  /**
-   * Returns big-endian ordered binary data as machine ordered multibyte string.
-   * Removes terminating zero.
-   * 
-   * @param string $value The binary data string.
-   * @return string
-   */
-  public static function fromString16BE($value)
-  {
-    $string = "";
-    foreach (unpack("n*", substr($value, -2) == "\0\0" ?
-                    substr($value, 0, -2) : $value) as $char)
-      $string .= pack("S", $char);
-    return $string;
+    
+    return substr($value, -2) == "\0\0" ? substr($value, 0, -2) : $value;
   }
 
   /**

@@ -206,7 +206,7 @@ final class ASF_Object_ExtendedStreamProperties extends ASF_Object
       $streamNameLength = $this->_reader->readUInt16LE();
       $streamName["streamName"] = iconv
         ("utf-16le", $this->getOption("encoding"),
-         $this->_reader->readString16LE($streamNameLength));
+         $this->_reader->readString16($streamNameLength));
       $this->_streamNames[] = $streamName;
     }
     for ($i = 0; $i < $payloadExtensionSystemCount; $i++) {
@@ -216,7 +216,7 @@ final class ASF_Object_ExtendedStreamProperties extends ASF_Object
       $extensionSystemInfoLength = $this->_reader->readUInt32LE();
       $payloadExtensionSystem["extensionSystemInfo"] = iconv
         ("utf-16le", $this->getOption("encoding"),
-         $this->_reader->readString16LE($extensionSystemInfoLength));
+         $this->_reader->readString16($extensionSystemInfoLength));
       $this->_payloadExtensionSystems[] = $payloadExtensionSystem;
     }
   }
@@ -680,7 +680,7 @@ final class ASF_Object_ExtendedStreamProperties extends ASF_Object
         Transform::toUInt16LE(strlen($streamName = iconv
           ($this->getOption("encoding"), "utf-16le",
            $this->_streamNames["streamName"]) . "\0\0")) .
-        Transform::toString16LE($streamName);
+        Transform::toString16($streamName);
     for ($i = 0; $i < $payloadExtensionSystemCount; $i++)
       $data .=
         Transform::toGUID($this->_streamNames["extensionSystemId"]) .
@@ -688,7 +688,7 @@ final class ASF_Object_ExtendedStreamProperties extends ASF_Object
         Transform::toUInt16LE(strlen($extensionSystemInfo = iconv
           ($this->getOption("encoding"), "utf-16le",
            $this->_streamNames["extensionSystemInfo"]) . "\0\0")) .
-        Transform::toString16LE($extensionSystemInfo);
+        Transform::toString16($extensionSystemInfo);
     $this->setSize(24 /* for header */ + strlen($data));
     return
       Transform::toGUID($this->getIdentifier()) .

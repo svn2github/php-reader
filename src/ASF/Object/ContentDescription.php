@@ -92,19 +92,19 @@ final class ASF_Object_ContentDescription extends ASF_Object
 
     $this->_title = iconv
       ("utf-16le", $this->getOption("encoding"),
-       $this->_reader->readString16LE($titleLen));
+       $this->_reader->readString16($titleLen));
     $this->_author =  iconv
       ("utf-16le", $this->getOption("encoding"),
-       $this->_reader->readString16LE($authorLen));
+       $this->_reader->readString16($authorLen));
     $this->_copyright =  iconv
       ("utf-16le", $this->getOption("encoding"),
-       $this->_reader->readString16LE($copyrightLen));
+       $this->_reader->readString16($copyrightLen));
     $this->_description =  iconv
       ("utf-16le", $this->getOption("encoding"),
-       $this->_reader->readString16LE($descriptionLen));
+       $this->_reader->readString16($descriptionLen));
     $this->_rating =  iconv
       ("utf-16le", $this->getOption("encoding"),
-       $this->_reader->readString16LE($ratingLen));
+       $this->_reader->readString16($ratingLen));
   }
   
   /**
@@ -225,11 +225,11 @@ final class ASF_Object_ContentDescription extends ASF_Object
       Transform::toUInt16LE(strlen($copyright)) .
       Transform::toUInt16LE(strlen($description)) .
       Transform::toUInt16LE(strlen($rating)) .
-      Transform::toString16LE($title) .
-      Transform::toString16LE($author) .
-      Transform::toString16LE($copyright) .
-      Transform::toString16LE($description) .
-      Transform::toString16LE($rating);
+      Transform::toString16($title) .
+      Transform::toString16($author) .
+      Transform::toString16($copyright) .
+      Transform::toString16($description) .
+      Transform::toString16($rating);
     $this->setSize(24 /* for header */ + strlen($data));
     return
       Transform::toGUID($this->getIdentifier()) .

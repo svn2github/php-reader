@@ -118,13 +118,13 @@ final class ID3_Frame_SYLT extends ID3_Frame
       list($this->_description, $this->_data) =
         $this->_explodeString16($this->_data, 2);
       $this->_description = $this->_convertString
-        ($this->_description, "utf-16");
+        (Transform::fromString16($this->_description), "utf-16");
       break;
     case self::UTF16BE:
       list($this->_description, $this->_data) =
         $this->_explodeString16($this->_data, 2);
       $this->_description = $this->_convertString
-        ($this->_description, "utf-16be");
+        (Transform::fromString16($this->_description), "utf-16be");
       break;
     case self::UTF8:
       list($this->_description, $this->_data) =
@@ -144,12 +144,14 @@ final class ID3_Frame_SYLT extends ID3_Frame
       case self::UTF16:
         list($syllable, $this->_data) = 
           $this->_explodeString16($this->_data, 2);
-        $syllable = $this->_convertString($syllable, "utf-16");
+        $syllable = $this->_convertString
+          (Transform::fromString16($syllable), "utf-16");
         break;
       case self::UTF16BE:
         list($syllable, $this->_data) = 
           $this->_explodeString16($this->_data, 2);
-        $syllable = $this->_convertString($syllable, "utf-16be");
+        $syllable = $this->_convertString
+          (Transform::fromString16($syllable), "utf-16be");
         break;
       case self::UTF8:
         list($syllable, $this->_data) = 
@@ -308,11 +310,12 @@ final class ID3_Frame_SYLT extends ID3_Frame
       Transform::toUInt8($this->_format) . Transform::toUInt8($this->_type);
     switch ($this->_encoding) {
     case self::UTF16LE:
-      $data .= 0xfeff . $this->_description . "\0\0";
+      $data .= Transform::toString16
+        ($this->_description, Transform::LITTLE_ENDIAN_ORDER, 1);
       break;
     case self::UTF16:
     case self::UTF16BE:
-      $data .= $this->_description . "\0\0";
+      $data .= Transform::toString16($this->_description, false, 1);
       break;
     default:
       $data .= $this->_description . "\0";
@@ -320,11 +323,12 @@ final class ID3_Frame_SYLT extends ID3_Frame
     foreach ($this->_events as $timestamp => $syllable) {
       switch ($this->_encoding) {
       case self::UTF16LE:
-        $data .= 0xfeff . $syllable . "\0\0";
+        $data .= Transform::toString16
+          ($syllable, Transform::LITTLE_ENDIAN_ORDER, 1);
         break;
       case self::UTF16:
       case self::UTF16BE:
-        $data .= $syllable . "\0\0";
+        $data .= Transform::toString16($syllable, false, 1);
         break;
       default:
         $data .= $syllable . "\0";

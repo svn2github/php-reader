@@ -36,159 +36,159 @@
  */
 
 /**#@+ @ignore */
-require_once("PHPUnit/Framework.php");
-require_once("ID3v1.php");
+require_once 'PHPUnit/Framework.php';
+require_once 'Zend/Media/Id3v1.php';
 /**#@-*/
 
 /**
- * Unit test case for ID3v1 class.
+ * Unit test case for Id3v1 class.
  *
  * @package    php-reader
  * @subpackage Tests
  * @author     Sven Vollbehr <svollbehr@gmail.com>
  * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
- * @version    $Rev$
+ * @version    $Id$
  */
-final class TestID3v1 extends PHPUnit_Framework_TestCase
+final class TestId3v1 extends PHPUnit_Framework_TestCase
 {
   function testTagCreate()
   {
-    $id3 = new ID3v1();
-    
-    $id3->title   = "Title 1";
-    $this->assertEquals("Title 1",   $id3->title);
+    $id3 = new Zend_Media_Id3v1();
 
-    $id3->artist  = "Artist 1";
-    $this->assertEquals("Artist 1",  $id3->artist);
+    $id3->title   = 'Title 1';
+    $this->assertEquals('Title 1',   $id3->title);
 
-    $id3->album   = "Album 1";
-    $this->assertEquals("Album 1",   $id3->album);
-    
-    $id3->year    = "2008";
-    $this->assertEquals("2008",      $id3->year);
+    $id3->artist  = 'Artist 1';
+    $this->assertEquals('Artist 1',  $id3->artist);
 
-    $id3->comment = "Comment 1";
-    $this->assertEquals("Comment 1", $id3->comment);
-    
+    $id3->album   = 'Album 1';
+    $this->assertEquals('Album 1',   $id3->album);
+
+    $id3->year    = '2008';
+    $this->assertEquals('2008',      $id3->year);
+
+    $id3->comment = 'Comment 1';
+    $this->assertEquals('Comment 1', $id3->comment);
+
     $id3->track = 30;
     $this->assertEquals(30, $id3->track);
-    
-    $id3->genre = array_search("Classical", ID3v1::$genres);
-    $this->assertEquals("Classical", $id3->genre);
-    
-    $id3->write("id3v1.tag");
+
+    $id3->genre = array_search('Classical', Zend_Media_Id3v1::$genres);
+    $this->assertEquals('Classical', $id3->genre);
+
+    $id3->write('id3v1.tag');
   }
 
   function testTagReadAfterCreate()
   {
-    $id3 = new ID3v1("id3v1.tag");
-    $this->assertEquals("Title 1",   $id3->title);
-    $this->assertEquals("Artist 1",  $id3->artist);
-    $this->assertEquals("Album 1",   $id3->album);
-    $this->assertEquals("2008",      $id3->year);
-    $this->assertEquals("Comment 1", $id3->comment);
+    $id3 = new Zend_Media_Id3v1('id3v1.tag');
+    $this->assertEquals('Title 1',   $id3->title);
+    $this->assertEquals('Artist 1',  $id3->artist);
+    $this->assertEquals('Album 1',   $id3->album);
+    $this->assertEquals('2008',      $id3->year);
+    $this->assertEquals('Comment 1', $id3->comment);
     $this->assertEquals(30,          $id3->track);
-    $this->assertEquals("Classical", $id3->genre);
+    $this->assertEquals('Classical', $id3->genre);
   }
 
   function testTagChange()
   {
-    $id3 = new ID3v1("id3v1.tag");
-    
-    $id3->title   = "Title 2";
-    $this->assertEquals("Title 2",   $id3->title);
+    $id3 = new Zend_Media_Id3v1('id3v1.tag');
 
-    $id3->artist  = "Artist 2";
-    $this->assertEquals("Artist 2",  $id3->artist);
+    $id3->title   = 'Title 2';
+    $this->assertEquals('Title 2',   $id3->title);
 
-    $id3->album   = "Album 2";
-    $this->assertEquals("Album 2",   $id3->album);
-    
-    $id3->year    = "2045";
-    $this->assertEquals("2045",      $id3->year);
+    $id3->artist  = 'Artist 2';
+    $this->assertEquals('Artist 2',  $id3->artist);
 
-    $id3->comment = "Comment 2";
-    $this->assertEquals("Comment 2", $id3->comment);
-    
+    $id3->album   = 'Album 2';
+    $this->assertEquals('Album 2',   $id3->album);
+
+    $id3->year    = '2045';
+    $this->assertEquals('2045',      $id3->year);
+
+    $id3->comment = 'Comment 2';
+    $this->assertEquals('Comment 2', $id3->comment);
+
     $id3->track   = 10;
     $this->assertEquals(10, $id3->track);
-    
-    $id3->genre   = array_search("Trance", ID3v1::$genres);
-    $this->assertEquals("Trance",    $id3->genre);
-    
+
+    $id3->genre   = array_search('Trance', Zend_Media_Id3v1::$genres);
+    $this->assertEquals('Trance',    $id3->genre);
+
     $id3->write();
   }
 
   function testTagReadAfterChange()
   {
-    $id3 = new ID3v1("id3v1.tag");
-    $this->assertEquals("Title 2",   $id3->title);
-    $this->assertEquals("Artist 2",  $id3->artist);
-    $this->assertEquals("Album 2",   $id3->album);
-    $this->assertEquals("2045",      $id3->year);
-    $this->assertEquals("Comment 2", $id3->comment);
+    $id3 = new Zend_Media_Id3v1('id3v1.tag');
+    $this->assertEquals('Title 2',   $id3->title);
+    $this->assertEquals('Artist 2',  $id3->artist);
+    $this->assertEquals('Album 2',   $id3->album);
+    $this->assertEquals('2045',      $id3->year);
+    $this->assertEquals('Comment 2', $id3->comment);
     $this->assertEquals(10,          $id3->track);
-    $this->assertEquals("Trance",    $id3->genre);
+    $this->assertEquals('Trance',    $id3->genre);
   }
-  
+
   function testTagReplace()
   {
-    $id3 = new ID3v1();
-    
-    $id3->title = "Title 3";
-    $this->assertEquals("Title 3", $id3->title);
-    $this->assertEquals("Unknown", $id3->genre);
-    
-    $id3->write("id3v1.tag");
+    $id3 = new Zend_Media_Id3v1();
+
+    $id3->title = 'Title 3';
+    $this->assertEquals('Title 3', $id3->title);
+    $this->assertEquals('Unknown', $id3->genre);
+
+    $id3->write('id3v1.tag');
   }
 
   function testTagReadAfterReplace()
   {
-    $id3 = new ID3v1("id3v1.tag");
-    $this->assertEquals("Title 3", $id3->title);
-    $this->assertEquals("",        $id3->artist);
-    $this->assertEquals("",        $id3->album);
-    $this->assertEquals("",        $id3->year);
-    $this->assertEquals("",        $id3->comment);
-    $this->assertEquals("",        $id3->track);
-    $this->assertEquals("Unknown", $id3->genre);
+    $id3 = new Zend_Media_Id3v1('id3v1.tag');
+    $this->assertEquals('Title 3', $id3->title);
+    $this->assertEquals('',        $id3->artist);
+    $this->assertEquals('',        $id3->album);
+    $this->assertEquals('',        $id3->year);
+    $this->assertEquals('',        $id3->comment);
+    $this->assertEquals('',        $id3->track);
+    $this->assertEquals('Unknown', $id3->genre);
   }
 
   function testTagCreateVersion10()
   {
-    $id3 = new ID3v1();
-    
-    $id3->title   = "Title 4";
-    $this->assertEquals("Title 4",   $id3->title);
+    $id3 = new Zend_Media_Id3v1();
 
-    $id3->artist  = "Artist 4";
-    $this->assertEquals("Artist 4",  $id3->artist);
+    $id3->title   = 'Title 4';
+    $this->assertEquals('Title 4',   $id3->title);
 
-    $id3->album   = "Album 4";
-    $this->assertEquals("Album 4",   $id3->album);
-    
-    $id3->year    = "2020";
-    $this->assertEquals("2020",      $id3->year);
+    $id3->artist  = 'Artist 4';
+    $this->assertEquals('Artist 4',  $id3->artist);
 
-    $id3->comment = "A comment field with 30 chars.";
-    $this->assertEquals("A comment field with 30 chars.", $id3->comment);
-    
-    $id3->genre   = array_search("Classical", ID3v1::$genres);
-    $this->assertEquals("Classical", $id3->genre);
-    
-    $id3->write("id3v1.tag");
+    $id3->album   = 'Album 4';
+    $this->assertEquals('Album 4',   $id3->album);
+
+    $id3->year    = '2020';
+    $this->assertEquals('2020',      $id3->year);
+
+    $id3->comment = 'A comment field with 30 chars.';
+    $this->assertEquals('A comment field with 30 chars.', $id3->comment);
+
+    $id3->genre   = array_search('Classical', Zend_Media_Id3v1::$genres);
+    $this->assertEquals('Classical', $id3->genre);
+
+    $id3->write('id3v1.tag');
   }
 
   function testTagReadAfterCreateVersion10()
   {
-    $id3 = new ID3v1("id3v1.tag");
-    $this->assertEquals("Title 4",   $id3->title);
-    $this->assertEquals("Artist 4",  $id3->artist);
-    $this->assertEquals("Album 4",   $id3->album);
-    $this->assertEquals("2020",      $id3->year);
-    $this->assertEquals("A comment field with 30 chars.", $id3->comment);
-    $this->assertEquals("",          $id3->track);
-    $this->assertEquals("Classical", $id3->genre);
+    $id3 = new Zend_Media_Id3v1('id3v1.tag');
+    $this->assertEquals('Title 4',   $id3->title);
+    $this->assertEquals('Artist 4',  $id3->artist);
+    $this->assertEquals('Album 4',   $id3->album);
+    $this->assertEquals('2020',      $id3->year);
+    $this->assertEquals('A comment field with 30 chars.', $id3->comment);
+    $this->assertEquals('',          $id3->track);
+    $this->assertEquals('Classical', $id3->genre);
   }
 }

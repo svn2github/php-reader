@@ -36,8 +36,8 @@
  */
 
 /**#@+ @ignore */
-require_once("PHPUnit/Framework.php");
-require_once("Reader.php");
+require_once 'PHPUnit/Framework.php';
+require_once 'Zend/Io/Reader.php';
 /**#@-*/
 
 /**
@@ -49,20 +49,20 @@ require_once("Reader.php");
  * @author     Sven Vollbehr <svollbehr@gmail.com>
  * @copyright  Copyright (c) 2008 The PHP Reader Project Workgroup
  * @license    http://code.google.com/p/php-reader/wiki/License New BSD License
- * @version    $Rev$
+ * @version    $Id$
  */
 final class TestID3Frame extends PHPUnit_Framework_TestCase
 {
   const INITIALIZE = 1;
   const DRYRUN = 2;
   const RUN = 3;
-  
+
   private $testText = "abcdefghijklmnopqrstuvwxyzåäö1234567890!@#\$%^&*()-";
-  private $testLink = "http://www.abcdefghijklmnopqrstuvwxyz.com.xyz/qwerty.php?asdf=1234&zxcv=%20";
-  private $testDate = "20070707";
-  private $testCurrency = "AUD";
-  private $testIdentifier = "TEST";
-  private $testPrice = "169.12";
+  private $testLink = 'http://www.abcdefghijklmnopqrstuvwxyz.com.xyz/qwerty.php?asdf=1234&zxcv=%20';
+  private $testDate = '20070707';
+  private $testCurrency = 'AUD';
+  private $testIdentifier = 'TEST';
+  private $testPrice = '169.12';
   private $testInt8 = -0x7a;
   private $testInt16 = -0x7aff;
   private $testInt24 = 0x7affca;
@@ -78,15 +78,15 @@ final class TestID3Frame extends PHPUnit_Framework_TestCase
   public static function provider()
   {
     /* Ignore WIP frames */
-    $ignore = array("ASPI.php", "MLLT.php");
+    $ignore = array('Aspi.php', 'Mllt.php');
 
     /* Load all frames */
-    $dir = opendir("../src/ID3/Frame");
+    $dir = opendir('../src/Zend/Media/Id3/Frame');
     while (($file = readdir($dir)) !== false)
       if (preg_match("/^.+\.php$/", $file) && !in_array($file, $ignore))
-        require_once("ID3/Frame/" . $file);
+        require_once('Zend/Media/Id3/Frame/' . $file);
     foreach (get_declared_classes() as $class)
-      if (strpos($class, "ID3_Frame_") === 0)
+      if (strpos($class, "Zend_Media_Id3_Frame_") === 0)
         $identifiers[] = substr($class, 10);
     closedir($dir);
 
@@ -94,18 +94,20 @@ final class TestID3Frame extends PHPUnit_Framework_TestCase
     $tests = array();
     foreach ($identifiers as $identifier)
     {
-      if (!method_exists("TestID3Frame", "frame" . $identifier . "0"))
+      if (!method_exists('TestID3Frame', 'frame' . $identifier . '0'))
         continue; // skip if no handlers registered
 
-      $class = "ID3_Frame_" . $identifier;
+      $class = 'Zend_Media_Id3_Frame_' . $identifier;
       $encodings = $languages = $timings = array(null);
-      if (in_array("ID3_Encoding", class_implements($class)))
-        array_push($encodings, ID3_Encoding::ISO88591, ID3_Encoding::UTF16,
-          ID3_Encoding::UTF16BE, ID3_Encoding::UTF8);
-      if (in_array("ID3_Language", class_implements($class)))
-        array_push($languages, "eng", "und");
-      if (in_array("ID3_Timing", class_implements($class)))
-        array_push($timings, ID3_Timing::MPEG_FRAMES, ID3_Timing::MILLISECONDS);
+      if (in_array('Zend_Media_Id3_Encoding', class_implements($class)))
+        array_push($encodings, Zend_Media_Id3_Encoding::ISO88591,
+            Zend_Media_Id3_Encoding::UTF16, Zend_Media_Id3_Encoding::UTF16BE,
+            Zend_Media_Id3_Encoding::UTF8);
+      if (in_array('Zend_Media_Id3_Language', class_implements($class)))
+        array_push($languages, 'eng', 'und');
+      if (in_array('Zend_Media_Id3_Timing', class_implements($class)))
+        array_push($timings, Zend_Media_Id3_Timing::MPEG_FRAMES,
+            Zend_Media_Id3_Timing::MILLISECONDS);
 
       foreach ($encodings as $encoding)
         foreach ($languages as $language)
@@ -126,8 +128,8 @@ final class TestID3Frame extends PHPUnit_Framework_TestCase
    * string and testing for a final time.
    *
    * @param string $identifier The frame identifier.
-   * @param integer $encoding The {@link ID3_Encoding text encoding} for strings
-   *        in this frame.
+   * @param integer $encoding The {@link Zend_Media_Id3_Encoding text encoding}
+   *        for strings in this frame.
    * @param string $language The language code.
    * @param integer $timing The timing format.
    *
@@ -136,7 +138,7 @@ final class TestID3Frame extends PHPUnit_Framework_TestCase
   public function testFrame($identifier, $encoding, $language, $timing)
   {
     /* Iterate through all test case functions for this frame identifier */
-    $class = "ID3_Frame_" . $identifier;
+    $class = 'Zend_Media_Id3_Frame_' . $identifier;
     $test = 0;
     while (method_exists($this, $method = "frame" . $identifier . $test++)) {
 
@@ -148,21 +150,21 @@ final class TestID3Frame extends PHPUnit_Framework_TestCase
         $frame, self::DRYRUN, $encoding, $language, $timing);
 
       if (isset($encoding)) {
-        $this->assertTrue(method_exists($frame, "setEncoding"));
+        $this->assertTrue(method_exists($frame, 'setEncoding'));
         $frame->setEncoding($encoding);
-        $this->assertTrue(method_exists($frame, "getEncoding"));
+        $this->assertTrue(method_exists($frame, 'getEncoding'));
         $this->assertEquals($encoding, $frame->getEncoding());
       }
       if (isset($language)) {
-        $this->assertTrue(method_exists($frame, "setLanguage"));
+        $this->assertTrue(method_exists($frame, 'setLanguage'));
         $frame->setLanguage($language);
-        $this->assertTrue(method_exists($frame, "getLanguage"));
+        $this->assertTrue(method_exists($frame, 'getLanguage'));
         $this->assertEquals($language, $frame->getLanguage());
       }
       if (isset($timing)) {
-        $this->assertTrue(method_exists($frame, "setFormat"));
+        $this->assertTrue(method_exists($frame, 'setFormat'));
         $frame->setFormat($timing);
-        $this->assertTrue(method_exists($frame, "getFormat"));
+        $this->assertTrue(method_exists($frame, 'getFormat'));
         $this->assertEquals($timing, $frame->getFormat());
       }
 
@@ -170,13 +172,13 @@ final class TestID3Frame extends PHPUnit_Framework_TestCase
         /* Convert to string representation and store in an in-memory buffer */
         if ($i > 0)
           $existing = $data;
-        $length = strlen($data = "" . $frame);
-        $this->assertTrue(($fd = fopen("php://temp", "r+b")) !== false);
+        $length = strlen($data = '' . $frame);
+        $this->assertTrue(($fd = fopen('php://temp', 'r+b')) !== false);
         $this->assertEquals($length, fwrite($fd, $data, $length));
         $this->assertTrue(rewind($fd));
 
         /* Construct a frame using the reader and verify */
-        $frame = new $class($reader = new Reader($fd));
+        $frame = new $class($reader = new Zend_Io_Reader($fd));
         call_user_func(array($this, $method),
           $frame, self::RUN, $encoding, $language, $timing);
         if (isset($language))
@@ -190,9 +192,9 @@ final class TestID3Frame extends PHPUnit_Framework_TestCase
   /**
    * The first AENC frame test.
    *
-   * @param ID3_Frame_AENC $frame The frame to test.
+   * @param Zend_Media_Id3_Frame_AENC $frame The frame to test.
    * @param boolean $action The requested action.
-   * @param integer $encoding The {@link ID3_Encoding text encoding} for strings
+   * @param integer $encoding The {@link Zend_Media_Id3_Encoding text encoding} for strings
    *        in this frame.
    * @param string $language The language code.
    * @param integer $timing The timing format.
@@ -221,9 +223,9 @@ final class TestID3Frame extends PHPUnit_Framework_TestCase
   /**
    * The first APIC frame test.
    *
-   * @param ID3_Frame_APIC $frame The frame to test.
+   * @param Zend_Media_Id3_Frame_APIC $frame The frame to test.
    * @param boolean $action The requested action.
-   * @param integer $encoding The {@link ID3_Encoding text encoding} for strings
+   * @param integer $encoding The {@link Zend_Media_Id3_Encoding text encoding} for strings
    *        in this frame.
    * @param string $language The language code.
    * @param integer $timing The timing format.
@@ -257,9 +259,9 @@ final class TestID3Frame extends PHPUnit_Framework_TestCase
   /**
    * The first COMM frame test.
    *
-   * @param ID3_Frame_COMM $frame The frame to test.
+   * @param Zend_Media_Id3_Frame_COMM $frame The frame to test.
    * @param boolean $action The requested action.
-   * @param integer $encoding The {@link ID3_Encoding text encoding} for strings
+   * @param integer $encoding The {@link Zend_Media_Id3_Encoding text encoding} for strings
    *        in this frame.
    * @param string $language The language code.
    * @param integer $timing The timing format.
@@ -287,9 +289,9 @@ final class TestID3Frame extends PHPUnit_Framework_TestCase
   /**
    * The first COMR frame test.
    *
-   * @param ID3_Frame_COMR $frame The frame to test.
+   * @param Zend_Media_Id3_Frame_COMR $frame The frame to test.
    * @param boolean $action The requested action.
-   * @param integer $encoding The {@link ID3_Encoding text encoding} for strings
+   * @param integer $encoding The {@link Zend_Media_Id3_Encoding text encoding} for strings
    *        in this frame.
    * @param string $language The language code.
    * @param integer $timing The timing format.
@@ -340,9 +342,9 @@ final class TestID3Frame extends PHPUnit_Framework_TestCase
   /**
    * The first ENCR frame test.
    *
-   * @param ID3_Frame_ENCR $frame The frame to test.
+   * @param Zend_Media_Id3_Frame_ENCR $frame The frame to test.
    * @param boolean $action The requested action.
-   * @param integer $encoding The {@link ID3_Encoding text encoding} for strings
+   * @param integer $encoding The {@link Zend_Media_Id3_Encoding text encoding} for strings
    *        in this frame.
    * @param string $language The language code.
    * @param integer $timing The timing format.
@@ -368,9 +370,9 @@ final class TestID3Frame extends PHPUnit_Framework_TestCase
   /**
    * The first EQU2 frame test.
    *
-   * @param ID3_Frame_EQU2 $frame The frame to test.
+   * @param Zend_Media_Id3_Frame_EQU2 $frame The frame to test.
    * @param boolean $action The requested action.
-   * @param integer $encoding The {@link ID3_Encoding text encoding} for strings
+   * @param integer $encoding The {@link Zend_Media_Id3_Encoding text encoding} for strings
    *        in this frame.
    * @param string $language The language code.
    * @param integer $timing The timing format.
@@ -404,9 +406,9 @@ final class TestID3Frame extends PHPUnit_Framework_TestCase
   /**
    * The first EQUA frame test.
    *
-   * @param ID3_Frame_EQUA $frame The frame to test.
+   * @param Zend_Media_Id3_Frame_EQUA $frame The frame to test.
    * @param boolean $action The requested action.
-   * @param integer $encoding The {@link ID3_Encoding text encoding} for strings
+   * @param integer $encoding The {@link Zend_Media_Id3_Encoding text encoding} for strings
    *        in this frame.
    * @param string $language The language code.
    * @param integer $timing The timing format.
@@ -434,9 +436,9 @@ final class TestID3Frame extends PHPUnit_Framework_TestCase
   /**
    * The first ETCO frame test.
    *
-   * @param ID3_Frame_ETCO $frame The frame to test.
+   * @param Zend_Media_Id3_Frame_ETCO $frame The frame to test.
    * @param boolean $action The requested action.
-   * @param integer $encoding The {@link ID3_Encoding text encoding} for strings
+   * @param integer $encoding The {@link Zend_Media_Id3_Encoding text encoding} for strings
    *        in this frame.
    * @param string $language The language code.
    * @param integer $timing The timing format.
@@ -444,13 +446,13 @@ final class TestID3Frame extends PHPUnit_Framework_TestCase
   private function frameETCO0
       (&$frame, $action, $encoding, $language, $timing)
   {
-    $events[0] = array_search("Intro end", ID3_Frame_ETCO::$types);
-    $events[0xFFFF] = array_search("Verse start", ID3_Frame_ETCO::$types);
-    $events[0xFFFFF] = array_search("Verse end", ID3_Frame_ETCO::$types);
+    $events[0] = array_search('Intro end', Zend_Media_Id3_Frame_ETCO::$types);
+    $events[0xFFFF] = array_search('Verse start', Zend_Media_Id3_Frame_ETCO::$types);
+    $events[0xFFFFF] = array_search('Verse end', Zend_Media_Id3_Frame_ETCO::$types);
     $events[0xFFFFFF] = array_search
-      ("Audio end (start of silence)", ID3_Frame_ETCO::$types);
+      ('Audio end (start of silence)', Zend_Media_Id3_Frame_ETCO::$types);
     $events[0xFFFFFFFF] = array_search
-      ("Audio file ends", ID3_Frame_ETCO::$types);
+      ('Audio file ends', Zend_Media_Id3_Frame_ETCO::$types);
 
     if ($action == self::INITIALIZE)
       $frame->setEvents($events);
@@ -461,9 +463,9 @@ final class TestID3Frame extends PHPUnit_Framework_TestCase
   /**
    * The first GEOB frame test.
    *
-   * @param ID3_Frame_GEOB $frame The frame to test.
+   * @param Zend_Media_Id3_Frame_GEOB $frame The frame to test.
    * @param boolean $action The requested action.
-   * @param integer $encoding The {@link ID3_Encoding text encoding} for strings
+   * @param integer $encoding The {@link Zend_Media_Id3_Encoding text encoding} for strings
    *        in this frame.
    * @param string $language The language code.
    * @param integer $timing The timing format.
@@ -497,9 +499,9 @@ final class TestID3Frame extends PHPUnit_Framework_TestCase
   /**
    * The first GRID frame test.
    *
-   * @param ID3_Frame_GRID $frame The frame to test.
+   * @param Zend_Media_Id3_Frame_GRID $frame The frame to test.
    * @param boolean $action The requested action.
-   * @param integer $encoding The {@link ID3_Encoding text encoding} for strings
+   * @param integer $encoding The {@link Zend_Media_Id3_Encoding text encoding} for strings
    *        in this frame.
    * @param string $language The language code.
    * @param integer $timing The timing format.
@@ -525,9 +527,9 @@ final class TestID3Frame extends PHPUnit_Framework_TestCase
   /**
    * The first IPLS frame test.
    *
-   * @param ID3_Frame_IPLS $frame The frame to test.
+   * @param Zend_Media_Id3_Frame_IPLS $frame The frame to test.
    * @param boolean $action The requested action.
-   * @param integer $encoding The {@link ID3_Encoding text encoding} for strings
+   * @param integer $encoding The {@link Zend_Media_Id3_Encoding text encoding} for strings
    *        in this frame.
    * @param string $language The language code.
    * @param integer $timing The timing format.
@@ -559,9 +561,9 @@ final class TestID3Frame extends PHPUnit_Framework_TestCase
   /**
    * The first LINK frame test.
    *
-   * @param ID3_Frame_LINK $frame The frame to test.
+   * @param Zend_Media_Id3_Frame_LINK $frame The frame to test.
    * @param boolean $action The requested action.
-   * @param integer $encoding The {@link ID3_Encoding text encoding} for strings
+   * @param integer $encoding The {@link Zend_Media_Id3_Encoding text encoding} for strings
    *        in this frame.
    * @param string $language The language code.
    * @param integer $timing The timing format.
@@ -587,9 +589,9 @@ final class TestID3Frame extends PHPUnit_Framework_TestCase
   /**
    * The first MCDI frame test.
    *
-   * @param ID3_Frame_MCDI $frame The frame to test.
+   * @param Zend_Media_Id3_Frame_MCDI $frame The frame to test.
    * @param boolean $action The requested action.
-   * @param integer $encoding The {@link ID3_Encoding text encoding} for strings
+   * @param integer $encoding The {@link Zend_Media_Id3_Encoding text encoding} for strings
    *        in this frame.
    * @param string $language The language code.
    * @param integer $timing The timing format.
@@ -608,9 +610,9 @@ final class TestID3Frame extends PHPUnit_Framework_TestCase
   /**
    * The first OWNE frame test.
    *
-   * @param ID3_Frame_OWNE $frame The frame to test.
+   * @param Zend_Media_Id3_Frame_OWNE $frame The frame to test.
    * @param boolean $action The requested action.
-   * @param integer $encoding The {@link ID3_Encoding text encoding} for strings
+   * @param integer $encoding The {@link Zend_Media_Id3_Encoding text encoding} for strings
    *        in this frame.
    * @param string $language The language code.
    * @param integer $timing The timing format.
@@ -642,9 +644,9 @@ final class TestID3Frame extends PHPUnit_Framework_TestCase
   /**
    * The first PCNT frame test.
    *
-   * @param ID3_Frame_PCNT $frame The frame to test.
+   * @param Zend_Media_Id3_Frame_PCNT $frame The frame to test.
    * @param boolean $action The requested action.
-   * @param integer $encoding The {@link ID3_Encoding text encoding} for strings
+   * @param integer $encoding The {@link Zend_Media_Id3_Encoding text encoding} for strings
    *        in this frame.
    * @param string $language The language code.
    * @param integer $timing The timing format.
@@ -668,9 +670,9 @@ final class TestID3Frame extends PHPUnit_Framework_TestCase
   /**
    * The first POPM frame test.
    *
-   * @param ID3_Frame_POPM $frame The frame to test.
+   * @param Zend_Media_Id3_Frame_POPM $frame The frame to test.
    * @param boolean $action The requested action.
-   * @param integer $encoding The {@link ID3_Encoding text encoding} for strings
+   * @param integer $encoding The {@link Zend_Media_Id3_Encoding text encoding} for strings
    *        in this frame.
    * @param string $language The language code.
    * @param integer $timing The timing format.
@@ -696,9 +698,9 @@ final class TestID3Frame extends PHPUnit_Framework_TestCase
   /**
    * The first POSS frame test.
    *
-   * @param ID3_Frame_POSS $frame The frame to test.
+   * @param Zend_Media_Id3_Frame_POSS $frame The frame to test.
    * @param boolean $action The requested action.
-   * @param integer $encoding The {@link ID3_Encoding text encoding} for strings
+   * @param integer $encoding The {@link Zend_Media_Id3_Encoding text encoding} for strings
    *        in this frame.
    * @param string $language The language code.
    * @param integer $timing The timing format.
@@ -717,9 +719,9 @@ final class TestID3Frame extends PHPUnit_Framework_TestCase
   /**
    * The first PRIV frame test.
    *
-   * @param ID3_Frame_PRIV $frame The frame to test.
+   * @param Zend_Media_Id3_Frame_PRIV $frame The frame to test.
    * @param boolean $action The requested action.
-   * @param integer $encoding The {@link ID3_Encoding text encoding} for strings
+   * @param integer $encoding The {@link Zend_Media_Id3_Encoding text encoding} for strings
    *        in this frame.
    * @param string $language The language code.
    * @param integer $timing The timing format.
@@ -742,9 +744,9 @@ final class TestID3Frame extends PHPUnit_Framework_TestCase
   /**
    * The first RBUF frame test.
    *
-   * @param ID3_Frame_RBUF $frame The frame to test.
+   * @param Zend_Media_Id3_Frame_RBUF $frame The frame to test.
    * @param boolean $action The requested action.
-   * @param integer $encoding The {@link ID3_Encoding text encoding} for strings
+   * @param integer $encoding The {@link Zend_Media_Id3_Encoding text encoding} for strings
    *        in this frame.
    * @param string $language The language code.
    * @param integer $timing The timing format.
@@ -770,9 +772,9 @@ final class TestID3Frame extends PHPUnit_Framework_TestCase
   /**
    * The first RVA2 frame test.
    *
-   * @param ID3_Frame_RVA2 $frame The frame to test.
+   * @param Zend_Media_Id3_Frame_RVA2 $frame The frame to test.
    * @param boolean $action The requested action.
-   * @param integer $encoding The {@link ID3_Encoding text encoding} for strings
+   * @param integer $encoding The {@link Zend_Media_Id3_Encoding text encoding} for strings
    *        in this frame.
    * @param string $language The language code.
    * @param integer $timing The timing format.
@@ -781,33 +783,33 @@ final class TestID3Frame extends PHPUnit_Framework_TestCase
       (&$frame, $action, $encoding, $language, $timing)
   {
     $device = $this->testText;
-    $adjustments[0] = array(ID3_Frame_RVA2::channelType => 0,
-      ID3_Frame_RVA2::volumeAdjustment => -32767.0 / 512.0,
-      ID3_Frame_RVA2::peakVolume => 0x0);
-    $adjustments[1] = array(ID3_Frame_RVA2::channelType => 1,
-      ID3_Frame_RVA2::volumeAdjustment => -8191.0 / 512.0,
-      ID3_Frame_RVA2::peakVolume => 0x7f);
-    $adjustments[2] = array(ID3_Frame_RVA2::channelType => 2,
-      ID3_Frame_RVA2::volumeAdjustment => -2047.0 / 512.0,
-      ID3_Frame_RVA2::peakVolume => 0xff);
-    $adjustments[3] = array(ID3_Frame_RVA2::channelType => 3,
-      ID3_Frame_RVA2::volumeAdjustment => -1.0,
-      ID3_Frame_RVA2::peakVolume => 0x7fff);
-    $adjustments[4] = array(ID3_Frame_RVA2::channelType => 4,
-      ID3_Frame_RVA2::volumeAdjustment => 0.0,
-      ID3_Frame_RVA2::peakVolume => 0xffff);
-    $adjustments[5] = array(ID3_Frame_RVA2::channelType => 5,
-      ID3_Frame_RVA2::volumeAdjustment => 1.0,
-      ID3_Frame_RVA2::peakVolume => 0x7fffff);
-    $adjustments[6] = array(ID3_Frame_RVA2::channelType => 6,
-      ID3_Frame_RVA2::volumeAdjustment => 2047.0 / 512.0,
-      ID3_Frame_RVA2::peakVolume => 0xffffff);
-    $adjustments[7] = array(ID3_Frame_RVA2::channelType => 7,
-      ID3_Frame_RVA2::volumeAdjustment => 8191.0 / 512.0,
-      ID3_Frame_RVA2::peakVolume => 0x7fffffff);
-    $adjustments[8] = array(ID3_Frame_RVA2::channelType => 8,
-      ID3_Frame_RVA2::volumeAdjustment => 32767.0 / 512.0,
-      ID3_Frame_RVA2::peakVolume => 0xffffffff);
+    $adjustments[0] = array(Zend_Media_Id3_Frame_RVA2::channelType => 0,
+      Zend_Media_Id3_Frame_RVA2::volumeAdjustment => -32767.0 / 512.0,
+      Zend_Media_Id3_Frame_RVA2::peakVolume => 0x0);
+    $adjustments[1] = array(Zend_Media_Id3_Frame_RVA2::channelType => 1,
+      Zend_Media_Id3_Frame_RVA2::volumeAdjustment => -8191.0 / 512.0,
+      Zend_Media_Id3_Frame_RVA2::peakVolume => 0x7f);
+    $adjustments[2] = array(Zend_Media_Id3_Frame_RVA2::channelType => 2,
+      Zend_Media_Id3_Frame_RVA2::volumeAdjustment => -2047.0 / 512.0,
+      Zend_Media_Id3_Frame_RVA2::peakVolume => 0xff);
+    $adjustments[3] = array(Zend_Media_Id3_Frame_RVA2::channelType => 3,
+      Zend_Media_Id3_Frame_RVA2::volumeAdjustment => -1.0,
+      Zend_Media_Id3_Frame_RVA2::peakVolume => 0x7fff);
+    $adjustments[4] = array(Zend_Media_Id3_Frame_RVA2::channelType => 4,
+      Zend_Media_Id3_Frame_RVA2::volumeAdjustment => 0.0,
+      Zend_Media_Id3_Frame_RVA2::peakVolume => 0xffff);
+    $adjustments[5] = array(Zend_Media_Id3_Frame_RVA2::channelType => 5,
+      Zend_Media_Id3_Frame_RVA2::volumeAdjustment => 1.0,
+      Zend_Media_Id3_Frame_RVA2::peakVolume => 0x7fffff);
+    $adjustments[6] = array(Zend_Media_Id3_Frame_RVA2::channelType => 6,
+      Zend_Media_Id3_Frame_RVA2::volumeAdjustment => 2047.0 / 512.0,
+      Zend_Media_Id3_Frame_RVA2::peakVolume => 0xffffff);
+    $adjustments[7] = array(Zend_Media_Id3_Frame_RVA2::channelType => 7,
+      Zend_Media_Id3_Frame_RVA2::volumeAdjustment => 8191.0 / 512.0,
+      Zend_Media_Id3_Frame_RVA2::peakVolume => 0x7fffffff);
+    $adjustments[8] = array(Zend_Media_Id3_Frame_RVA2::channelType => 8,
+      Zend_Media_Id3_Frame_RVA2::volumeAdjustment => 32767.0 / 512.0,
+      Zend_Media_Id3_Frame_RVA2::peakVolume => 0xffffffff);
 
     if ($action == self::INITIALIZE) {
       $frame->setDevice($device);
@@ -821,9 +823,9 @@ final class TestID3Frame extends PHPUnit_Framework_TestCase
   /**
    * The first RVAD frame test.
    *
-   * @param ID3_Frame_RVAD $frame The frame to test.
+   * @param Zend_Media_Id3_Frame_RVAD $frame The frame to test.
    * @param boolean $action The requested action.
-   * @param integer $encoding The {@link ID3_Encoding text encoding} for strings
+   * @param integer $encoding The {@link Zend_Media_Id3_Encoding text encoding} for strings
    *        in this frame.
    * @param string $language The language code.
    * @param integer $timing The timing format.
@@ -831,10 +833,10 @@ final class TestID3Frame extends PHPUnit_Framework_TestCase
   private function frameRVAD0
       (&$frame, $action, $encoding, $language, $timing)
   {
-    $adjustments[ID3_Frame_RVAD::right] = -0xffff;
-    $adjustments[ID3_Frame_RVAD::left] = 0xffff;
-    $adjustments[ID3_Frame_RVAD::peakRight] = 0xffff;
-    $adjustments[ID3_Frame_RVAD::peakLeft] = 0xfff;
+    $adjustments[Zend_Media_Id3_Frame_RVAD::right] = -0xffff;
+    $adjustments[Zend_Media_Id3_Frame_RVAD::left] = 0xffff;
+    $adjustments[Zend_Media_Id3_Frame_RVAD::peakRight] = 0xffff;
+    $adjustments[Zend_Media_Id3_Frame_RVAD::peakLeft] = 0xfff;
 
     if ($action == self::INITIALIZE)
       $frame->setAdjustments($adjustments);
@@ -845,9 +847,9 @@ final class TestID3Frame extends PHPUnit_Framework_TestCase
   /**
    * The second RVAD frame test.
    *
-   * @param ID3_Frame_RVAD $frame The frame to test.
+   * @param Zend_Media_Id3_Frame_RVAD $frame The frame to test.
    * @param boolean $action The requested action.
-   * @param integer $encoding The {@link ID3_Encoding text encoding} for strings
+   * @param integer $encoding The {@link Zend_Media_Id3_Encoding text encoding} for strings
    *        in this frame.
    * @param string $language The language code.
    * @param integer $timing The timing format.
@@ -855,14 +857,14 @@ final class TestID3Frame extends PHPUnit_Framework_TestCase
   private function frameRVAD1
       (&$frame, $action, $encoding, $language, $timing)
   {
-    $adjustments[ID3_Frame_RVAD::right] = -0xffff;
-    $adjustments[ID3_Frame_RVAD::left] = 0xffff;
-    $adjustments[ID3_Frame_RVAD::peakRight] = 0xffff;
-    $adjustments[ID3_Frame_RVAD::peakLeft] = 0xfff;
-    $adjustments[ID3_Frame_RVAD::rightBack] = -0xff;
-    $adjustments[ID3_Frame_RVAD::leftBack] = 0xff;
-    $adjustments[ID3_Frame_RVAD::peakRightBack] = 0xff;
-    $adjustments[ID3_Frame_RVAD::peakLeftBack] = 0xf;
+    $adjustments[Zend_Media_Id3_Frame_RVAD::right] = -0xffff;
+    $adjustments[Zend_Media_Id3_Frame_RVAD::left] = 0xffff;
+    $adjustments[Zend_Media_Id3_Frame_RVAD::peakRight] = 0xffff;
+    $adjustments[Zend_Media_Id3_Frame_RVAD::peakLeft] = 0xfff;
+    $adjustments[Zend_Media_Id3_Frame_RVAD::rightBack] = -0xff;
+    $adjustments[Zend_Media_Id3_Frame_RVAD::leftBack] = 0xff;
+    $adjustments[Zend_Media_Id3_Frame_RVAD::peakRightBack] = 0xff;
+    $adjustments[Zend_Media_Id3_Frame_RVAD::peakLeftBack] = 0xf;
 
     if ($action == self::INITIALIZE)
       $frame->setAdjustments($adjustments);
@@ -873,9 +875,9 @@ final class TestID3Frame extends PHPUnit_Framework_TestCase
   /**
    * The third RVAD frame test.
    *
-   * @param ID3_Frame_RVAD $frame The frame to test.
+   * @param Zend_Media_Id3_Frame_RVAD $frame The frame to test.
    * @param boolean $action The requested action.
-   * @param integer $encoding The {@link ID3_Encoding text encoding} for strings
+   * @param integer $encoding The {@link Zend_Media_Id3_Encoding text encoding} for strings
    *        in this frame.
    * @param string $language The language code.
    * @param integer $timing The timing format.
@@ -883,16 +885,16 @@ final class TestID3Frame extends PHPUnit_Framework_TestCase
   private function frameRVAD2
       (&$frame, $action, $encoding, $language, $timing)
   {
-    $adjustments[ID3_Frame_RVAD::right] = -0xffff;
-    $adjustments[ID3_Frame_RVAD::left] = 0xffff;
-    $adjustments[ID3_Frame_RVAD::peakRight] = 0xffff;
-    $adjustments[ID3_Frame_RVAD::peakLeft] = 0xfff;
-    $adjustments[ID3_Frame_RVAD::rightBack] = -0xff;
-    $adjustments[ID3_Frame_RVAD::leftBack] = 0xff;
-    $adjustments[ID3_Frame_RVAD::peakRightBack] = 0xff;
-    $adjustments[ID3_Frame_RVAD::peakLeftBack] = 0xf;
-    $adjustments[ID3_Frame_RVAD::center] = 0xf;
-    $adjustments[ID3_Frame_RVAD::peakCenter] = 0x7;
+    $adjustments[Zend_Media_Id3_Frame_RVAD::right] = -0xffff;
+    $adjustments[Zend_Media_Id3_Frame_RVAD::left] = 0xffff;
+    $adjustments[Zend_Media_Id3_Frame_RVAD::peakRight] = 0xffff;
+    $adjustments[Zend_Media_Id3_Frame_RVAD::peakLeft] = 0xfff;
+    $adjustments[Zend_Media_Id3_Frame_RVAD::rightBack] = -0xff;
+    $adjustments[Zend_Media_Id3_Frame_RVAD::leftBack] = 0xff;
+    $adjustments[Zend_Media_Id3_Frame_RVAD::peakRightBack] = 0xff;
+    $adjustments[Zend_Media_Id3_Frame_RVAD::peakLeftBack] = 0xf;
+    $adjustments[Zend_Media_Id3_Frame_RVAD::center] = 0xf;
+    $adjustments[Zend_Media_Id3_Frame_RVAD::peakCenter] = 0x7;
 
     if ($action == self::INITIALIZE)
       $frame->setAdjustments($adjustments);
@@ -903,9 +905,9 @@ final class TestID3Frame extends PHPUnit_Framework_TestCase
   /**
    * The fourth RVAD frame test.
    *
-   * @param ID3_Frame_RVAD $frame The frame to test.
+   * @param Zend_Media_Id3_Frame_RVAD $frame The frame to test.
    * @param boolean $action The requested action.
-   * @param integer $encoding The {@link ID3_Encoding text encoding} for strings
+   * @param integer $encoding The {@link Zend_Media_Id3_Encoding text encoding} for strings
    *        in this frame.
    * @param string $language The language code.
    * @param integer $timing The timing format.
@@ -913,18 +915,18 @@ final class TestID3Frame extends PHPUnit_Framework_TestCase
   private function frameRVAD3
       (&$frame, $action, $encoding, $language, $timing)
   {
-    $adjustments[ID3_Frame_RVAD::right] = -0xffff;
-    $adjustments[ID3_Frame_RVAD::left] = 0xffff;
-    $adjustments[ID3_Frame_RVAD::peakRight] = 0xffff;
-    $adjustments[ID3_Frame_RVAD::peakLeft] = 0xfff;
-    $adjustments[ID3_Frame_RVAD::rightBack] = -0xff;
-    $adjustments[ID3_Frame_RVAD::leftBack] = 0xff;
-    $adjustments[ID3_Frame_RVAD::peakRightBack] = 0xff;
-    $adjustments[ID3_Frame_RVAD::peakLeftBack] = 0xf;
-    $adjustments[ID3_Frame_RVAD::center] = 0xf;
-    $adjustments[ID3_Frame_RVAD::peakCenter] = 0x7;
-    $adjustments[ID3_Frame_RVAD::bass] = 0x0;
-    $adjustments[ID3_Frame_RVAD::peakBass] = 0x0;
+    $adjustments[Zend_Media_Id3_Frame_RVAD::right] = -0xffff;
+    $adjustments[Zend_Media_Id3_Frame_RVAD::left] = 0xffff;
+    $adjustments[Zend_Media_Id3_Frame_RVAD::peakRight] = 0xffff;
+    $adjustments[Zend_Media_Id3_Frame_RVAD::peakLeft] = 0xfff;
+    $adjustments[Zend_Media_Id3_Frame_RVAD::rightBack] = -0xff;
+    $adjustments[Zend_Media_Id3_Frame_RVAD::leftBack] = 0xff;
+    $adjustments[Zend_Media_Id3_Frame_RVAD::peakRightBack] = 0xff;
+    $adjustments[Zend_Media_Id3_Frame_RVAD::peakLeftBack] = 0xf;
+    $adjustments[Zend_Media_Id3_Frame_RVAD::center] = 0xf;
+    $adjustments[Zend_Media_Id3_Frame_RVAD::peakCenter] = 0x7;
+    $adjustments[Zend_Media_Id3_Frame_RVAD::bass] = 0x0;
+    $adjustments[Zend_Media_Id3_Frame_RVAD::peakBass] = 0x0;
 
     if ($action == self::INITIALIZE)
       $frame->setAdjustments($adjustments);
@@ -935,9 +937,9 @@ final class TestID3Frame extends PHPUnit_Framework_TestCase
   /**
    * The first RVRB frame test.
    *
-   * @param ID3_Frame_RVRB $frame The frame to test.
+   * @param Zend_Media_Id3_Frame_RVRB $frame The frame to test.
    * @param boolean $action The requested action.
-   * @param integer $encoding The {@link ID3_Encoding text encoding} for strings
+   * @param integer $encoding The {@link Zend_Media_Id3_Encoding text encoding} for strings
    *        in this frame.
    * @param string $language The language code.
    * @param integer $timing The timing format.
@@ -984,9 +986,9 @@ final class TestID3Frame extends PHPUnit_Framework_TestCase
   /**
    * The first SEEK frame test.
    *
-   * @param ID3_Frame_SEEK $frame The frame to test.
+   * @param Zend_Media_Id3_Frame_SEEK $frame The frame to test.
    * @param boolean $action The requested action.
-   * @param integer $encoding The {@link ID3_Encoding text encoding} for strings
+   * @param integer $encoding The {@link Zend_Media_Id3_Encoding text encoding} for strings
    *        in this frame.
    * @param string $language The language code.
    * @param integer $timing The timing format.
@@ -1005,9 +1007,9 @@ final class TestID3Frame extends PHPUnit_Framework_TestCase
   /**
    * The first SIGN frame test.
    *
-   * @param ID3_Frame_SIGN $frame The frame to test.
+   * @param Zend_Media_Id3_Frame_SIGN $frame The frame to test.
    * @param boolean $action The requested action.
-   * @param integer $encoding The {@link ID3_Encoding text encoding} for strings
+   * @param integer $encoding The {@link Zend_Media_Id3_Encoding text encoding} for strings
    *        in this frame.
    * @param string $language The language code.
    * @param integer $timing The timing format.
@@ -1030,9 +1032,9 @@ final class TestID3Frame extends PHPUnit_Framework_TestCase
   /**
    * The first SYLT frame test.
    *
-   * @param ID3_Frame_SYLT $frame The frame to test.
+   * @param Zend_Media_Id3_Frame_SYLT $frame The frame to test.
    * @param boolean $action The requested action.
-   * @param integer $encoding The {@link ID3_Encoding text encoding} for strings
+   * @param integer $encoding The {@link Zend_Media_Id3_Encoding text encoding} for strings
    *        in this frame.
    * @param string $language The language code.
    * @param integer $timing The timing format.
@@ -1066,9 +1068,9 @@ final class TestID3Frame extends PHPUnit_Framework_TestCase
   /**
    * The first SYTC frame test.
    *
-   * @param ID3_Frame_SYTC $frame The frame to test.
+   * @param Zend_Media_Id3_Frame_SYTC $frame The frame to test.
    * @param boolean $action The requested action.
-   * @param integer $encoding The {@link ID3_Encoding text encoding} for strings
+   * @param integer $encoding The {@link Zend_Media_Id3_Encoding text encoding} for strings
    *        in this frame.
    * @param string $language The language code.
    * @param integer $timing The timing format.
@@ -1076,8 +1078,8 @@ final class TestID3Frame extends PHPUnit_Framework_TestCase
   private function frameSYTC0
       (&$frame, $action, $encoding, $language, $timing)
   {
-    $events[0] = ID3_Frame_SYTC::BEAT_FREE;
-    $events[0xFFFF] = ID3_Frame_SYTC::SINGLE_BEAT;
+    $events[0] = Zend_Media_Id3_Frame_SYTC::BEAT_FREE;
+    $events[0xFFFF] = Zend_Media_Id3_Frame_SYTC::SINGLE_BEAT;
     $events[0xFFFFF] = 0xFF;
     $events[0xFFFFFF] = 0xFF + 1;
     $events[0xFFFFFFFF] = 0xFF + 0xFF;
@@ -1091,9 +1093,9 @@ final class TestID3Frame extends PHPUnit_Framework_TestCase
   /**
    * The first TXXX frame test.
    *
-   * @param ID3_Frame_TXXX $frame The frame to test.
+   * @param Zend_Media_Id3_Frame_TXXX $frame The frame to test.
    * @param boolean $action The requested action.
-   * @param integer $encoding The {@link ID3_Encoding text encoding} for strings
+   * @param integer $encoding The {@link Zend_Media_Id3_Encoding text encoding} for strings
    *        in this frame.
    * @param string $language The language code.
    * @param integer $timing The timing format.
@@ -1121,9 +1123,9 @@ final class TestID3Frame extends PHPUnit_Framework_TestCase
   /**
    * The first USER frame test.
    *
-   * @param ID3_Frame_USER $frame The frame to test.
+   * @param Zend_Media_Id3_Frame_USER $frame The frame to test.
    * @param boolean $action The requested action.
-   * @param integer $encoding The {@link ID3_Encoding text encoding} for strings
+   * @param integer $encoding The {@link Zend_Media_Id3_Encoding text encoding} for strings
    *        in this frame.
    * @param string $language The language code.
    * @param integer $timing The timing format.
@@ -1146,9 +1148,9 @@ final class TestID3Frame extends PHPUnit_Framework_TestCase
   /**
    * The first USLT frame test.
    *
-   * @param ID3_Frame_USLT $frame The frame to test.
+   * @param Zend_Media_Id3_Frame_USLT $frame The frame to test.
    * @param boolean $action The requested action.
-   * @param integer $encoding The {@link ID3_Encoding text encoding} for strings
+   * @param integer $encoding The {@link Zend_Media_Id3_Encoding text encoding} for strings
    *        in this frame.
    * @param string $language The language code.
    * @param integer $timing The timing format.
@@ -1176,9 +1178,9 @@ final class TestID3Frame extends PHPUnit_Framework_TestCase
   /**
    * The first WXXX frame test.
    *
-   * @param ID3_Frame_WXXX $frame The frame to test.
+   * @param Zend_Media_Id3_Frame_WXXX $frame The frame to test.
    * @param boolean $action The requested action.
-   * @param integer $encoding The {@link ID3_Encoding text encoding} for strings
+   * @param integer $encoding The {@link Zend_Media_Id3_Encoding text encoding} for strings
    *        in this frame.
    * @param string $language The language code.
    * @param integer $timing The timing format.
@@ -1211,18 +1213,18 @@ final class TestID3Frame extends PHPUnit_Framework_TestCase
   private static function convert($text, $encoding)
   {
     if ($encoding === null)
-      $encoding = ID3_Encoding::UTF8;
-    
+      $encoding = Zend_Media_Id3_Encoding::UTF8;
+
     switch ($encoding) {
-    case ID3_Encoding::ISO88591:
-      return iconv("utf-8", "iso-8859-1", $text);
-    case ID3_Encoding::UTF16:
-      return iconv("utf-8", "utf-16", $text);
-    case ID3_Encoding::UTF16LE:
-      return iconv("utf-8", "utf-16le", $text);
-    case ID3_Encoding::UTF16BE:
-      return iconv("utf-8", "utf-16be", $text);
-    default: // ID3_Encoding::UTF8
+    case Zend_Media_Id3_Encoding::ISO88591:
+      return iconv('utf-8', 'iso-8859-1', $text);
+    case Zend_Media_Id3_Encoding::UTF16:
+      return iconv('utf-8', 'utf-16', $text);
+    case Zend_Media_Id3_Encoding::UTF16LE:
+      return iconv('utf-8', 'utf-16le', $text);
+    case Zend_Media_Id3_Encoding::UTF16BE:
+      return iconv('utf-8', 'utf-16be', $text);
+    default: // Zend_Media_Id3_Encoding::UTF8
       return $text;
     }
   }

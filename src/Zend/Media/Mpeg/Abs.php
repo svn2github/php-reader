@@ -196,8 +196,9 @@ final class Zend_Media_Mpeg_Abs extends Zend_Media_Mpeg_Abs_Object
 
         /* Read necessary frames */
         if ($this->getOption('readmode', 'lazy') == 'lazy') {
-            if (($header = $this->_xingHeader) !== null ||
-                    ($header = $this->_vbriHeader) !== null) {
+            if ((($header = $this->_xingHeader) !== null ||
+                 ($header = $this->_vbriHeader) !== null) &&
+                 $header->getFrames() != 0) {
                 $this->_estimatedPlayDuration = $header->getFrames() *
                     $firstFrame->getSamples() /
                     $firstFrame->getSamplingFrequency();
@@ -240,7 +241,7 @@ final class Zend_Media_Mpeg_Abs extends Zend_Media_Mpeg_Abs_Object
      */
     public function hasXingHeader() 
     {
-        return $this->_xingHeader === null; 
+        return $this->_xingHeader !== null;
     }
 
     /**
@@ -262,7 +263,7 @@ final class Zend_Media_Mpeg_Abs extends Zend_Media_Mpeg_Abs_Object
      */
     public function hasLameHeader() 
     {
-        return $this->_lameHeader === null; 
+        return $this->_lameHeader !== null;
     }
 
     /**
@@ -277,14 +278,14 @@ final class Zend_Media_Mpeg_Abs extends Zend_Media_Mpeg_Abs_Object
     }
 
     /**
-     * Returns <var>true</var> if the audio bitstream contains the Fraunhofer IIS
-     * VBR header, or <var>false</var> otherwise.
+     * Returns <var>true</var> if the audio bitstream contains the Fraunhofer
+     * IIS VBR header, or <var>false</var> otherwise.
      *
      * @return boolean
      */
     public function hasVbriHeader() 
     {
-        return $this->_vbriHeader === null; 
+        return $this->_vbriHeader !== null;
     }
 
     /**
@@ -299,8 +300,8 @@ final class Zend_Media_Mpeg_Abs extends Zend_Media_Mpeg_Abs_Object
     }
 
     /**
-     * Returns the bitrate estimate. This value is either fetched from one of the
-     * headers or calculated based on the read frames.
+     * Returns the bitrate estimate. This value is either fetched from one of
+     * the headers or calculated based on the read frames.
      *
      * @return integer
      */
@@ -310,8 +311,8 @@ final class Zend_Media_Mpeg_Abs extends Zend_Media_Mpeg_Abs_Object
     }
 
     /**
-     * For variable bitrate files this method returns the exact average bitrate of
-     * the whole file.
+     * For variable bitrate files this method returns the exact average bitrate
+     * of the whole file.
      *
      * @return integer
      */
@@ -403,7 +404,7 @@ final class Zend_Media_Mpeg_Abs extends Zend_Media_Mpeg_Abs_Object
             $this->_reader->setOffset($this->_lastFrameOffset);
         }
 
-        for ($i = 0; $this->_reader->getOffset() < $this->_bytes; $i++) {
+        for ($i = 0; ($j = $this->_reader->getOffset()) < $this->_bytes; $i++) {
             $options = $this->getOptions();
             $frame = new Zend_Media_Mpeg_Abs_Frame($this->_reader, $options);
 
@@ -416,7 +417,9 @@ final class Zend_Media_Mpeg_Abs extends Zend_Media_Mpeg_Abs_Object
             if ($limit === null) {
                 $this->_lastFrameOffset = $this->_reader->getOffset();
             }
-            if ($limit !== null && ($i + 1) == $limit) {
+            if (($limit !== null && (($i + 1) == $limit)) ||
+                ($limit !== null &&
+                 ($j + $frame->getLength() >= $this->_bytes))) {
                 $this->_lastFrameOffset = $this->_reader->getOffset();
                 break;
             }

@@ -340,7 +340,9 @@ final class Zend_Media_Id3v2 extends Zend_Media_Id3_Object
             str_replace(array('*', '?'), array('.*', '.'), $identifier) . '$/i';
         foreach ($this->_frames as $identifier => $frames) {
             if (preg_match($searchPattern, $identifier)) {
-                unset($this->_frames[$identifier]);
+                foreach ($frames as $key => $value) {
+                    unset($this->_frames[$identifier][$key]);
+                }
             }
         }
     }
@@ -478,7 +480,7 @@ final class Zend_Media_Id3v2 extends Zend_Media_Id3_Object
         $tag = new Zend_Io_StringWriter();
         $this->_writeData($tag);
         $tagSize = empty($this->_frames) ? 0 : $tag->getSize();
-
+        
         if ($tagSize > $oldTagSize || $tagSize == 0) {
             fseek($fd, 0, SEEK_END);
             $oldFileSize = ftell($fd);
@@ -486,15 +488,15 @@ final class Zend_Media_Id3v2 extends Zend_Media_Id3_Object
                 ($fd, $newFileSize = $tagSize - $oldTagSize + $oldFileSize);
             for ($i = 1, $cur = $oldFileSize; $cur > 0; $cur -= 1024, $i++) {
               if ($cur >= 1024) {
-                fseek($fd, $off=-(($i * 1024) +
+                fseek($fd, -(($i * 1024) +
                       ($newFileSize - $oldFileSize)), SEEK_END);
                 $buffer = fread($fd, 1024);
-                fseek($fd, $off=-($i * 1024), SEEK_END);
+                fseek($fd, -($i * 1024), SEEK_END);
                 $bytes = fwrite($fd, $buffer, 1024);
               } else {
                 fseek($fd, 0);
                 $buffer = fread($fd, $cur);
-                fseek($fd, $off=$newFileSize % 1024 - $cur);
+                fseek($fd, $newFileSize - $oldFileSize);
                 $bytes = fwrite($fd, $buffer, $cur);
               }
             }

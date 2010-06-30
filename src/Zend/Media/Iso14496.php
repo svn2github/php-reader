@@ -285,7 +285,7 @@ final class Zend_Media_Iso14496 extends Zend_Media_Iso14496_Box
                 $this->_reader = new Zend_Io_FileReader($filename);
             } catch (Zend_Io_Exception $e) {
                 $this->_reader = null;
-                require_once 'Zend/Media/Id3/Exception.php';
+                require_once 'Zend/Media/Iso14496/Exception.php';
                 throw new Zend_Media_Iso14496_Exception($e->getMessage());
             }
             if (is_string($filename) && !isset($options['readonly'])) {

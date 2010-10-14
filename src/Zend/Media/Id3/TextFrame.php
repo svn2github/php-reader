@@ -100,7 +100,7 @@ abstract class Zend_Media_Id3_TextFrame extends Zend_Media_Id3_Frame
      * character encoding specified with the <var>encoding</var> option. See
      * {@link Zend_Media_Id3v2} for details. This method returns that character
      * encoding, or any value set after read, translated into a string form
-     * regarless if it was set using a {@link Zend_Media_Id3_Encoding} constant
+     * regardless if it was set using a {@link Zend_Media_Id3_Encoding} constant
      * or a string.
      * 
      * @return integer
@@ -137,7 +137,7 @@ abstract class Zend_Media_Id3_TextFrame extends Zend_Media_Id3_Frame
      */
     public function getText() 
     {
-         return $this->_text[0]; 
+        return $this->_text[0]; 
     }
 
     /**
@@ -147,7 +147,7 @@ abstract class Zend_Media_Id3_TextFrame extends Zend_Media_Id3_Frame
      */
     public function getTexts() 
     {
-         return $this->_text; 
+        return $this->_text; 
     }
 
     /**

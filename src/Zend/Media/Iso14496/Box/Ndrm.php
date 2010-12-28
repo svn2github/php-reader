@@ -66,6 +66,26 @@ final class Zend_Media_Iso14496_Box_Ndrm extends Zend_Media_Iso14496_FullBox
     }
 
     /**
+     * Returns the raw binary data.
+     *
+     * @return string
+     */
+    public function getData()
+    {
+        return $this->_data;
+    }
+
+    /**
+     * Sets the raw binary data.
+     *
+     * @param string $data The data.
+     */
+    public function setData($data)
+    {
+        $this->_data = $data;
+    }
+
+    /**
      * Returns the box heap size in bytes.
      *
      * @return integer

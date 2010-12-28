@@ -85,7 +85,6 @@ final class Zend_Media_Mpeg_Ps extends Zend_Media_Mpeg_Object
         do {
             do {
                 $startCode = $this->nextStartCode();
-                echo "STARTCODE: $startCode\n";
             } while ($startCode != 0x1b3 && $startCode != 0x1b8);
 
             if ($startCode == 0x1b3 /* sequence_header_code */ &&

@@ -139,13 +139,43 @@ final class Zend_Media_Mpeg_Abs extends Zend_Media_Mpeg_Abs_Object
         }
         $this->_reader->setOffset($offset);
 
-        /* Skip ID3v2 tag */
-        if ($this->_reader->readString8(3) == 'ID3') {
+        /* Skip ID3v2 tags (some files errorneusly contain multiple tags) */
+        while ($this->_reader->readString8(3) == 'ID3') {
             require_once 'Zend/Media/Id3/Header.php';
             $header = new Zend_Media_Id3_Header($this->_reader);
             $this->_reader->skip
                 ($header->getSize() +
                  ($header->hasFlag(Zend_Media_Id3_Header::FOOTER) ? 10 : 0));
+            $offset = $this->_reader->getOffset();
+        }
+        $this->_reader->setOffset($offset);
+
+        /* Check whether the ABS is contained within a RIFF chunk */
+        $offset = $this->_reader->getOffset();
+
+        if ($this->_reader->readString8(4) == 'RIFF') {
+            $riffSize = $this->_reader->readUInt32LE();
+            $riffType = $this->_reader->read(4); // WAVE
+
+            while ($this->_reader->getOffset() < $offset + 8 + $riffSize - 1) {
+                $chunkId = $this->_reader->read(4);
+                $chunkSize = $this->_reader->readUInt32LE();
+
+                if ($chunkId == 'fmt ') {
+                    if ($this->_reader->readInt16LE() != 85) { // 85: MPEG-1 Layer 3 Codec
+                        require_once 'Zend/Media/Mpeg/Exception.php';
+                        throw new Zend_Media_Mpeg_Exception
+                            ('File does not contain a valid MPEG Audio Bit Stream (Contains RIFF with no MPEG ABS)');
+                    } else {
+                        $this->_reader->skip($chunkSize - 2);
+                    }
+                } else if ($chunkId == 'data') {
+                    $offset = $this->_reader->getOffset();
+                    break;
+                } else {
+                    $this->_reader->skip($chunkSize);
+                }
+            }
         } else {
             $this->_reader->setOffset($offset);
         }

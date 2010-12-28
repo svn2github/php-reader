@@ -92,7 +92,9 @@ final class Zend_Media_Mpeg_Ps extends Zend_Media_Mpeg_Object
                 $i1 = $this->_reader->readUInt32BE();
                 $i2 = $this->_reader->readUInt32BE();
                 if (!Zend_Bit_Twiddling::testAllBits($i2, 0x2000)) {
-                    throw new RuntimeException('Invalid mark');
+                    require_once 'Zend/Media/Mpeg/Exception.php';
+                    throw new Zend_Media_Mpeg_Exception
+                        ('File does not contain a valid MPEG Program Stream (Invalid mark)');
                 }
                 $pictureRate = $rates[Zend_Bit_Twiddling::getValue($i1, 4, 8)];
                 $foundSeqHdr = true;

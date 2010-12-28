@@ -230,6 +230,11 @@ final class Zend_Media_Mpeg_Abs_Frame extends Zend_Media_Mpeg_Abs_Object
         $this->_offset = $this->_reader->getOffset();
 
         $header = $this->_reader->readUInt32BE();
+        if (!Zend_Bit_Twiddling::testAllBits(Zend_Bit_Twiddling::getValue($header, 21, 32), 0xffe)) {
+            require_once 'Zend/Media/Mpeg/Exception.php';
+            throw new Zend_Media_Mpeg_Exception
+                ('File does not contain a valid MPEG Audio Bit Stream (Invalid frame sync)');
+        }
         $this->_version = Zend_Bit_Twiddling::getValue($header, 19, 20);
         $this->_frequencyType = Zend_Bit_Twiddling::testBit($header, 19);
         $this->_layer = Zend_Bit_Twiddling::getValue($header, 17, 18);

@@ -126,7 +126,7 @@ final class Zend_Media_Id3_ExtendedHeader extends Zend_Media_Id3_Object
                 $this->_reader->skip(1);
                 $this->_crc =
                     $this->_reader->readInt8() * (0xfffffff + 1) +
-                    _decodeSynchsafe32($this->_reader->readUInt32BE());
+                    $this->_decodeSynchsafe32($this->_reader->readUInt32BE());
             }
             if ($this->hasFlag(self::RESTRICTED)) {
                 $this->_reader->skip(1);

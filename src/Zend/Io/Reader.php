@@ -338,6 +338,114 @@ class Zend_Io_Reader
     }
 
     /**
+     * Returns machine endian ordered binary data as signed 24-bit integer.
+     *
+     * @param string $value The binary data string.
+     * @return integer
+     */
+    private function _fromInt24($value)
+    {
+        list(, $int) = unpack('l*', $this->_isLittleEndian() ? ("\x00" . $value) : ($value . "\x00"));
+        return $int;
+    }
+
+    /**
+     * Reads 3 bytes from the stream and returns little-endian ordered binary
+     * data as signed 24-bit integer.
+     *
+     * @return integer
+     * @throws Zend_Io_Exception if an I/O error occurs
+     */
+    public final function readInt24LE()
+    {
+        if ($this->_isBigEndian()) {
+            return $this->_fromInt24(strrev($this->read(3)));
+        } else {
+            return $this->_fromInt24($this->read(3));
+        }
+    }
+
+    /**
+     * Reads 3 bytes from the stream and returns big-endian ordered binary data
+     * as signed 24-bit integer.
+     *
+     * @return integer
+     * @throws Zend_Io_Exception if an I/O error occurs
+     */
+    public final function readInt24BE()
+    {
+        if ($this->_isLittleEndian()) {
+            return $this->_fromInt24(strrev($this->read(3)));
+        } else {
+            return $this->_fromInt24($this->read(3));
+        }
+    }
+
+    /**
+     * Reads 3 bytes from the stream and returns machine ordered binary data
+     * as signed 24-bit integer.
+     *
+     * @return integer
+     * @throws Zend_Io_Exception if an I/O error occurs
+     */
+    public final function readInt24()
+    {
+        return $this->_fromInt24($this->read(3));
+    }
+
+    /**
+     * Returns machine endian ordered binary data as unsigned 24-bit integer.
+     *
+     * @param string  $value The binary data string.
+     * @param integer $order The byte order of the binary data string.
+     * @return integer
+     */
+    private function _fromUInt24($value, $order = 0)
+    {
+        list(, $int) = unpack
+            (($order == self::BIG_ENDIAN_ORDER ? 'N' :
+                ($order == self::LITTLE_ENDIAN_ORDER ? 'V' : 'L')) . '*',
+             $this->_isLittleEndian() ? ("\x00" . $value) : ($value . "\x00"));
+        return $int;
+    }
+
+    /**
+     * Reads 3 bytes from the stream and returns little-endian ordered binary
+     * data as unsigned 24-bit integer.
+     *
+     * @return integer
+     * @throws Zend_Io_Exception if an I/O error occurs
+     */
+    public final function readUInt24LE()
+    {
+        return $this->_fromUInt24($this->read(3), self::LITTLE_ENDIAN_ORDER);
+    }
+
+    /**
+     * Reads 3 bytes from the stream and returns big-endian ordered binary data
+     * as unsigned 24-bit integer.
+     *
+     * @return integer
+     * @throws Zend_Io_Exception if an I/O error occurs
+     */
+    public final function readUInt24BE()
+    {
+        return $this->_fromUInt24($this->read(3), self::BIG_ENDIAN_ORDER);
+    }
+
+    /**
+     * Reads 3 bytes from the stream and returns machine ordered binary data
+     * as unsigned 24-bit integer.
+     *
+     * @return integer
+     * @throws Zend_Io_Exception if an I/O error occurs
+     */
+    public final function readUInt24()
+    {
+        return $this->_fromUInt24($this->read(3), self::MACHINE_ENDIAN_ORDER);
+    }
+
+    /**
      * Returns machine-endian ordered binary data as signed 32-bit integer.
      *
      * @param string $value The binary data string.

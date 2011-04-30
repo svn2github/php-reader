@@ -172,7 +172,6 @@ abstract class Zend_Media_Id3_Object
     /**
      * Decodes the given 28-bit synchsafe integer to regular 32-bit integer.
      *
-
      * @param integer $val The integer to decode
      * @return integer
      */
@@ -188,24 +187,17 @@ abstract class Zend_Media_Id3_Object
      * Whenever a false synchronisation is found within the data, one zeroed
      * byte is inserted after the first false synchronisation byte. This has the
      * side effect that all 0xff00 combinations have to be altered, so they will
-     * not be affected by the decoding process. Therefore all the 0xff00
-     * combinations have to be replaced with the 0xff0000 combination during the
-     * unsynchronisation.
+     * not be affected by the decoding process.
+     * 
+     * Therefore all the 0xff00 combinations are replaced with the 0xff0000 combination and all the 0xff[0xe0-0xff]
+     * combinations are replaced with 0xff00[0xe0-0xff] during the unsynchronisation.
      *
      * @param string $data The input data.
      * @return string
      */
     protected final function _encodeUnsynchronisation(&$data)
     {
-        $result = '';
-        for ($i = 0, $j = 0; $i < strlen($data) - 1; $i++) {
-            if (ord($data[$i]) == 0xff &&
-                ((($tmp = ord($data[$i + 1])) & 0xe0) == 0xe0 || $tmp == 0x0)) {
-                $result .= substr($data, $j, $i + 1 - $j) . "\0";
-                $j = $i + 1;
-            }
-        }
-        return $result . substr($data, $j);
+        return preg_replace('/\xff(?=[\xe0-\xff])/', "\xff\x00", preg_replace('/\xff\x00/', "\xff\x00\x00", $data));
     }
 
     /**
@@ -217,14 +209,7 @@ abstract class Zend_Media_Id3_Object
      */
     protected final function _decodeUnsynchronisation(&$data)
     {
-        $result = '';
-        for ($i = 0, $j = 0; $i < strlen($data) - 1; $i++) {
-            if (ord($data[$i]) == 0xff && ord($data[$i + 1]) == 0x0) {
-                $result .= substr($data, $j, $i + 1 - $j);
-                $j = $i + 2;
-            }
-        }
-        return $result . substr($data, $j);
+        return preg_replace('/\xff\x00\x00/', "\xff\x00", preg_replace('/\xff\x00(?=[\xe0-\xff])/', "\xff", $data));
     }
 
     /**
@@ -263,7 +248,7 @@ abstract class Zend_Media_Id3_Object
      */
     protected final function _explodeString8($value, $limit = null)
     {
-        return preg_split("/\\x00/", $value, $limit);
+        return preg_split('/\x00/', $value, $limit);
     }
 
     /**

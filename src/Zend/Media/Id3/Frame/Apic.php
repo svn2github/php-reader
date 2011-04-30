@@ -285,6 +285,6 @@ final class Zend_Media_Id3_Frame_Apic extends Zend_Media_Id3_Frame
                 $writer->writeString8($this->_description, 1);
                 break;
         }
-        $writer->writeString8($this->_imageData);
+        $writer->write($this->_imageData);
     }
 }

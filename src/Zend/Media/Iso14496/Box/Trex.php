@@ -120,7 +120,7 @@ final class Zend_Media_Iso14496_Box_Trex extends Zend_Media_Iso14496_FullBox
      *
      * @param integer $defaultSampleDescriptionIndex The description index.
      */
-    public function getDefaultSampleDescriptionIndex
+    public function setDefaultSampleDescriptionIndex
         ($defaultSampleDescriptionIndex)
     {
         $this->_defaultSampleDescriptionIndex = $defaultSampleDescriptionIndex;

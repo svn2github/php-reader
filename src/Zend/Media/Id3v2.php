@@ -669,7 +669,7 @@ final class Zend_Media_Id3v2 extends Zend_Media_Id3_Object
      */
     public function __get($name)
     {
-        if (isset($this->_frames[strtoupper($name)])) {
+        if (!empty($this->_frames[strtoupper($name)])) {
             return $this->_frames[strtoupper($name)][0];
         }
         if (method_exists($this, 'get' . ucfirst($name))) {

@@ -164,7 +164,7 @@ final class Zend_Media_Id3v1
      */
     public function getTitle()
     {
-         return $this->_title;
+        return $this->_title;
     }
 
     /**
@@ -175,7 +175,7 @@ final class Zend_Media_Id3v1
      */
     public function setTitle($title)
     {
-         $this->_title = $title;
+        $this->_title = $title;
     }
 
     /**
@@ -185,7 +185,7 @@ final class Zend_Media_Id3v1
      */
     public function getArtist()
     {
-         return $this->_artist;
+        return $this->_artist;
     }
 
     /**
@@ -196,7 +196,7 @@ final class Zend_Media_Id3v1
      */
     public function setArtist($artist)
     {
-         $this->_artist = $artist;
+        $this->_artist = $artist;
     }
 
     /**
@@ -206,7 +206,7 @@ final class Zend_Media_Id3v1
      */
     public function getAlbum()
     {
-         return $this->_album;
+        return $this->_album;
     }
 
     /**
@@ -217,7 +217,7 @@ final class Zend_Media_Id3v1
      */
     public function setAlbum($album)
     {
-         $this->_album = $album;
+        $this->_album = $album;
     }
 
     /**
@@ -227,7 +227,7 @@ final class Zend_Media_Id3v1
      */
     public function getYear()
     {
-         return $this->_year;
+        return $this->_year;
     }
 
     /**
@@ -238,7 +238,7 @@ final class Zend_Media_Id3v1
      */
     public function setYear($year)
     {
-         $this->_year = $year;
+        $this->_year = $year;
     }
 
     /**
@@ -248,7 +248,7 @@ final class Zend_Media_Id3v1
      */
     public function getComment()
     {
-         return $this->_comment;
+        return $this->_comment;
     }
 
     /**
@@ -259,7 +259,7 @@ final class Zend_Media_Id3v1
      */
     public function setComment($comment)
     {
-         $this->_comment = $comment;
+        $this->_comment = $comment;
     }
 
     /**
@@ -270,7 +270,7 @@ final class Zend_Media_Id3v1
      */
     public function getTrack()
     {
-         return $this->_track;
+        return $this->_track;
     }
 
     /**
@@ -282,7 +282,7 @@ final class Zend_Media_Id3v1
      */
     public function setTrack($track)
     {
-         $this->_track = $track;
+        $this->_track = $track;
     }
 
     /**
@@ -366,6 +366,20 @@ final class Zend_Media_Id3v1
         }
 
         $this->_filename = $filename;
+    }
+
+    /**
+     * Removes the ID3v1 tag altogether.
+     *
+     * @param string $filename The path to the file.
+     */
+    public static function remove($filename)
+    {
+        $reader = new Zend_Io_FileReader($filename, 'r+b');
+        $reader->setOffset(-128);
+        if ($reader->read(3) == 'TAG') {
+            ftruncate($reader->getFileDescriptor(), $reader->getSize() - 128);
+        }
     }
 
     /**

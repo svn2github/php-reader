@@ -83,8 +83,7 @@ final class Zend_Media_Id3_Header extends Zend_Media_Id3_Object
         $this->_version = $options['version'] =
             $this->_reader->readUInt8() + $this->_reader->readUInt8() / 10;
         $this->_flags = $this->_reader->readUInt8();
-        $this->_size = $this->_version < 4 ?
-            $this->_reader->readUInt32BE() : $this->_decodeSynchsafe32($this->_reader->readUInt32BE());
+        $this->_size = $this->_decodeSynchsafe32($this->_reader->readUInt32BE());
     }
 
     /**
@@ -174,6 +173,6 @@ final class Zend_Media_Id3_Header extends Zend_Media_Id3_Object
         $writer->writeUInt8(floor($this->_version))
                ->writeUInt8(($this->_version - floor($this->_version)) * 10)
                ->writeUInt8($this->_flags)
-               ->writeUInt32BE($this->_version < 4 ? $this->_size : $this->_encodeSynchsafe32($this->_size));
+               ->writeUInt32BE($this->_encodeSynchsafe32($this->_size));
     }
 }

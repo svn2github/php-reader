@@ -37,7 +37,7 @@ require_once 'Zend/Media/Iso14496/FullBox.php';
 /**#@-*/
 
 /**
- * The <i>Track Fragment Random Access Box<i> provides entries that contains the location and the presentation time of
+ * The <i>Track Fragment Random Access Box</i> provides entries that contains the location and the presentation time of
  * the random accessible sample. It indicates that the sample in the entry can be random accessed. Note that not every
  * random accessible sample in the track needs to be listed in the table.
  *
@@ -288,6 +288,10 @@ final class Zend_Media_Iso14496_Box_Tfra extends Zend_Media_Iso14496_FullBox
         }
     }
 
+    /**
+     * Returns the length sizes based on maximum numbers for each type of integer.
+     * @return integer Returns the length sizes based on maximum numbers for each type of integer.
+     */
     private function _getLengthSizes()
     {
         $maxTrafNum = $maxTrunNum = $maxSampleNum = 0;
@@ -309,6 +313,12 @@ final class Zend_Media_Iso14496_Box_Tfra extends Zend_Media_Iso14496_FullBox
         );
     }
 
+    /**
+     * Returns the length size based on the given integer.
+     *
+     * @param integer $integer The integer to determine the length size from.
+     * @return Returns the length size of the given integer.
+     */
     private function _getLengthSizeFromInteger($integer)
     {
         if ($integer <= 0xff) {

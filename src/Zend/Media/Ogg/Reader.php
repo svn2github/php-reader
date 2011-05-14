@@ -39,6 +39,7 @@ require_once 'Zend/Media/Ogg/Page.php';
  * @copyright  Copyright (c) 2005-2011 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
  * @version    $Id$
+ * @todo       Currently supports only one logical bitstream
  */
 final class Zend_Media_Ogg_Reader extends Zend_Io_Reader
 {
@@ -50,9 +51,6 @@ final class Zend_Media_Ogg_Reader extends Zend_Io_Reader
 
     /** @var integer */
     private $_currentPagePosition = 0;
-
-    /** @var integer */
-    private $_streamSize = 0;
 
     /**
      * Constructs the Ogg class with given file.
@@ -70,7 +68,7 @@ final class Zend_Media_Ogg_Reader extends Zend_Io_Reader
                 'page'   => $page = new Zend_Media_Ogg_Page($reader),
                 'offset' => $reader->getOffset()
             );
-            $this->_streamSize += $page->getPageSize();
+            $this->_size += $page->getPageSize();
             $reader->skip($page->getPageSize());
         }
         $reader->setOffset($this->_pages[$this->_currentPage]['offset']);
@@ -111,17 +109,6 @@ final class Zend_Media_Ogg_Reader extends Zend_Io_Reader
             }
             $streamSize += $this->_pages[$i]['page']->getPageSize();
         }
-    }
-
-    /**
-     * Overwrite the method to return the Ogg bitstream size in bytes.
-     *
-     * @return integer
-     */
-    public function getSize()
-    {
-        echo "getSize\n";
-        return $this->_streamSize;
     }
 
     /**

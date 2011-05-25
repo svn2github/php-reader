@@ -73,6 +73,8 @@ class Zend_Media_Mpeg_Abs_VbriHeader extends Zend_Media_Mpeg_Abs_Object
      */
     public function __construct($reader, &$options = array())
     {
+        parent::__construct($reader, $options);
+        
         $offset = $this->_reader->getOffset();
         $this->_version = $this->_reader->readUInt16BE();
         $this->_delay = $this->_reader->readUInt16BE();

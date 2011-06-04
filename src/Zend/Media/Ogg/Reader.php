@@ -47,7 +47,7 @@ final class Zend_Media_Ogg_Reader extends Zend_Io_Reader
     private $_pages = array();
 
     /** @var integer */
-    private $_currentPage = 0;
+    private $_currentPageNumber = 0;
 
     /** @var integer */
     private $_currentPagePosition = 0;
@@ -65,13 +65,15 @@ final class Zend_Media_Ogg_Reader extends Zend_Io_Reader
         $fileSize = $reader->getSize();
         while ($reader->getOffset() < $fileSize) {
             $this->_pages[] = array(
-                'page'   => $page = new Zend_Media_Ogg_Page($reader),
-                'offset' => $reader->getOffset()
+                'offset' => $reader->getOffset(),
+                'page'   => $page = new Zend_Media_Ogg_Page($reader)
             );
             $this->_size += $page->getPageSize();
             $reader->skip($page->getPageSize());
         }
-        $reader->setOffset($this->_pages[$this->_currentPage]['offset']);
+        $reader->setOffset
+            ($this->_pages[$this->_currentPageNumber]['offset'] +
+             $this->_pages[$this->_currentPageNumber]['page']->getHeaderSize());
         $this->_fd = $reader->getFileDescriptor();
     }
 
@@ -84,7 +86,7 @@ final class Zend_Media_Ogg_Reader extends Zend_Io_Reader
     public function getOffset()
     {
         $offset = 0;
-        for ($i = 0; $i < $this->_currentPage; $i++) {
+        for ($i = 0; $i < $this->_currentPageNumber; $i++) {
             $offset += $this->_pages[$i]['page']->getPageSize();
         }
         return $offset += $this->_currentPagePosition;
@@ -102,9 +104,11 @@ final class Zend_Media_Ogg_Reader extends Zend_Io_Reader
         $streamSize = 0;
         for ($i = 0, $pageCount = count($this->_pages); $i < $pageCount; $i++) {
             if (($streamSize + $this->_pages[$i]['page']->getPageSize()) >= $offset) {
-                $this->_currentPage = $i;
+                $this->_currentPageNumber = $i;
                 $this->_currentPagePosition = $offset - $streamSize;
-                parent::setOffset($this->_pages[$i]['offset'] + $this->_currentPagePosition);
+                parent::setOffset
+                    ($this->_pages[$i]['offset'] + $this->_pages[$i]['page']->getHeaderSize() +
+                     $this->_currentPagePosition);
                 break;
             }
             $streamSize += $this->_pages[$i]['page']->getPageSize();
@@ -120,12 +124,12 @@ final class Zend_Media_Ogg_Reader extends Zend_Io_Reader
      */
     public function skip($size)
     {
-        $currentPageSize = $this->_pages[$this->_currentPage]['page']->getPageSize();
+        $currentPageSize = $this->_pages[$this->_currentPageNumber]['page']->getPageSize();
         if (($this->_currentPagePosition + $size) >= $currentPageSize) {
             parent::skip
                 (($currentPageSize - $this->_currentPagePosition) +
-                  $this->_pages[++$this->_currentPage]['page']->getHeaderSize() +
-                 ($this->_currentPagePosition = ($size - $currentPageSize - $this->_currentPagePosition)));
+                  $this->_pages[++$this->_currentPageNumber]['page']->getHeaderSize() +
+                 ($this->_currentPagePosition = ($size - ($currentPageSize - $this->_currentPagePosition))));
         } else {
             $this->_currentPagePosition += $size;
             parent::skip($size);
@@ -141,10 +145,10 @@ final class Zend_Media_Ogg_Reader extends Zend_Io_Reader
      */
     public function read($length)
     {
-        $currentPageSize = $this->_pages[$this->_currentPage]['page']->getPageSize();
+        $currentPageSize = $this->_pages[$this->_currentPageNumber]['page']->getPageSize();
         if (($this->_currentPagePosition + $length) >= $currentPageSize) {
             $buffer = parent::read($currentPageSize - $this->_currentPagePosition);
-            parent::skip($this->_pages[++$this->_currentPage]['page']->getHeaderSize());
+            parent::skip($this->_pages[++$this->_currentPageNumber]['page']->getHeaderSize());
             return $buffer . parent::read
                 ($this->_currentPagePosition = ($length - ($currentPageSize - $this->_currentPagePosition)));
         } else {
@@ -152,5 +156,36 @@ final class Zend_Media_Ogg_Reader extends Zend_Io_Reader
             $this->_currentPagePosition += $length;
             return $buffer;
         }
+    }
+
+    /**
+     * Returns the underlying Ogg page at given number.
+     *
+     * @param integer $pageNumber The number of the page to return.
+     * @return Zend_Media_Ogg_Page
+     */
+    public function getPage($pageNumber)
+    {
+        return $this->_pages[$pageNumber]['page'];
+    }
+
+    /**
+     * Returns the underlying Ogg page number.
+     *
+     * @return integer
+     */
+    public function getCurrentPageNumber()
+    {
+        return $this->_currentPageNumber;
+    }
+    
+    /**
+     * Returns the underlying Ogg page position, in bytes.
+     *
+     * @return integer
+     */
+    public function getCurrentPagePosition()
+    {
+        return $this->_currentPagePosition;
     }
 }

@@ -61,11 +61,11 @@ final class Zend_Media_Vorbis
     /** @var Zend_Media_Vorbis_Header_Comment */
     private $_commentHeader;
 
-//    /** @var Zend_Media_Vorbis_Header_Setup */
-//    private $_setupHeader;
+    /** @var Zend_Media_Vorbis_Header_Setup */
+    private $_setupHeader;
 
     /**
-     * Constructs the .
+     * Constructs the Zend_Media_Vorbis class with given file.
      *
      * @param string|resource|Zend_Io_Reader $filename The path to the file,
      *  file descriptor of an opened file, or a {@link Zend_Io_Reader} instance.
@@ -90,7 +90,7 @@ final class Zend_Media_Vorbis
 
         $this->_identificationHeader = new Zend_Media_Vorbis_Header_Identification($this->_reader);
         $this->_commentHeader = new Zend_Media_Vorbis_Header_Comment($this->_reader);
-//        $this->_setupHeader = new Zend_Media_Vorbis_Header_Setup($this->_reader);
+        $this->_setupHeader = new Zend_Media_Vorbis_Header_Setup($this->_reader);
     }
 
     /**
@@ -120,9 +120,7 @@ final class Zend_Media_Vorbis
      */
     public function getSetupHeader()
     {
-        require_once 'Zend/Media/Vorbis/Exception.php';
-        throw new Zend_Media_Vorbis_Exception('Not yet supported');
-//        return $this->_setupHeader;
+        return $this->_setupHeader;
     }
 
     /**

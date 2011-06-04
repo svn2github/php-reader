@@ -53,6 +53,9 @@ abstract class Zend_Media_Vorbis_Header
      */
     protected $_packetType;
 
+    /** $var integer */
+    protected $_packetSize = 0;
+
     /**
      * Constructs the class with given parameters.
      *
@@ -62,7 +65,6 @@ abstract class Zend_Media_Vorbis_Header
     public function __construct($reader)
     {
         $this->_reader = $reader;
-
         if (!in_array($this->_packetType = $this->_reader->readUInt8(), array(1, 3, 5))) {
             require_once 'Zend/Media/Vorbis/Exception.php';
             throw new Zend_Media_Vorbis_Exception('Unknown header packet type: ' . $this->_packetType);
@@ -70,6 +72,28 @@ abstract class Zend_Media_Vorbis_Header
         if (($vorbis = $this->_reader->read(6)) != 'vorbis') {
             require_once 'Zend/Media/Vorbis/Exception.php';
             throw new Zend_Media_Vorbis_Exception('Unknown header packet: ' . $vorbis);
+        }
+
+        $skipBytes = $this->_reader->getCurrentPagePosition();
+        for ($page = $this->_reader->getCurrentPageNumber(); /* goes on until we find packet end */; $page++) {
+            $segments = $this->_reader->getPage($page)->getSegmentTable();
+            for ($i = 0, $skippedSegments = 0; $i < count($segments); $i++) {
+                // Skip page segments that are already read in
+                if ($skipBytes > $segments[$i]) {
+                    $skipBytes -= $segments[$i];
+                    continue;
+                }
+
+                // Skip segments that are full
+                if ($segments[$i] == 255 && ++$skippedSegments) {
+                    continue;
+                }
+
+                // Record packet size from the first non-255 segment
+                $this->_packetSize += $i * 255 + $segments[$i];
+                break 2;
+            }
+            $this->_packetSize += $skippedSegments * 255;
         }
     }
 

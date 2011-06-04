@@ -87,6 +87,7 @@ final class Zend_Media_Vorbis_Header_Comment extends Zend_Media_Vorbis_Header
             require_once 'Zend/Media/Vorbis/Exception.php';
             throw new Zend_Media_Vorbis_Exception('Undecodable Vorbis stream');
         }
+        $this->_reader->skip($this->_packetSize - $this->_reader->getOffset() + 30 /* header */);
     }
 
     /**

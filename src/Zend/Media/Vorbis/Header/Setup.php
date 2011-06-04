@@ -26,9 +26,8 @@ require_once 'Zend/Media/Vorbis/Header.php';
 
 /**
  * The setup header contains the bulk of the codec setup information needed for decode. The setup header contains, in
- * order, the lists of codebook congurations, time-domain transform congurations (placeholders in Vorbis I), oor con
- * gurations, residue congurations, channel mapping congurations and mode congurations. It finishes with a framing
- * bit of '1'.
+ * order, the lists of codebook configurations, time-domain transform configurations (placeholders in Vorbis I), floor
+ * configurations, residue configurations, channel mapping configurations and mode configurations.
  *
  * @category   Zend
  * @package    Zend_Media

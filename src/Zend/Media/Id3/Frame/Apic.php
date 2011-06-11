@@ -84,7 +84,7 @@ final class Zend_Media_Id3_Frame_Apic extends Zend_Media_Id3_Frame
      *
      * @todo  There is the possibility to put only a link to the image file by
      *  using the MIME type '-->' and having a complete URL instead of picture
-     *  data. Support for such needs design considerations.
+     *  data. Support for such needs further design considerations.
      * @param Zend_Io_Reader $reader The reader object.
      * @param Array $options The options array.
      */

@@ -62,17 +62,26 @@ final class Zend_Media_Vorbis_Header_Comment extends Zend_Media_Vorbis_Header
     private $_comments;
 
     /** @var integer */
-    private $_framingFlag;
+    private $_framingFlag = 1;
 
     /**
-     * Constructs the class with given parameters.
+     * Constructs the class with given parameters and reads object related data from the bitstream.
+     *
+     * The following options are currently recognized:
+     *  o vorbisContext -- Indicates whether to expect comments to be in the context of a vorbis bitstream or not. This
+     *    option can be used to parse vorbis comments in another formats, eg FLAC, that do not use for example the
+     *    framing flags. Defaults to true.
      *
      * @param Zend_Io_Reader $reader The reader object.
+     * @param Array          $options Array of options.
      */
-    public function __construct($reader)
+    public function __construct($reader, $options = array())
     {
-        parent::__construct($reader);
-
+        if (!isset($options['vorbisContext']) || $options['vorbisContext']) {
+            parent::__construct($reader);
+        } else {
+            $this->_reader = $reader;
+        }
         $this->_vendor = $this->_reader->read($this->_reader->readUInt32LE());
         $userCommentListLength = $this->_reader->readUInt32LE();
         for ($i = 0; $i < $userCommentListLength; $i++) {
@@ -82,12 +91,24 @@ final class Zend_Media_Vorbis_Header_Comment extends Zend_Media_Vorbis_Header
             }
             $this->_comments[strtoupper($name)][] = $value;
         }
-        $this->_framingFlag = $this->_reader->readUInt8() & 0x1;
-        if ($this->_framingFlag == 0) {
-            require_once 'Zend/Media/Vorbis/Exception.php';
-            throw new Zend_Media_Vorbis_Exception('Undecodable Vorbis stream');
+        if (!isset($options['vorbisContext']) || $options['vorbisContext']) {
+            $this->_framingFlag = $this->_reader->readUInt8() & 0x1;
+            if ($this->_framingFlag == 0) {
+                require_once 'Zend/Media/Vorbis/Exception.php';
+                throw new Zend_Media_Vorbis_Exception('Undecodable Vorbis stream');
+            }
+            $this->_reader->skip($this->_packetSize - $this->_reader->getOffset() + 30 /* header */);
         }
-        $this->_reader->skip($this->_packetSize - $this->_reader->getOffset() + 30 /* header */);
+    }
+
+    /**
+     * Returns the vendor string.
+     *
+     * @return string
+     */
+    public function getVendor()
+    {
+        return $this->_vendor;
     }
 
     /**
@@ -124,7 +145,7 @@ final class Zend_Media_Vorbis_Header_Comment extends Zend_Media_Vorbis_Header
      */
     public function __isset($name)
     {
-        return empty($this->_comments[strtoupper($name)]);
+        return count($this->_comments[strtoupper($name)]) > 0;
     }
 
     /**

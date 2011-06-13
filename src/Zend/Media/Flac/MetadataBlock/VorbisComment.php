@@ -69,7 +69,7 @@ final class Zend_Media_Flac_MetadataBlock_VorbisComment extends Zend_Media_Flac_
     public function __call($name, $arguments)
     {
         if (method_exists($this, $name)) {
-            return $this->$name($arguments);
+            return call_user_func(array($this, $name), $arguments);
         }
         try {
             return $this->_impl->$name($arguments);

@@ -185,8 +185,8 @@ final class Zend_Media_Flac
      * Returns an array of metadata blocks frames matching the given type or an empty array if no metadata blocks
      * matched the type.
      *
-     * Please note that one may also use the shorthand $obj->type to access the first metadata block with the given
-     * type.
+     * Please note that one may also use the shorthand $obj->type or $obj->getType(), where the type is the metadata
+     * block name, to access the first metadata block with the given type.
      *
      * @param string $type The metadata block type.
      * @return Array
@@ -204,9 +204,34 @@ final class Zend_Media_Flac
     }
 
     /**
+     * Magic function so that $obj->X() or $obj->getX() will work, where X is the name of the metadata block. If there
+     * is no metadata block by the given name, an exception is thrown.
+     *
+     * @param string $name The metadata block name.
+     * @return mixed
+     */
+    public function __call($name, $arguments)
+    {
+        if (preg_match('/^(?:get)([A-Z].*)$/', $name, $matches)) {
+            $name = lcfirst($matches[1]);
+        }
+        if (defined($constant = 'self::' . strtoupper(preg_replace('/(?<=[a-z])[A-Z]/', '_$0', $name)))) {
+            $metadataBlocks = $this->getMetadataBlocksByType(constant($constant));
+            if (isset($metadataBlocks[0])) {
+                return $metadataBlocks[0];
+            }
+        }
+        if (!empty($this->_comments[strtoupper($name)])) {
+           return $this->_comments[strtoupper($name)][0];
+        }
+        require_once 'Zend/Media/Flac/Exception.php';
+        throw new Zend_Media_Flac_Exception('Unknown metadata block: ' . strtoupper($name));
+    }
+
+    /**
      * Magic function so that $obj->value will work.
      *
-     * @param string $name The field name.
+     * @param string $name The metadata block name.
      * @return mixed
      */
     public function __get($name)

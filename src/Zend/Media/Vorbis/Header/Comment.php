@@ -122,14 +122,52 @@ final class Zend_Media_Vorbis_Header_Comment extends Zend_Media_Vorbis_Header
     }
 
     /**
+     * Returns an array of comments having the field names as keys and an array of values as a value. The array is
+     * restricted to field names that matches the given criteria. Unlike the getX() methods, which return the first
+     * value, this method returns an array of field values.
+     *
+     * @return Array
+     */
+    public function getCommentsByName($name)
+    {
+        if (!empty($this->_comments[strtoupper($name)])) {
+           return $this->_comments[strtoupper($name)];
+        }
+        return array();
+    }
+
+    /**
+     * Magic function so that $obj->X() or $obj->getX() will work, where X is the name of the comment field. The method
+     * will attempt to return the first field by the given name from the comment. If there is no field with given name,
+     * an exception is thrown.
+     *
+     * @param string $name The field name.
+     * @return mixed
+     */
+    public function __call($name, $arguments)
+    {
+        if (preg_match('/^(?:get)([A-Z].*)$/', $name, $matches)) {
+            $name = $matches[1];
+        }
+        if (!empty($this->_comments[strtoupper($name)])) {
+           return $this->_comments[strtoupper($name)][0];
+        }
+        require_once 'Zend/Media/Vorbis/Exception.php';
+        throw new Zend_Media_Vorbis_Exception('Unknown field: ' . strtoupper($name));
+    }
+
+    /**
      * Magic function so that $obj->value will work. The method will attempt to return the first field by the given
      * name from the comment. If there is no field with given name, functionality of the parent method is executed.
-     * 
+     *
      * @param string $name The field name.
      * @return mixed
      */
     public function __get($name)
     {
+        if (method_exists($this, 'get' . ucfirst($name))) {
+            return call_user_func(array($this, 'get' . ucfirst($name)));
+        }
         if (!empty($this->_comments[strtoupper($name)])) {
             return $this->_comments[strtoupper($name)][0];
         }

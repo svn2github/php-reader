@@ -65,7 +65,7 @@ final class Zend_Media_Id3_Frame_Comm extends Zend_Media_Id3_LanguageTextFrame
 
         $encoding = $this->_reader->readUInt8();
         $this->_language = strtolower($this->_reader->read(3));
-        if ($this->_language == 'xxx') {
+        if ($this->_language == 'xxx' || trim($this->_language, "\0") == '') {
             $this->_language = 'und';
         }
 

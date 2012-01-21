@@ -96,7 +96,7 @@ final class Zend_Media_Id3_Frame_SYLT extends Zend_Media_Id3_Frame
 
         $encoding = $this->_reader->readUInt8();
         $this->_language = strtolower($this->_reader->read(3));
-        if ($this->_language == 'xxx') {
+        if ($this->_language == 'xxx' || trim($this->_language, "\0") == '') {
             $this->_language = 'und';
         }
         $this->_format = $this->_reader->readUInt8();
@@ -110,8 +110,10 @@ final class Zend_Media_Id3_Frame_SYLT extends Zend_Media_Id3_Frame
                 list($this->_description) =
                     $this->_explodeString16
                         ($this->_reader->read($this->_reader->getSize()), 2);
-                $this->_reader->setOffset
-                    ($offset + strlen($this->_description) + 2);
+                if ($this->_reader->getSize() >= $offset + strlen($this->_description) + 2) {
+                    $this->_reader->setOffset
+                        ($offset + strlen($this->_description) + 2);
+                }
                 break;
             case self::UTF8:
                 // break intentionally omitted
@@ -119,12 +121,13 @@ final class Zend_Media_Id3_Frame_SYLT extends Zend_Media_Id3_Frame
                 list($this->_description) =
                     $this->_explodeString8
                         ($this->_reader->read($this->_reader->getSize()), 2);
-                $this->_reader->setOffset
-                    ($offset + strlen($this->_description) + 1);
+                if ($this->_reader->getSize() >= $offset + strlen($this->_description) + 1) {
+                    $this->_reader->setOffset
+                        ($offset + strlen($this->_description) + 1);
+                }
                 break;
         }
-        $this->_description =
-            $this->_convertString($this->_description, $encoding);
+        $this->_description = $this->_convertString($this->_description, $encoding);
 
         while ($this->_reader->available()) {
             $offset = $this->_reader->getOffset();

@@ -27,7 +27,7 @@ require_once 'Zend/Media/Riff/Chunk.php';
  * @author     Sven Vollbehr <sven@vollbehr.eu>
  * @copyright  Copyright (c) 2011 Sven Vollbehr
  * @license    http://framework.zend.com/license/new-bsd New BSD License
- * @version    $Id: Box.php 177 2010-03-09 13:13:34Z svollbehr $
+ * @version    $Id$
  */
 abstract class Zend_Media_Riff_StringChunk extends Zend_Media_Riff_Chunk
 {

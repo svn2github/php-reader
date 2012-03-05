@@ -38,7 +38,7 @@ require_once 'Zend/Media/Mpeg/Abs/Object.php';
  * @subpackage MPEG
  * @author     Ryan Butterfield <buttza@gmail.com>
  * @author     Sven Vollbehr <sven@vollbehr.eu>
- * @copyright  Copyright (c) 2005-2010 Zend Technologies USA Inc. (http://www.zend.com) 
+ * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com) 
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
  * @version    $Id$
  */
@@ -228,13 +228,21 @@ final class Zend_Media_Mpeg_Abs_Frame extends Zend_Media_Mpeg_Abs_Object
         parent::__construct($reader, $options);
 
         $this->_offset = $this->_reader->getOffset();
-
-        $header = $this->_reader->readUInt32BE();
-        if (!Zend_Bit_Twiddling::testAllBits(Zend_Bit_Twiddling::getValue($header, 21, 32), 0xffe)) {
-            require_once 'Zend/Media/Mpeg/Exception.php';
-            throw new Zend_Media_Mpeg_Exception
-                ('File does not contain a valid MPEG Audio Bit Stream (Invalid frame sync)');
+        
+        $header = null;
+        for ($i = 0; $i < 5775 /* max attempts: max frame size x2 */; $i++) {
+            $header = $this->_reader->readUInt32BE();
+            if (Zend_Bit_Twiddling::testAllBits(Zend_Bit_Twiddling::getValue($header, 21, 32), 0xffe)) {
+                break;
+            }
+            $this->_reader->setOffset(++$this->_offset + 1);
+            if ($this->_offset == $this->_reader->getSize() || $i == (5775 - 1)) {
+                require_once 'Zend/Media/Mpeg/Exception.php';
+                throw new Zend_Media_Mpeg_Exception
+                    ('File does not contain a valid MPEG Audio Bit Stream (Invalid frame sync and resynchronization failed)');
+            }
         }
+        
         $this->_version = Zend_Bit_Twiddling::getValue($header, 19, 20);
         $this->_frequencyType = Zend_Bit_Twiddling::testBit($header, 19);
         $this->_layer = Zend_Bit_Twiddling::getValue($header, 17, 18);
@@ -269,14 +277,25 @@ final class Zend_Media_Mpeg_Abs_Frame extends Zend_Media_Mpeg_Abs_Object
     }
 
     /**
+     * Returns the offset where the frame actually begins (stream error may
+     * cause resynchronization).
+     *
+     * @return integer
+     */
+    public function getOffset()
+    {
+        return $this->_offset;
+    }
+
+    /**
      * Returns the version identifier of the algorithm.
      *
      * @see VERSION_ONE, VERSION_TWO, VERSION_TWO_FIVE
      * @return integer
      */
-    public function getVersion() 
+    public function getVersion()
     {
-        return $this->_version; 
+        return $this->_version;
     }
 
     /**
@@ -291,9 +310,9 @@ final class Zend_Media_Mpeg_Abs_Frame extends Zend_Media_Mpeg_Abs_Object
      * @see SAMPLING_FREQUENCY_LOW, SAMPLING_FREQUENCY_HIGH
      * @return integer
      */
-    public function getFrequencyType() 
+    public function getFrequencyType()
     {
-        return $this->_frequencyType; 
+        return $this->_frequencyType;
     }
 
     /**
@@ -302,9 +321,9 @@ final class Zend_Media_Mpeg_Abs_Frame extends Zend_Media_Mpeg_Abs_Object
      * @see LAYER_ONE, LAYER_TWO, LAYER_THREE
      * @return integer
      */
-    public function getLayer() 
+    public function getLayer()
     {
-        return $this->_layer; 
+        return $this->_layer;
     }
 
     /**
@@ -313,9 +332,9 @@ final class Zend_Media_Mpeg_Abs_Frame extends Zend_Media_Mpeg_Abs_Object
      * @see getRedundancy
      * @return boolean
      */
-    public function hasRedundancy() 
+    public function hasRedundancy()
     {
-        return $this->getRedundancy(); 
+        return $this->getRedundancy();
     }
 
     /**
@@ -326,9 +345,9 @@ final class Zend_Media_Mpeg_Abs_Frame extends Zend_Media_Mpeg_Abs_Object
      *
      * @return boolean
      */
-    public function getRedundancy() 
+    public function getRedundancy()
     {
-        return $this->_redundancy; 
+        return $this->_redundancy;
     }
 
     /**
@@ -338,9 +357,9 @@ final class Zend_Media_Mpeg_Abs_Frame extends Zend_Media_Mpeg_Abs_Object
      *
      * @return integer
      */
-    public function getBitrate() 
+    public function getBitrate()
     {
-        return $this->_bitrate; 
+        return $this->_bitrate;
     }
 
     /**
@@ -348,9 +367,9 @@ final class Zend_Media_Mpeg_Abs_Frame extends Zend_Media_Mpeg_Abs_Object
      *
      * @return integer
      */
-    public function getSamplingFrequency() 
+    public function getSamplingFrequency()
     {
-        return $this->_samplingFrequency; 
+        return $this->_samplingFrequency;
     }
 
     /**
@@ -359,9 +378,9 @@ final class Zend_Media_Mpeg_Abs_Frame extends Zend_Media_Mpeg_Abs_Object
      * @see getPadding
      * @return boolean
      */
-    public function hasPadding() 
+    public function hasPadding()
     {
-        return $this->getPadding(); 
+        return $this->getPadding();
     }
 
     /**
@@ -373,9 +392,9 @@ final class Zend_Media_Mpeg_Abs_Frame extends Zend_Media_Mpeg_Abs_Object
      *
      * @return boolean
      */
-    public function getPadding() 
+    public function getPadding()
     {
-        return $this->_padding; 
+        return $this->_padding;
     }
 
     /**
@@ -386,9 +405,9 @@ final class Zend_Media_Mpeg_Abs_Frame extends Zend_Media_Mpeg_Abs_Object
      *      CHANNEL_SINGLE_CHANNEL
      * @return integer
      */
-    public function getMode() 
+    public function getMode()
     {
-        return $this->_mode; 
+        return $this->_mode;
     }
 
     /**
@@ -414,9 +433,9 @@ final class Zend_Media_Mpeg_Abs_Frame extends Zend_Media_Mpeg_Abs_Object
      *
      * @return integer
      */
-    public function getModeExtension() 
+    public function getModeExtension()
     {
-        return $this->_modeExtension; 
+        return $this->_modeExtension;
     }
 
     /**
@@ -425,9 +444,9 @@ final class Zend_Media_Mpeg_Abs_Frame extends Zend_Media_Mpeg_Abs_Object
      * @see getCopyright
      * @return boolean
      */
-    public function hasCopyright() 
+    public function hasCopyright()
     {
-        return $this->getCopyright(); 
+        return $this->getCopyright();
     }
 
     /**
@@ -436,9 +455,9 @@ final class Zend_Media_Mpeg_Abs_Frame extends Zend_Media_Mpeg_Abs_Object
      *
      * @return boolean
      */
-    public function getCopyright() 
+    public function getCopyright()
     {
-        return $this->_copyright; 
+        return $this->_copyright;
     }
 
     /**
@@ -447,9 +466,9 @@ final class Zend_Media_Mpeg_Abs_Frame extends Zend_Media_Mpeg_Abs_Object
      * @see getOriginal
      * @return boolean
      */
-    public function isOriginal() 
+    public function isOriginal()
     {
-        return $this->getOriginal(); 
+        return $this->getOriginal();
     }
 
     /**
@@ -457,9 +476,9 @@ final class Zend_Media_Mpeg_Abs_Frame extends Zend_Media_Mpeg_Abs_Object
      *
      * @return boolean
      */
-    public function getOriginal() 
+    public function getOriginal()
     {
-        return $this->_original; 
+        return $this->_original;
     }
 
     /**
@@ -473,9 +492,9 @@ final class Zend_Media_Mpeg_Abs_Frame extends Zend_Media_Mpeg_Abs_Object
      * @see EMPHASIS_NONE, EMPHASIS_50_15, EMPHASIS_CCIT_J17
      * @return integer
      */
-    public function getEmphasis() 
+    public function getEmphasis()
     {
-        return $this->_emphasis; 
+        return $this->_emphasis;
     }
 
     /**
@@ -484,9 +503,9 @@ final class Zend_Media_Mpeg_Abs_Frame extends Zend_Media_Mpeg_Abs_Object
      *
      * @return integer
      */
-    public function getLength() 
+    public function getLength()
     {
-        return $this->_length; 
+        return $this->_length;
     }
 
     /**
@@ -494,9 +513,9 @@ final class Zend_Media_Mpeg_Abs_Frame extends Zend_Media_Mpeg_Abs_Object
      *
      * @return integer
      */
-    public function getSamples() 
+    public function getSamples()
     {
-        return $this->_samples; 
+        return $this->_samples;
     }
 
     /**

@@ -40,7 +40,8 @@ require_once 'Zend/Media/Asf/Object/Container.php';
  * @package    Zend_Media
  * @subpackage ASF
  * @author     Sven Vollbehr <sven@vollbehr.eu>
- * @copyright  Copyright (c) 2005-2010 Zend Technologies USA Inc. (http://www.zend.com)
+ * @author     Elias Haapamäki <elias.haapamaki@turunhelluntaisrk.fi>
+ * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
  * @version    $Id$
  */
@@ -198,12 +199,19 @@ class Zend_Media_Asf extends Zend_Media_Asf_Object_Container
             ftruncate
                 ($fd, $newFileSize = $headerLengthNew - $headerLengthOld +
                  $oldFileSize);
-            for ($i = 1, $cur = $oldFileSize; $cur > 0; $cur -= 1024, $i++) {
-                fseek($fd, -(($i * 1024) +
-                      ($newFileSize - $oldFileSize)), SEEK_END);
-                $buffer = fread($fd, 1024);
-                fseek($fd, -($i * 1024), SEEK_END);
-                fwrite($fd, $buffer, 1024);
+             for ($i = 1, $cur = $oldFileSize; $cur > 0; $cur -= 1024, $i++) {
+                if ($cur >= 1024) {
+                    fseek($fd, -(($i * 1024) +
+                            ($newFileSize - $oldFileSize)), SEEK_END);
+                    $buffer = fread($fd, 1024);
+                    fseek($fd, -($i * 1024), SEEK_END);
+                    fwrite($fd, $buffer, 1024);
+                } else {
+                    fseek($fd, 0);
+                    $buffer = fread($fd, $cur);
+                    fseek($fd, $newFileSize - $oldFileSize);
+                    fwrite($fd, $buffer, $cur);
+                }
             }
         }
 

@@ -362,6 +362,9 @@ final class Zend_Media_Id3v2 extends Zend_Media_Id3_Object
     public function addFrame($frame)
     {
         $frame->setOptions($this->getOptions());
+        $frame->setEncoding
+            ($this->getOption('encoding', $this->getOption('version', 4) < 4 ?
+             Zend_Media_Id3_Encoding::ISO88591 : Zend_Media_Id3_Encoding::UTF));
         if (!$this->hasFrame($frame->getIdentifier())) {
             $this->_frames[$frame->getIdentifier()] = array();
         }

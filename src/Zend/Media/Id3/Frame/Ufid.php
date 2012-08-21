@@ -29,7 +29,7 @@ require_once 'Zend/Media/Id3/Frame.php';
  * the audio file in a database, that may provide more information relevant to
  * the content. Since standardisation of such a database is beyond this document,
  * all UFID frames begin with an 'owner identifier' field. It is a null-
- * terminated string with a URL [URL] containing an email address, or a link to
+ * terminated string with a URL containing an email address, or a link to
  * a location where an email address can be found, that belongs to the
  * organisation responsible for this specific database implementation.
  * Questions regarding the database should be sent to the indicated email

@@ -36,5 +36,5 @@ require_once 'Zend/Media/Id3/TextFrame.php';
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
  * @version    $Id$
  */
-final class Zend_Media_Id3_Frame_TRSN extends Zend_Media_Id3_TextFrame
+final class Zend_Media_Id3_Frame_Trsn extends Zend_Media_Id3_TextFrame
 {}

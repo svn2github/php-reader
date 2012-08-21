@@ -59,16 +59,12 @@ final class Zend_Media_Id3_Frame_Tsrc extends Zend_Media_Id3_TextFrame
      */
     public function __construct($reader = null, &$options = array())
     {
-        Zend_Media_Id3_Frame::__construct($reader, $options);
-
-        $this->setEncoding(Zend_Media_Id3_Encoding::ISO88591);
+        parent::__construct($reader, $options);
 
         if ($this->_reader === null) {
             return;
         }
 
-        $this->_reader->skip(1);
-        $this->setText($this->_reader->readString8($this->_reader->getSize()));
         $this->_country = substr($this->getText(), 0, 2);
         $this->_registrant = substr($this->getText(), 2, 3);
         $this->_year = substr($this->getText(), 5, 2);

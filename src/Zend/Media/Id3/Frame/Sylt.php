@@ -45,7 +45,7 @@ require_once 'Zend/Media/Id3/Timing.php';
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
  * @version    $Id$
  */
-final class Zend_Media_Id3_Frame_SYLT extends Zend_Media_Id3_Frame
+final class Zend_Media_Id3_Frame_Sylt extends Zend_Media_Id3_Frame
     implements Zend_Media_Id3_Encoding, Zend_Media_Id3_Language,
         Zend_Media_Id3_Timing
 {

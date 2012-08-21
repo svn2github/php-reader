@@ -52,18 +52,12 @@ abstract class Zend_Media_Id3_DateFrame
     public function __construct
         ($reader = null, &$options = array(), $format = null)
     {
-        Zend_Media_Id3_Frame::__construct($reader, $options);
-
-        $this->setEncoding(Zend_Media_Id3_Encoding::ISO88591);
-
+        parent::__construct($reader, $options);
         $this->_format = $format;
 
         if ($this->_reader === null) {
             return;
         }
-
-        $this->_reader->skip(1);
-        $this->setText($this->_reader->readString8($this->_reader->getSize()));
     }
 
     /**
@@ -105,7 +99,11 @@ abstract class Zend_Media_Id3_DateFrame
      */
     protected function _writeData($writer)
     {
-        $this->setEncoding(Zend_Media_Id3_Encoding::ISO88591);
-        parent::_writeData($writer);
+        if ($this->getOption('version', 4) >= 4) {
+            parent::_writeData($writer);
+        } else {
+            $this->setEncoding(Zend_Media_Id3_Encoding::ISO88591);
+            parent::_writeData($writer);
+        }
     }
 }
